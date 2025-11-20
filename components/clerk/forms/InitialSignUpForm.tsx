@@ -1,18 +1,15 @@
-import { useState } from 'react'
-import Form from '../components/Form'
 import { useClerk, useSignUp } from "@clerk/clerk-expo";
-import { EnvironmentResource, SignInFirstFactor } from "@clerk/types";
-import OAuthButtonRow from "../components/OAuthButtonRow";
-import Input from '../components/Input';
+import { EnvironmentResource } from "@clerk/types";
+import { useState } from 'react';
 import ContinueButton from '../components/ContinueButton';
-import { TouchableOpacity } from 'react-native';
-import { Text, StyleSheet } from 'react-native';
 import ErrorText from '../components/ErrorText';
-import FormDivider from '../components/FormDivider';
+import Form from '../components/Form';
+import Input from '../components/Input';
+import OAuthButtonRow from "../components/OAuthButtonRow";
 import TextButton from '../components/TextButton';
 
 // Safely import expo-router
-let Router: any = { useRouter: () => ({ replace: () => {} }) };
+let Router: any = { useRouter: () => ({ replace: () => { } }) };
 try {
   Router = require("expo-router");
 } catch (error) {
@@ -67,33 +64,33 @@ function InitialSignUpForm({
     <Form title={`Create Your ${environment.displayConfig.applicationName} Account`} subtitle="Welcome! Please fill in the details to get started.">
       <OAuthButtonRow scheme={scheme} showDivider={true} />
 
-        <Input
-            label="Email address"
-            autoCapitalize="none"
-            value={emailAddress}
-            onChangeText={(email: string) => setEmailAddress(email)}
-            placeholder="Enter your email"
-            paramName="email_address"
-            error={erroredParams.includes("email_address") ? errorMessage : undefined}
-        />
-        <Input
-            label="Password"
-            value={password}
-            secureTextEntry={true}
-            onChangeText={(password: string) => setPassword(password)}
-            placeholder="Create a password"
-            paramName="password"
-            error={erroredParams.includes("password") ? errorMessage : undefined}
-        />
+      <Input
+        label="Email address"
+        autoCapitalize="none"
+        value={emailAddress}
+        onChangeText={(email: string) => setEmailAddress(email)}
+        placeholder="Enter your email"
+        paramName="email_address"
+        error={erroredParams.includes("email_address") ? errorMessage : undefined}
+      />
+      <Input
+        label="Password"
+        value={password}
+        secureTextEntry={true}
+        onChangeText={(password: string) => setPassword(password)}
+        placeholder="Create a password"
+        paramName="password"
+        error={erroredParams.includes("password") ? errorMessage : undefined}
+      />
 
-        <ErrorText message={errorMessage} />
+      <ErrorText message={erroredParams.includes('email_address') || erroredParams.includes('password') ? "" : errorMessage} />
 
-        <ContinueButton onPress={onContinuePressed} disabled={!emailAddress || !password} />
+      <ContinueButton onPress={onContinuePressed} disabled={!emailAddress || !password} />
 
-        <TextButton
-            onPress={() => router.replace(signInUrl)}
-            text="Already have an account? Sign in"
-        />
+      <TextButton
+        onPress={() => router.replace(signInUrl)}
+        text="Already have an account? Sign in"
+      />
     </Form>
   )
 }

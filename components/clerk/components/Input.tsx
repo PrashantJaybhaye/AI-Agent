@@ -1,7 +1,6 @@
 // @ts-ignore - Ignoring missing type declarations for @expo/vector-icons
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import TextButton from './TextButton';
 
 interface AlternateAction {
   text: string;
@@ -24,17 +23,17 @@ export function Input({ label, error, paramName, alternateAction, ...props }: Pr
           {alternateAction && <Text onPress={alternateAction.onPress} style={styles.alternateActionText}>{alternateAction.text}</Text>}
         </View>
       )}
-      <TextInput 
-        style={[styles.input, error ? styles.inputError : null]} 
+      <TextInput
+        style={[styles.input, error ? styles.inputError : null]}
         placeholderTextColor="#A0A0A0"
         {...props}
       />
-      {/* {error && (
+      {error && (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={16} color="#FF3B30" />
           <Text style={styles.errorText}>{error}</Text>
         </View>
-      )} */}
+      )}
     </View>
   )
 }

@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // Safely import expo modules
-let WebBrowser: any = { maybeCompleteAuthSession: () => {}, warmUpAsync: () => {}, coolDownAsync: () => {} };
+let WebBrowser: any = { maybeCompleteAuthSession: () => { }, warmUpAsync: () => { }, coolDownAsync: () => { } };
 let Linking: any = { createURL: () => "" };
 
 try {
@@ -43,16 +43,20 @@ export function OAuthButton({ strategy, children, hideText, scheme }: Props) {
   const clerk = useClerk();
   // @ts-ignore
   const environment = clerk.__unstable__environment as EnvironmentResource;
-  
+
   React.useEffect(() => {
     if (Platform.OS !== "android" || !webBrowserAvailable) return;
 
     try {
-      void WebBrowser.warmUpAsync();
+      WebBrowser.warmUpAsync().catch((err: any) => {
+        console.warn('WebBrowser warmup failed:', err);
+      });
       return () => {
         if (Platform.OS !== "android" || !webBrowserAvailable) return;
         try {
-          void WebBrowser.coolDownAsync();
+          WebBrowser.coolDownAsync().catch((err: any) => {
+            console.warn('WebBrowser cooldown failed:', err);
+          });
         } catch (error) {
           console.warn('WebBrowser cooldown failed:', error);
         }
@@ -70,7 +74,7 @@ export function OAuthButton({ strategy, children, hideText, scheme }: Props) {
       console.error('WebBrowser is not available on this platform');
       return;
     }
-    
+
     try {
       const { createdSessionId, setActive } = await startOAuthFlow({
         redirectUrl: Linking.createURL("", { scheme: scheme }),
@@ -89,38 +93,38 @@ export function OAuthButton({ strategy, children, hideText, scheme }: Props) {
     if (!environment?.userSettings?.social) {
       return { name: "Sign In", logoUrl: null };
     }
-    
+
     const provider = environment.userSettings.social[strategy as keyof typeof environment.userSettings.social];
-    
+
     if (!provider) {
       return { name: "Sign In", logoUrl: null };
     }
-    
+
     return {
       name: (provider as any).name || "Sign In",
       logoUrl: (provider as any).logo_url || null
     };
   }, [environment, strategy]);
-  
+
   const buttonText = () => {
     return providerInfo.name;
   }
 
   return (
     <TouchableOpacity onPress={onPress}>
-      { children ? children :       
+      {children ? children :
         <View style={styles.socialButton}>
           <View style={styles.socialButtonContent}>
             {providerInfo.logoUrl && (
-              <Image 
-                source={{ uri: providerInfo.logoUrl }} 
-                style={styles.providerLogo} 
+              <Image
+                source={{ uri: providerInfo.logoUrl }}
+                style={styles.providerLogo}
                 resizeMode="contain"
               />
             )}
             {!hideText && <Text style={styles.buttonText}>{buttonText()}</Text>}
           </View>
-        </View> }
+        </View>}
     </TouchableOpacity>
   );
 }
