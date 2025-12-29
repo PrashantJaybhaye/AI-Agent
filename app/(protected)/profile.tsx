@@ -79,7 +79,7 @@ const ActivityBar = ({ height, label, active }: any) => (
     </View>
 );
 
-const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode }: any) => {
+const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode, isAdmin, router }: any) => {
     const insets = useSafeAreaInsets();
 
     // Normalized simple ease-in-out animation
@@ -115,7 +115,6 @@ const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode 
                     entering={enteringAnimation}
                     style={[styles.actionSheetContainer, { paddingBottom: insets.bottom + 10 }]}
                 >
-                    {/* Main Action Group */}
                     <View style={styles.actionGroup}>
 
                         {/* Edit Profile */}
@@ -154,6 +153,8 @@ const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode 
                         >
                             <Text style={styles.actionSheetText}>Share Profile</Text>
                         </TouchableHighlight>
+
+
 
                         <View style={styles.actionSheetSeparator} />
 
@@ -230,6 +231,16 @@ export default function ProfileScreen() {
             transform: [{ rotate: `${spinValue.value * 360}deg` }]
         };
     });
+
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: 'Check out Siora, my favorite focus companion!',
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
 
     const parseDate = (date: any): Date => {
@@ -418,9 +429,6 @@ export default function ProfileScreen() {
         return activity.map(v => (v / maxVal) * 100);
     };
 
-
-
-
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -437,6 +445,14 @@ export default function ProfileScreen() {
                     <Text style={styles.headerTitle}>Profile</Text>
                 </View>
                 <View style={styles.headerRight}>
+                    {userData?.isAdmin && (
+                        <TouchableOpacity
+                            style={styles.settingsBtn}
+                            onPress={() => router.push('/(protected)/admin/dashboard')}
+                        >
+                            <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         style={styles.settingsBtn}
                         onPress={onRefresh}
@@ -472,7 +488,6 @@ export default function ProfileScreen() {
                     )}
                 </Animated.View>
 
-
                 <View style={styles.gridContainer}>
                     <View style={styles.gridRow}>
                         <BentoCard colSpan={2} delay={100} style={{ backgroundColor: COLORS.card }}>
@@ -495,9 +510,11 @@ export default function ProfileScreen() {
 
                     <View style={styles.gridRow}>
                         <BentoCard colSpan={3} delay={300} style={{ height: 180 }}>
-                            <View style={styles.cardHeader}>
-                                <Ionicons name="bar-chart" size={16} color={COLORS.secondary} />
-                                <Text style={styles.cardLabel}>WEEKLY ACTIVITY</Text>
+                            <View style={[styles.cardHeader, { justifyContent: 'space-between' }]}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                    <Ionicons name="bar-chart" size={16} color={COLORS.secondary} />
+                                    <Text style={styles.cardLabel}>WEEKLY ACTIVITY</Text>
+                                </View>
                             </View>
                             <View style={styles.chartContainer}>
                                 <ActivityBar height={Math.max(stats.dailyActivity[0], 10)} label="M" active={new Date().getDay() === 1} />
@@ -520,8 +537,12 @@ export default function ProfileScreen() {
                             <Text style={styles.cardValueSmall}>{stats.averageDurationMinutes}m</Text>
                             <Text style={styles.cardLabelBottom}>AVG TIME</Text>
                         </BentoCard>
+
+
                         <BentoCard colSpan={1} delay={600} style={{ alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.accent }}>
-                            <Ionicons name="share-outline" size={24} color={COLORS.primary} />
+                            <TouchableOpacity onPress={handleShare} style={{ alignItems: 'center', justifyContent: 'center', flex: 1, width: '100%' }}>
+                                <Ionicons name="share-outline" size={24} color={COLORS.primary} />
+                            </TouchableOpacity>
                         </BentoCard>
                     </View>
                 </View>
@@ -564,8 +585,11 @@ export default function ProfileScreen() {
                 signOut={signOut}
                 privacyMode={privacyMode}
                 setPrivacyMode={setPrivacyMode}
+                isAdmin={userData?.isAdmin}
+                router={router}
             />
-        </View>
+
+        </View >
     );
 }
 
@@ -579,7 +603,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingBottom: 25,
     },
     headerTitle: {
         fontSize: 32,
