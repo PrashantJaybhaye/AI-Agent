@@ -1,6 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    useColorScheme
+} from 'react-native';
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 
 interface UserDetailModalProps {
     visible: boolean;
@@ -8,6 +23,7 @@ interface UserDetailModalProps {
     onClose: () => void;
     onDelete: () => void;
     onToggleAdmin: () => void;
+    onUpdate?: (data: { displayName: string; email: string }) => Promise<void>;
     isCurrentUser: boolean;
 }
 
@@ -17,15 +33,58 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     onClose,
     onDelete,
     onToggleAdmin,
+    onUpdate,
     isCurrentUser,
 }) => {
+    const colorScheme = useColorScheme();
+
+    // Edit Mode State
+    const [isEditing, setIsEditing] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Form State
+    const [displayName, setDisplayName] = useState('');
+    const [email, setEmail] = useState('');
+
+    useEffect(() => {
+        if (user) {
+            setDisplayName(user.displayName || '');
+            setEmail(user.email || '');
+            setIsEditing(false);
+        }
+    }, [user, visible]);
+
     if (!user) return null;
+
+    const handleSave = async () => {
+        if (!onUpdate) return;
+
+        setIsLoading(true);
+        try {
+            await onUpdate({ displayName, email });
+            setIsEditing(false);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update profile');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleClose = () => {
+        if (isEditing) {
+            setDisplayName(user.displayName || '');
+            setEmail(user.email || '');
+            setIsEditing(false);
+        } else {
+            onClose();
+        }
+    };
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return 'N/A';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         return date.toLocaleDateString('en-US', {
-            month: 'long',
+            month: 'short',
             day: 'numeric',
             year: 'numeric',
             hour: '2-digit',
@@ -37,97 +96,198 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
         <Modal
             visible={visible}
             transparent
-            animationType="slide"
-            onRequestClose={onClose}
+            animationType="none"
+            onRequestClose={handleClose}
         >
-            <View style={styles.overlay}>
-                <TouchableOpacity
-                    style={styles.backdrop}
-                    activeOpacity={1}
-                    onPress={onClose}
-                />
+            <View style={{ flex: 1 }}>
+                {visible && (
+                    <Animated.View
+                        entering={FadeIn.duration(300)}
+                        exiting={FadeOut.duration(300)}
+                        style={styles.overlay}
+                    >
+                        <TouchableOpacity
+                            style={styles.backdrop}
+                            activeOpacity={1}
+                            onPress={handleClose}
+                        />
 
-                <View style={styles.modalContainer}>
-                    <View style={styles.grabberContainer}>
-                        <View style={styles.grabber} />
-                    </View>
+                        <Animated.View
+                            entering={SlideInDown.duration(300)}
+                            exiting={SlideOutDown.duration(300)}
+                            style={styles.keyboardView}
+                        >
+                            <KeyboardAvoidingView
+                                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                                style={{ flex: 1 }}
+                            >
+                                <View style={styles.modalContainer}>
+                                    {/* Grabber */}
+                                    <View style={styles.grabberContainer}>
+                                        <View style={styles.grabber} />
+                                    </View>
 
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>User Details</Text>
-                        <TouchableOpacity onPress={onClose} style={styles.doneBtn}>
-                            <Text style={styles.doneText}>Done</Text>
-                        </TouchableOpacity>
-                    </View>
+                                    {/* Header */}
+                                    <View style={styles.header}>
+                                        <TouchableOpacity
+                                            onPress={() => isEditing ? setIsEditing(false) : setIsEditing(true)}
+                                            style={styles.headerBtn}
+                                        >
+                                            <Text style={[styles.headerBtnText, isEditing && styles.cancelText]}>
+                                                {isEditing ? 'Cancel' : 'Edit'}
+                                            </Text>
+                                        </TouchableOpacity>
 
-                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                        {/* Profile Section */}
-                        <View style={styles.profileSection}>
-                            <Image
-                                source={user.photoURL}
-                                style={styles.avatar}
-                                contentFit="cover"
-                            />
-                            {user.isAdmin && (
-                                <View style={styles.adminBadge}>
-                                    <Text style={styles.adminBadgeText}>Administrator</Text>
+                                        <Text style={styles.headerTitle}>
+                                            {isEditing ? 'Edit Profile' : 'User Details'}
+                                        </Text>
+
+                                        <TouchableOpacity
+                                            onPress={isEditing ? handleSave : onClose}
+                                            style={styles.headerBtn}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <ActivityIndicator size="small" color="#007AFF" />
+                                            ) : (
+                                                <Text style={[styles.headerBtnText, styles.doneText]}>
+                                                    {isEditing ? 'Save' : 'Done'}
+                                                </Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                                        {/* Profile Hero */}
+                                        {/* Profile Hero */}
+                                        <View style={styles.heroSection}>
+                                            <View style={styles.avatarWrapper}>
+                                                <Image
+                                                    source={user.photoURL}
+                                                    style={styles.avatar}
+                                                    contentFit="cover"
+                                                />
+                                                {user.isAdmin && (
+                                                    <View style={styles.adminBadge}>
+                                                        <Ionicons name="shield-checkmark" size={14} color="#FFF" />
+                                                    </View>
+                                                )}
+                                            </View>
+                                            {!isEditing && (
+                                                <View style={styles.heroText}>
+                                                    <Text style={styles.heroName}>{user.displayName || 'Unknown'}</Text>
+                                                    <Text style={styles.heroEmail}>{user.email}</Text>
+                                                </View>
+                                            )}
+                                        </View>
+
+                                        {/* Info Rows */}
+                                        <View style={styles.section}>
+                                            <View style={styles.groupContainer}>
+                                                {isEditing ? (
+                                                    <View style={styles.formContent}>
+                                                        <View style={styles.inputGroup}>
+                                                            <Text style={styles.inputLabel}>Display Name</Text>
+                                                            <TextInput
+                                                                style={styles.textInput}
+                                                                value={displayName}
+                                                                onChangeText={setDisplayName}
+                                                                placeholder="Enter name"
+                                                                placeholderTextColor="#999"
+                                                            />
+                                                        </View>
+                                                        <View style={[styles.inputGroup, styles.noBorder]}>
+                                                            <Text style={styles.inputLabel}>Email Address</Text>
+                                                            <TextInput
+                                                                style={styles.textInput}
+                                                                value={email}
+                                                                onChangeText={setEmail}
+                                                                placeholder="Enter email"
+                                                                placeholderTextColor="#999"
+                                                                keyboardType="email-address"
+                                                                autoCapitalize="none"
+                                                            />
+                                                        </View>
+                                                    </View>
+                                                ) : (
+                                                    <>
+                                                        <InfoRow
+                                                            icon="calendar-outline"
+                                                            label="Joined"
+                                                            value={formatDate(user.createdAt)}
+                                                            iconColor="#007AFF"
+                                                        />
+                                                        <InfoRow
+                                                            icon="time-outline"
+                                                            label="Last Seen"
+                                                            value={formatDate(user.lastLoginAt)}
+                                                            iconColor="#34C759"
+                                                        />
+                                                        <InfoRow
+                                                            icon="finger-print-outline"
+                                                            label="User ID"
+                                                            value={user.id}
+                                                            mono
+                                                            last
+                                                            iconColor="#8E8E93"
+                                                        />
+                                                    </>
+                                                )}
+                                            </View>
+                                        </View>
+
+                                        {/* Actions */}
+                                        <View style={styles.section}>
+                                            <View style={styles.groupContainer}>
+                                                <View style={styles.compactButtonRow}>
+                                                    <TouchableOpacity
+                                                        style={[styles.compactButton, isCurrentUser && styles.disabledRow]}
+                                                        onPress={onToggleAdmin}
+                                                        disabled={isCurrentUser}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Text style={styles.compactButtonLabel}>
+                                                            {user.isAdmin ? 'Revoke Admin' : 'Make Admin'}
+                                                        </Text>
+                                                    </TouchableOpacity>
+
+                                                    <View style={styles.verticalSeparator} />
+
+                                                    <TouchableOpacity
+                                                        style={[styles.compactButton, isCurrentUser && styles.disabledRow]}
+                                                        onPress={onDelete}
+                                                        disabled={isCurrentUser}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Text style={[styles.compactButtonLabel, styles.destructiveLabel]}>
+                                                            Delete
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        </View>
+
+                                        <View style={{ height: 60 }} />
+                                    </ScrollView>
                                 </View>
-                            )}
-                        </View>
-
-                        {/* Info Section - Grouped Style */}
-                        <View style={styles.groupContainer}>
-                            <InfoRow label="Name" value={user.displayName || 'Unknown'} first />
-                            <InfoRow label="Email" value={user.email} />
-                            <InfoRow label="User ID" value={user.id} mono />
-                            <InfoRow label="Created" value={formatDate(user.createdAt)} />
-                            <InfoRow label="Last Login" value={formatDate(user.lastLoginAt)} last />
-                        </View>
-
-                        {/* Actions */}
-                        <View style={styles.actionsSection}>
-                            <TouchableOpacity
-                                style={[styles.actionButton, isCurrentUser && styles.actionButtonDisabled]}
-                                onPress={onToggleAdmin}
-                                disabled={isCurrentUser}
-                            >
-                                <Text style={[styles.actionButtonText, isCurrentUser && styles.actionButtonTextDisabled]}>
-                                    {user.isAdmin ? 'Revoke Admin Access' : 'Grant Admin Access'}
-                                </Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.actionButton, styles.deleteButton, isCurrentUser && styles.actionButtonDisabled]}
-                                onPress={onDelete}
-                                disabled={isCurrentUser}
-                            >
-                                <Text style={[styles.actionButtonText, styles.deleteButtonText, isCurrentUser && styles.actionButtonTextDisabled]}>
-                                    Delete User
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={{ height: 40 }} />
-                    </ScrollView>
-                </View>
+                            </KeyboardAvoidingView>
+                        </Animated.View>
+                    </Animated.View>
+                )}
             </View>
         </Modal>
     );
 };
 
-const InfoRow: React.FC<{ label: string; value: string; mono?: boolean; highlight?: boolean; first?: boolean; last?: boolean }> = ({
-    label,
-    value,
-    mono = false,
-    highlight = false,
-    first = false,
-    last = false
-}) => (
+const InfoRow = ({ icon, label, value, mono, last, iconColor = "#8E8E93" }: any) => (
     <View style={[styles.infoRow, last && styles.noBorder]}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={[
-            styles.infoValue,
-            mono && styles.monoValue,
-            highlight && styles.highlightValue
-        ]} numberOfLines={1}>{value}</Text>
+        <View style={styles.rowLabelGroup}>
+            <Ionicons name={icon} size={20} color={iconColor} style={styles.rowIcon} />
+            <Text style={styles.infoLabel}>{label}</Text>
+        </View>
+        <Text style={[styles.infoValue, mono && styles.monoText]} numberOfLines={1}>
+            {value}
+        </Text>
     </View>
 );
 
@@ -135,7 +295,7 @@ const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     backdrop: {
         position: 'absolute',
@@ -144,12 +304,16 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
     },
+    keyboardView: {
+        width: '100%',
+        height: '70%',
+    },
     modalContainer: {
-        backgroundColor: '#F2F2F7', // iOS System Gray 6
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        paddingBottom: 40,
-        height: '90%',
+        flex: 1,
+        backgroundColor: '#F2F2F7',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        overflow: 'hidden',
     },
     grabberContainer: {
         alignItems: 'center',
@@ -159,122 +323,167 @@ const styles = StyleSheet.create({
         width: 36,
         height: 5,
         borderRadius: 2.5,
-        backgroundColor: '#C7C7CC', // iOS Grabber Gray
+        backgroundColor: '#C7C7CC',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingHorizontal: 16,
+        paddingBottom: 16,
     },
     headerTitle: {
-        fontSize: 22, // iOS Large Title
-        fontWeight: '700',
+        fontSize: 17,
+        fontWeight: '600',
         color: '#000',
-        letterSpacing: -0.5,
     },
-    doneBtn: {
-        backgroundColor: '#E5E5EA',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 30,
+    headerBtn: {
+        minWidth: 60,
+    },
+    headerBtnText: {
+        fontSize: 17,
+        color: '#007AFF',
     },
     doneText: {
-        fontSize: 15,
         fontWeight: '600',
-        color: '#007AFF', // iOS Blue
+        textAlign: 'right',
+    },
+    cancelText: {
+        color: '#FF3B30',
     },
     content: {
+        flex: 1,
     },
-    profileSection: {
+    heroSection: {
         alignItems: 'center',
-        marginBottom: 24,
+        paddingVertical: 20,
+    },
+    avatarWrapper: {
+        position: 'relative',
+        marginBottom: 16,
     },
     avatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#E5E5EA',
-        marginBottom: 12,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#FFF',
+        borderWidth: 3,
+        borderColor: '#FFF',
     },
     adminBadge: {
-        backgroundColor: '#E5E5EA',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#007AFF',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#FFF',
     },
-    adminBadgeText: {
-        fontSize: 13,
-        fontWeight: '600',
+    heroText: {
+        alignItems: 'center',
+        gap: 4,
+    },
+    heroName: {
+        fontSize: 24,
+        fontWeight: '700',
         color: '#000',
+    },
+    heroEmail: {
+        fontSize: 15,
+        color: '#8E8E93',
+    },
+    section: {
+        paddingHorizontal: 16,
+        marginBottom: 20,
     },
     groupContainer: {
         backgroundColor: '#FFF',
-        borderRadius: 12,
-        marginHorizontal: 16,
+        borderRadius: 14,
         overflow: 'hidden',
     },
     infoRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 16,
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#E5E5EA', // Separator
+        justifyContent: 'space-between',
+        padding: 16,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#C6C6C8',
     },
     noBorder: {
         borderBottomWidth: 0,
     },
+    rowLabelGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    rowIcon: {
+        width: 24,
+    },
     infoLabel: {
         fontSize: 16,
         color: '#000',
-        fontWeight: '400',
     },
     infoValue: {
         fontSize: 16,
         color: '#8E8E93',
-        fontWeight: '400',
         flex: 1,
         textAlign: 'right',
+        marginLeft: 20,
     },
-    monoValue: {
-        fontFamily: 'Courier',
+    monoText: {
+        fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
         fontSize: 14,
     },
-    highlightValue: {
-        color: '#007AFF',
+    formContent: {
+        paddingVertical: 4,
     },
-    actionsSection: {
-        marginTop: 24,
-        paddingHorizontal: 16,
-        gap: 12,
+    inputGroup: {
+        padding: 16,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#C6C6C8',
     },
-    actionButton: {
+    inputLabel: {
+        fontSize: 13,
+        color: '#8E8E93',
+        marginBottom: 4,
+        textTransform: 'uppercase',
+    },
+    textInput: {
+        fontSize: 17,
+        color: '#000',
+        padding: 0,
+    },
+    compactButtonRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FFF', // White pill button
-        paddingVertical: 16,
-        borderRadius: 12,
+        height: 50,
     },
-    actionButtonText: {
-        fontSize: 17,
+    compactButton: {
+        flex: 1,
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFF',
+    },
+    compactButtonLabel: {
+        fontSize: 16,
         fontWeight: '600',
         color: '#007AFF',
     },
-    deleteButton: {
-        backgroundColor: '#FFF', // Native iOS destructive is often white in sheets too, or separate red
-        marginTop: 8,
+    verticalSeparator: {
+        width: StyleSheet.hairlineWidth,
+        height: '60%',
+        backgroundColor: '#C6C6C8',
     },
-    deleteButtonText: {
+    destructiveLabel: {
         color: '#FF3B30',
     },
-    actionButtonDisabled: {
+    disabledRow: {
         opacity: 0.5,
-    },
-    actionButtonTextDisabled: {
-        color: '#C7C7CC',
     },
 });

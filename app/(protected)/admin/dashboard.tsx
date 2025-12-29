@@ -520,6 +520,18 @@ export default function AdminDashboard() {
                 onToggleAdmin={() => {
                     handleToggleAdmin(selectedUser);
                 }}
+                onUpdate={async (data) => {
+                    if (!selectedUser) return;
+                    try {
+                        const userRef = doc(db, 'users', selectedUser.id);
+                        await updateDoc(userRef, data);
+                        await fetchUsers(); // Refresh list
+                        setSelectedUser({ ...selectedUser, ...data });
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        throw error;
+                    }
+                }}
                 isCurrentUser={selectedUser?.id === userData?.uid}
             />
         </View>
