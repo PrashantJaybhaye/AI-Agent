@@ -13,10 +13,11 @@ import {
     Dimensions,
     Modal,
     ScrollView,
+    Share,
     StatusBar,
     StyleSheet,
-    Switch,
     Text,
+    TouchableHighlight,
     TouchableOpacity,
     View
 } from "react-native";
@@ -24,6 +25,7 @@ import Animated, {
     Easing,
     FadeInDown,
     FadeInUp,
+    SlideInDown,
     cancelAnimation,
     useAnimatedStyle,
     useSharedValue,
@@ -77,50 +79,126 @@ const ActivityBar = ({ height, label, active }: any) => (
 );
 
 const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode }: any) => {
+    const insets = useSafeAreaInsets();
+
+    // Normalized simple ease-in-out animation
+    const enteringAnimation = SlideInDown.duration(300).easing(Easing.inOut(Easing.quad));
+
+    const IOS_HIGHLIGHT = "#E5E5EA"; // The exact color iOS uses for press states
+
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: 'Check out Siora, my favorite focus companion!',
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     return (
-        <Modal visible={visible} animationType="fade" transparent>
-            <View style={styles.modalOverlay}>
-                <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
-                <Animated.View entering={FadeInUp} style={styles.modalContent}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Preferences</Text>
-                        <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
-                            <Ionicons name="close" size={20} color="#52525b" />
-                        </TouchableOpacity>
-                    </View>
+        <Modal
+            visible={visible}
+            animationType="fade"
+            transparent
+            onRequestClose={onClose}
+        >
+            <View style={styles.actionSheetOverlay}>
+                <TouchableOpacity
+                    style={StyleSheet.absoluteFill}
+                    onPress={onClose}
+                    activeOpacity={1}
+                />
 
-                    <View style={styles.settingRow}>
-                        <View style={styles.settingIconBox}>
-                            <Ionicons name="eye-off-outline" size={22} color={COLORS.primary} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 16 }}>
-                            <Text style={styles.settingLabel}>Incognito Mode</Text>
-                            <Text style={styles.settingSub}>Hide activity from friends</Text>
-                        </View>
-                        <Switch
-                            value={privacyMode}
-                            onValueChange={(v) => {
+                <Animated.View
+                    entering={enteringAnimation}
+                    style={[styles.actionSheetContainer, { paddingBottom: insets.bottom + 10 }]}
+                >
+                    {/* Main Action Group */}
+                    <View style={styles.actionGroup}>
+
+                        {/* Edit Profile */}
+                        <TouchableHighlight
+                            style={styles.actionSheetItem}
+                            underlayColor={IOS_HIGHLIGHT}
+                            onPress={() => {
                                 Haptics.selectionAsync();
-                                setPrivacyMode(v);
+                                onClose();
                             }}
-                            trackColor={{ false: '#E4E4E7', true: COLORS.accent }}
-                            thumbColor={"#FFFFFF"}
-                            ios_backgroundColor="#E4E4E7"
-                        />
+                        >
+                            <Text style={styles.actionSheetText}>Edit Profile</Text>
+                        </TouchableHighlight>
+
+                        <View style={styles.actionSheetSeparator} />
+
+                        {/* Notifications */}
+                        <TouchableHighlight
+                            style={styles.actionSheetItem}
+                            underlayColor={IOS_HIGHLIGHT}
+                            onPress={() => {
+                                Haptics.selectionAsync();
+                                onClose();
+                            }}
+                        >
+                            <Text style={styles.actionSheetText}>Notifications</Text>
+                        </TouchableHighlight>
+
+                        <View style={styles.actionSheetSeparator} />
+
+                        {/* Share Profile */}
+                        <TouchableHighlight
+                            style={styles.actionSheetItem}
+                            underlayColor={IOS_HIGHLIGHT}
+                            onPress={handleShare}
+                        >
+                            <Text style={styles.actionSheetText}>Share Profile</Text>
+                        </TouchableHighlight>
+
+                        <View style={styles.actionSheetSeparator} />
+
+                        {/* Incognito Mode Toggle */}
+                        <TouchableHighlight
+                            style={styles.actionSheetItem}
+                            underlayColor={IOS_HIGHLIGHT}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                setPrivacyMode(!privacyMode);
+                                setTimeout(onClose, 150); // Close after brief delay to show feedback
+                            }}
+                        >
+                            <Text style={styles.actionSheetText}>
+                                {privacyMode ? 'Turn Off Incognito Mode' : 'Turn On Incognito Mode'}
+                            </Text>
+                        </TouchableHighlight>
+
+                        <View style={styles.actionSheetSeparator} />
+
+                        {/* Log Out */}
+                        <TouchableHighlight
+                            style={styles.actionSheetItem}
+                            underlayColor={IOS_HIGHLIGHT}
+                            onPress={() => {
+                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                                signOut();
+                            }}
+                        >
+                            <Text style={styles.actionSheetTextDestructive}>Log Out</Text>
+                        </TouchableHighlight>
                     </View>
 
-                    <View style={{ height: 1, backgroundColor: '#E4E4E7', marginVertical: 24 }} />
-
-                    <TouchableOpacity
-                        style={styles.logoutBtn}
+                    {/* Cancel Button */}
+                    <TouchableHighlight
+                        style={styles.cancelButton}
+                        underlayColor={IOS_HIGHLIGHT}
                         onPress={() => {
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                            signOut();
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            onClose();
                         }}
                     >
-                        <Ionicons name="log-out-outline" size={20} color={COLORS.danger} style={{ marginRight: 8 }} />
-                        <Text style={styles.logoutText}>Log Out</Text>
-                    </TouchableOpacity>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableHighlight>
+
+
                 </Animated.View>
             </View>
         </Modal>
@@ -697,80 +775,54 @@ const styles = StyleSheet.create({
     },
 
 
-    modalOverlay: {
+    actionSheetOverlay: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
-        backgroundColor: 'rgba(0,0,0,0.5)', // Standard dimming
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'flex-end',
     },
-    modalContent: {
-        width: '100%',
+    actionSheetContainer: {
+        paddingHorizontal: 16,
+    },
+    actionGroup: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 14,
+        overflow: 'hidden',
+        marginBottom: 8,
+    },
+    actionSheetItem: {
+        paddingVertical: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#FFFFFF',
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 8,
-        },
-        shadowOpacity: 0.15,
-        shadowRadius: 24,
-        elevation: 10,
     },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 32,
+    actionSheetText: {
+        fontSize: 17,
+        fontWeight: '500',
+        color: '#000000',
+        letterSpacing: -0.3, // Tighter tracking for that "premium" feel
     },
-    modalTitle: {
-        color: COLORS.primary,
-        fontSize: 22,
-        fontWeight: '700',
-        letterSpacing: -0.5,
-    },
-    modalCloseBtn: {
-        width: 32,
-        height: 32,
-        backgroundColor: '#F4F4F5',
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    settingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    settingIconBox: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        backgroundColor: '#F4F4F5',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    settingLabel: {
-        color: COLORS.primary,
-        fontSize: 16,
+    actionSheetTextDestructive: {
+        fontSize: 17,
         fontWeight: '600',
+        color: '#FF3B30',
+        letterSpacing: -0.3,
     },
-    settingSub: {
-        color: COLORS.secondary,
-        fontSize: 13,
-        marginTop: 2,
+    actionSheetSeparator: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: '#3C3C4336',
+        width: '100%',
     },
-    logoutBtn: {
-        flexDirection: 'row',
-        backgroundColor: '#FEF2F2', // Light Red bg
+    cancelButton: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 14,
         paddingVertical: 16,
-        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    logoutText: {
-        color: COLORS.danger,
+    cancelButtonText: {
+        fontSize: 17,
         fontWeight: '700',
-        fontSize: 16,
+        color: '#000000',
+        letterSpacing: -0.3,
     },
 });
