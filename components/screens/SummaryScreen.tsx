@@ -1,7 +1,7 @@
+import { useUserContext } from "@/context/UserContext";
 import { colors } from "@/utils/colors";
 import { db } from "@/utils/firebase";
 import { ConversationResponse, TranscriptEntry } from "@/utils/types";
-import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -41,7 +41,7 @@ const MessageBubble = React.memo(({ item }: { item: TranscriptEntry }) => {
 export default function SummaryScreen() {
     const { conversationId, sessionId } = useLocalSearchParams();
     const router = useRouter();
-    const { user } = useUser();
+    const { userData } = useUserContext();
     const [conversation, setConversation] = useState<ConversationResponse>();
     const [isSaving, setIsSaving] = useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -150,7 +150,7 @@ export default function SummaryScreen() {
         try {
             setIsSaving(true);
             await addDoc(collection(db, "session"), {
-                user_id: user?.id,
+                user_id: userData?.uid,
                 status: conversation?.status,
                 conv_id: conversationId,
                 tokens: Number(conversation?.metadata?.cost),

@@ -1,8 +1,8 @@
 import { PullToRefreshSectionList } from "@/components/PullToRefreshSectionList";
+import { useUserContext } from "@/context/UserContext";
 import { colors, sessionThemes } from "@/utils/colors";
 import { db } from "@/utils/firebase";
 import { Session } from "@/utils/types";
-import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -38,7 +38,7 @@ const getSessionTheme = (id: string) => {
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
-    const { user } = useUser();
+    const { userData } = useUserContext();
     const router = useRouter();
     const [sections, setSections] = useState<HistorySection[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,15 +46,15 @@ export default function HistoryScreen() {
 
     useEffect(() => {
         fetchSessions();
-    }, [user]);
+    }, [userData]);
 
     const fetchSessions = async () => {
-        if (!user) return;
+        if (!userData) return;
         try {
             if (sections.length === 0) setLoading(true);
 
             const sessionsRef = collection(db, "session");
-            const q = query(sessionsRef, where("user_id", "==", user.id));
+            const q = query(sessionsRef, where("user_id", "==", userData.uid));
             const querySnapshot = await getDocs(q);
 
             const sessions: Session[] = [];
@@ -143,11 +143,11 @@ export default function HistoryScreen() {
                         style={styles.avatarButton}
                         onPress={() => router.push("/profile")}
                     >
-                        {user?.imageUrl ? (
-                            <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} />
+                        {userData?.photoURL ? (
+                            <Image source={{ uri: userData.photoURL }} style={styles.avatarImage} />
                         ) : (
                             <View style={styles.avatarPlaceholder}>
-                                <Text style={styles.avatarInitial}>{user?.firstName?.[0] || "U"}</Text>
+                                <Text style={styles.avatarInitial}>{userData?.displayName?.[0] || "U"}</Text>
                             </View>
                         )}
                     </TouchableOpacity>

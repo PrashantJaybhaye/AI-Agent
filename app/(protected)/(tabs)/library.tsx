@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-expo';
+import { useUserContext } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
@@ -64,7 +64,7 @@ const SESSIONS = [
 export default function LibraryScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { user } = useUser();
+    const { userData } = useUserContext();
 
     // State for modal
     const [selectedSession, setSelectedSession] = useState<typeof SESSIONS[0] | null>(null);
@@ -104,11 +104,11 @@ export default function LibraryScreen() {
                             <Ionicons name="ellipsis-horizontal" size={20} color="#000" />
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.avatarButton}>
-                            {user?.imageUrl ? (
-                                <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} />
+                            {userData?.photoURL ? (
+                                <Image source={{ uri: userData.photoURL }} style={styles.avatarImage} />
                             ) : (
                                 <View style={styles.avatarPlaceholder}>
-                                    <Text style={styles.avatarInitial}>{user?.firstName?.[0] || "U"}</Text>
+                                    <Text style={styles.avatarInitial}>{userData?.displayName?.[0] || "U"}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>

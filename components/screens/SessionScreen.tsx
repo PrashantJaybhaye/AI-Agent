@@ -1,6 +1,6 @@
+import { useUserContext } from "@/context/UserContext";
 import { useConversation } from "@/hooks/useConversation";
 import { sessions } from "@/utils/sessions";
-import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import * as Brightness from "expo-brightness";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,7 +14,7 @@ import { Gradient } from "../gradient";
 const { width } = Dimensions.get("window");
 
 export default function SessionScreen() {
-    const { user, isLoaded } = useUser();
+    const { userData, loading } = useUserContext();
     const { sessionId } = useLocalSearchParams();
     const router = useRouter();
 
@@ -99,7 +99,7 @@ export default function SessionScreen() {
 
             console.log("Starting session with:", {
                 agentId,
-                username: user?.firstName,
+                username: userData?.displayName,
                 title: currentSession.title,
                 description: currentSession.description
             });
@@ -107,7 +107,7 @@ export default function SessionScreen() {
             await conversation.startSession({
                 agentId,
                 dynamicVariables: {
-                    username: user?.firstName || "user",
+                    username: userData?.displayName || "user",
                     session_title: String(currentSession.title),
                     session_description: String(currentSession.description)
                 }
@@ -132,7 +132,7 @@ export default function SessionScreen() {
         }
     }
 
-    if (!isLoaded) return null;
+    if (loading) return null;
 
     const isConnected = conversation.status === "connected";
     const isConnecting = conversation.status === "connecting" || isStarting;

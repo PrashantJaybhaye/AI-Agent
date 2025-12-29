@@ -1,7 +1,7 @@
 import { db } from "@/utils/firebase";
 import { getStreakEntries } from "@/utils/streak";
 import { Session, StreakEntry } from "@/utils/types";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from 'expo-haptics';
 import { Image } from "expo-image";
@@ -33,6 +33,7 @@ import Animated, {
     withTiming
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useUserContext } from "../../context/UserContext";
 
 const { width } = Dimensions.get('window');
 
@@ -207,7 +208,7 @@ const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode 
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user } = useUser();
+    const { userData } = useUserContext();
     const { signOut } = useAuth();
     const insets = useSafeAreaInsets();
 
@@ -264,20 +265,20 @@ export default function ProfileScreen() {
     }, []);
 
     useEffect(() => {
-        if (!user) return;
+        if (!userData) return;
 
         setIsRefreshing(true);
 
         // Fetch sessions
         const sessionsRef = collection(db, "session");
-        const q = query(sessionsRef, where("user_id", "==", user.id));
+        const q = query(sessionsRef, where("user_id", "==", userData.uid));
 
         const unsubscribe = onSnapshot(q, async (querySnapshot) => {
             const sessions: Session[] = [];
             querySnapshot.forEach((doc) => sessions.push({ id: doc.id, ...doc.data() } as Session));
 
             // Fetch streak entries
-            const streakEntries = await getStreakEntries(user.id);
+            const streakEntries = await getStreakEntries(userData.uid);
 
             await processSessions(sessions, streakEntries);
             setIsRefreshing(false);
@@ -287,7 +288,7 @@ export default function ProfileScreen() {
         });
 
         return () => unsubscribe();
-    }, [user, processSessions]);
+    }, [userData, processSessions]);
 
     const onRefresh = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -459,14 +460,16 @@ export default function ProfileScreen() {
             >
 
                 <Animated.View entering={FadeInDown.duration(600)} style={styles.identityRow}>
-                    <Image source={user?.imageUrl} style={styles.avatar} contentFit="cover" />
+                    <Image source={userData?.photoURL} style={styles.avatar} contentFit="cover" />
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>
-                        <Text style={styles.userEmail}>{user?.primaryEmailAddress?.emailAddress}</Text>
+                        <Text style={styles.userName}>{userData?.displayName}</Text>
+                        <Text style={styles.userEmail}>{userData?.email}</Text>
                     </View>
-                    <View style={styles.proBadge}>
-                        <Text style={styles.proBadgeText}>PRO</Text>
-                    </View>
+                    {userData?.isAdmin && (
+                        <View style={styles.proBadge}>
+                            <Text style={styles.proBadgeText}>ADMIN</Text>
+                        </View>
+                    )}
                 </Animated.View>
 
 

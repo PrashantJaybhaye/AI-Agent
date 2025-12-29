@@ -65,3 +65,13 @@ export interface Achievement {
     description: string;
     earned_at: any;
 }
+
+export interface User {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL?: string;
+    isAdmin: boolean;
+    createdAt: any;
+    lastLoginAt: any;
+}

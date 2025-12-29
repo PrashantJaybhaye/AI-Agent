@@ -3,8 +3,10 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { StatusBar } from "react-native";
+import { UserProvider } from "../context/UserContext";
 
 function RootLayoutWithAuth() {
+
   const { isSignedIn, isLoaded } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -23,7 +25,7 @@ function RootLayoutWithAuth() {
 
     // Redirect based on auth state
     if (isSignedIn && !inProtectedGroup) {
-      router.replace("/(protected)");
+      router.replace("/(protected)/(tabs)");
     } else if (!isSignedIn && !inPublicGroup) {
       router.replace("/(public)");
     }
@@ -53,8 +55,10 @@ export default function RootLayout() {
       tokenCache={tokenCache}
       publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
-      <StatusBar backgroundColor="transparent" barStyle="dark-content" hidden={false} />
-      <RootLayoutWithAuth />
+      <UserProvider>
+        <StatusBar backgroundColor="transparent" barStyle="dark-content" hidden={false} />
+        <RootLayoutWithAuth />
+      </UserProvider>
     </ClerkProvider>
   )
 }

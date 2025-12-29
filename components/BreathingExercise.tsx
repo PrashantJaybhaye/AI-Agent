@@ -1,7 +1,7 @@
+import { useUserContext } from '@/context/UserContext';
 import { addBreathingExerciseAchievement } from '@/utils/achievements';
 import { colors } from '@/utils/colors';
 import { saveStreakEntry } from '@/utils/streak';
-import { useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer } from 'expo-audio';
 import { BlurView } from 'expo-blur';
@@ -37,7 +37,7 @@ interface BreathingExerciseProps {
 
 export default function BreathingExercise({ session }: BreathingExerciseProps) {
     const router = useRouter();
-    const { user } = useUser();
+    const { userData } = useUserContext();
     const insets = useSafeAreaInsets();
     const progress = useSharedValue(0);
     const isInhaling = useSharedValue(true);
@@ -87,7 +87,7 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
     };
 
     const handleSessionComplete = async () => {
-        if (!user?.id) {
+        if (!userData?.uid) {
             console.error('No user ID available');
             return;
         }
@@ -96,7 +96,7 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
             const actualDurationSeconds = initialSeconds;
 
             await saveStreakEntry({
-                userId: user.id,
+                userId: userData.uid,
                 sessionType: 'breathing',
                 sessionTitle: session?.title || 'Breathing Exercise',
                 sessionDetails: {
@@ -107,7 +107,7 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
                 totalDurationSeconds: actualDurationSeconds,
             });
 
-            const achievementResult = await addBreathingExerciseAchievement(user.id);
+            const achievementResult = await addBreathingExerciseAchievement(userData.uid);
 
             // Check if a new achievement was earned
             if (achievementResult?.newlyAwarded) {

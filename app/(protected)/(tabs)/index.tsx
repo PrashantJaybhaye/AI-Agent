@@ -1,9 +1,9 @@
 import ParallaxScrollView, { blurhash } from "@/components/ParallaxScrollView";
+import { useUserContext } from "@/context/UserContext";
 import { colors } from "@/utils/colors";
 import { db } from "@/utils/firebase";
 import { sessions } from "@/utils/sessions";
 import { Session } from "@/utils/types";
-import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
@@ -19,7 +19,7 @@ export default function Index() {
     const router = useRouter();
     const [sessionHistory, setSessionHistory] = useState<Session[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { user } = useUser();
+    const { userData } = useUserContext();
 
     useEffect(() => {
         let isMounted = true;
@@ -33,15 +33,15 @@ export default function Index() {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [userData]);
 
     const fetchSession = async () => {
-        if (!user) return;
+        if (!userData) return;
 
         try {
             setIsLoading(true);
             const sessionsRef = collection(db, "session");
-            const q = query(sessionsRef, where("user_id", "==", user.id));
+            const q = query(sessionsRef, where("user_id", "==", userData.uid));
             const querySnapshot = await getDocs(q);
 
             const sessions: Session[] = [];
