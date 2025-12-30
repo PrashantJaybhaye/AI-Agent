@@ -6,8 +6,8 @@ import { StyleSheet, Text, View } from "react-native";
 import Animated, { interpolate, useAnimatedRef, useAnimatedStyle, useScrollOffset } from "react-native-reanimated";
 import Button from "./Button";
 
-export const blurhash = "LNF$b0%gNI9G_LRl-qRkIAIUxvoz";
-const HEADER_HEIGHT = 450;
+export const blurhash = "L6D]4w~q4n?b?bD%IUM{4n-;M{Rj";
+const HEADER_HEIGHT = 440;
 
 type ParallaxScrollViewProps = PropsWithChildren<{
     headerRight?: ReactNode;
