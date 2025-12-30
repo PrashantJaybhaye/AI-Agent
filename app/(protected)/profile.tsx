@@ -79,8 +79,9 @@ const ActivityBar = ({ height, label, active }: any) => (
     </View>
 );
 
-const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode, isAdmin, router }: any) => {
+const SettingsModal = ({ visible, onClose, signOut, isAdmin, router }: any) => {
     const insets = useSafeAreaInsets();
+    const { userData } = useUserContext();
 
     // Normalized simple ease-in-out animation
     const enteringAnimation = SlideInDown.duration(300).easing(Easing.inOut(Easing.quad));
@@ -90,7 +91,8 @@ const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode,
     const handleShare = async () => {
         try {
             await Share.share({
-                message: 'Check out Siora, my favorite focus companion!',
+                message: `Check out my profile on Siora! 🧘‍♂️\n\nhttps://siora.app/u/${userData?.uid}`,
+                url: `https://siora.app/u/${userData?.uid}`, // iOS supports generic URL field
             });
         } catch (error) {
             console.log(error);
@@ -124,6 +126,7 @@ const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode,
                             onPress={() => {
                                 Haptics.selectionAsync();
                                 onClose();
+                                router.push('/(protected)/edit-profile');
                             }}
                         >
                             <Text style={styles.actionSheetText}>Edit Profile</Text>
@@ -158,22 +161,9 @@ const SettingsModal = ({ visible, onClose, signOut, privacyMode, setPrivacyMode,
 
                         <View style={styles.actionSheetSeparator} />
 
-                        {/* Incognito Mode Toggle */}
-                        <TouchableHighlight
-                            style={styles.actionSheetItem}
-                            underlayColor={IOS_HIGHLIGHT}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                setPrivacyMode(!privacyMode);
-                                setTimeout(onClose, 150); // Close after brief delay to show feedback
-                            }}
-                        >
-                            <Text style={styles.actionSheetText}>
-                                {privacyMode ? 'Turn Off Incognito Mode' : 'Turn On Incognito Mode'}
-                            </Text>
-                        </TouchableHighlight>
 
-                        <View style={styles.actionSheetSeparator} />
+
+
 
                         {/* Log Out */}
                         <TouchableHighlight
@@ -222,7 +212,6 @@ export default function ProfileScreen() {
         dailyActivity: [0, 0, 0, 0, 0, 0, 0],
     });
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [privacyMode, setPrivacyMode] = useState(false);
     const [settingsVisible, setSettingsVisible] = useState(false);
 
     const spinValue = useSharedValue(0);
@@ -233,10 +222,15 @@ export default function ProfileScreen() {
     });
 
     const handleShare = async () => {
+        const message = `I'm on a ${stats.currentStreak}-day streak with Siora! 🧘‍♂️\n\nTotal Focus: ${stats.totalDurationMinutes} mins\nSessions: ${stats.totalSessions}\n\nCheck out my profile: https://siora.app/u/${userData?.uid}`;
         try {
-            await Share.share({
-                message: 'Check out Siora, my favorite focus companion!',
+            const result = await Share.share({
+                message: message,
+                url: `https://siora.app/u/${userData?.uid}`, // iOS support
             });
+            if (result.action === Share.sharedAction) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
         } catch (error) {
             console.log(error);
         }
@@ -583,8 +577,6 @@ export default function ProfileScreen() {
                 visible={settingsVisible}
                 onClose={() => setSettingsVisible(false)}
                 signOut={signOut}
-                privacyMode={privacyMode}
-                setPrivacyMode={setPrivacyMode}
                 isAdmin={userData?.isAdmin}
                 router={router}
             />
