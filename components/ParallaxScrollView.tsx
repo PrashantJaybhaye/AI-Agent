@@ -7,7 +7,7 @@ import Animated, { interpolate, useAnimatedRef, useAnimatedStyle, useScrollOffse
 import Button from "./Button";
 
 export const blurhash = "LNF$b0%gNI9G_LRl-qRkIAIUxvoz";
-const HEADER_HEIGHT = 400;
+const HEADER_HEIGHT = 450;
 
 type ParallaxScrollViewProps = PropsWithChildren<{
     headerRight?: ReactNode;
