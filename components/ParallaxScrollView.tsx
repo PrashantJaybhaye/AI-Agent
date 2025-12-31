@@ -7,14 +7,15 @@ import Animated, { interpolate, useAnimatedRef, useAnimatedStyle, useScrollOffse
 import Button from "./Button";
 
 export const blurhash = "L6D]4w~q4n?b?bD%IUM{4n-;M{Rj";
-const HEADER_HEIGHT = 440;
+const HEADER_HEIGHT = 400;
 
 type ParallaxScrollViewProps = PropsWithChildren<{
     headerRight?: ReactNode;
+    featuredSession?: typeof sessions[0];
 }>;
 
-export default function ParallaxScrollView({ children, headerRight }: ParallaxScrollViewProps) {
-    const todaySession = useMemo(() => sessions[Math.floor(Math.random() * sessions.length)], []);
+export default function ParallaxScrollView({ children, headerRight, featuredSession }: ParallaxScrollViewProps) {
+    const todaySession = useMemo(() => featuredSession || sessions[Math.floor(Math.random() * sessions.length)], [featuredSession]);
     const scrollRef = useAnimatedRef<Animated.ScrollView>();
     const scrollOffset = useScrollOffset(scrollRef);
 
@@ -57,7 +58,7 @@ export default function ParallaxScrollView({ children, headerRight }: ParallaxSc
                 ref={scrollRef}
                 scrollEventThrottle={16}
             >
-                <Animated.View>
+                <Animated.View style={headerAnimatedStyle}>
                     <Image
                         source={todaySession.image}
                         placeholder={blurhash}
