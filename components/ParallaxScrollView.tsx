@@ -1,13 +1,15 @@
 import { sessions } from "@/utils/sessions";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { PropsWithChildren, ReactNode, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { interpolate, useAnimatedRef, useAnimatedStyle, useScrollOffset } from "react-native-reanimated";
 import Button from "./Button";
 
 export const blurhash = "L6D]4w~q4n?b?bD%IUM{4n-;M{Rj";
-const HEADER_HEIGHT = 400;
+const HEADER_HEIGHT = 410;
 
 type ParallaxScrollViewProps = PropsWithChildren<{
     headerRight?: ReactNode;
@@ -15,6 +17,7 @@ type ParallaxScrollViewProps = PropsWithChildren<{
 }>;
 
 export default function ParallaxScrollView({ children, headerRight, featuredSession }: ParallaxScrollViewProps) {
+    const router = useRouter();
     const todaySession = useMemo(() => featuredSession || sessions[Math.floor(Math.random() * sessions.length)], [featuredSession]);
     const scrollRef = useAnimatedRef<Animated.ScrollView>();
     const scrollOffset = useScrollOffset(scrollRef);
@@ -63,6 +66,9 @@ export default function ParallaxScrollView({ children, headerRight, featuredSess
                         source={todaySession.image}
                         placeholder={blurhash}
                         style={{ width: "100%", height: HEADER_HEIGHT }}
+                        cachePolicy="memory-disk"
+                        allowDownscaling={true}
+                        transition={200}
                     />
                 </Animated.View>
                 <LinearGradient
@@ -73,11 +79,13 @@ export default function ParallaxScrollView({ children, headerRight, featuredSess
                     <View style={{ flex: 1 }} />
 
                     <View style={styles.headerContent}>
-                        <Text style={styles.headerSubtitle}>Featured Session</Text>
+                        <BlurView intensity={20} tint="light" style={styles.subtitleContainer}>
+                            <Text style={styles.headerSubtitle}>FEATURED SESSION</Text>
+                        </BlurView>
                         <Text style={styles.headerTitle}>{todaySession.title}</Text>
                         <Text style={styles.headerDescription}>{todaySession.description}</Text>
-                        <Button>
-                            Start Session
+                        <Button onPress={() => router.push({ pathname: "/session/[sessionId]", params: { sessionId: todaySession.id } })}>
+                            <Text style={styles.buttonText}>Start Session</Text>
                         </Button>
                         <View style={{ flex: 1 }} />
                     </View>
@@ -94,20 +102,44 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    buttonText: {
+        color: 'white',
+        fontWeight: '700',
+        fontSize: 13,
+        letterSpacing: 0.5,
+    },
+    subtitleContainer: {
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        backgroundColor: 'transparent',
+        borderWidth: 0.5,
+        borderColor: 'rgba(255, 255, 255, 0.5)',
+        borderRadius: 20,
+        marginBottom: 12,
+        overflow: 'hidden',
+        alignSelf: 'center',
+    },
     headerSubtitle: {
-        fontSize: 16,
+        fontSize: 10,
         color: "white",
-        opacity: 0.5,
-        fontWeight: "bold",
+        fontWeight: "700",
+        letterSpacing: 2,
     },
     headerTitle: {
-        fontSize: 48,
-        fontWeight: "bold",
+        fontSize: 38,
+        fontWeight: "700",
         color: "white",
+        textAlign: 'center',
+        marginBottom: 8,
+        letterSpacing: -0.5,
     },
     headerDescription: {
         fontSize: 16,
-        color: "white",
+        color: "rgba(255, 255, 255, 0.9)",
+        textAlign: 'center',
+        marginBottom: 24,
+        maxWidth: '80%',
+        lineHeight: 22,
     },
     headerContainer: {
         position: "absolute",
@@ -124,7 +156,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        gap: 8,
     },
     headerRightContainer: {
         position: "absolute",

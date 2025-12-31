@@ -72,9 +72,10 @@ const SessionItem = ({ session }: { session: typeof sessions[0] }) => {
                     source={session.image}
                     style={styles.sessionImage}
                     contentFit="cover"
-                    transition={200}
+                    transition={100}
                     placeholder={{ blurhash }}
                     cachePolicy="memory-disk"
+                    allowDownscaling={true}
                 />
 
                 <LinearGradient
@@ -175,6 +176,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 2,
-        backdropFilter: 'blur(10px)', // web support mostly, but good intent
     },
 });
