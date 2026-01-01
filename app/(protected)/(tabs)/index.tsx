@@ -1,5 +1,5 @@
 import ParallaxScrollView, { blurhash } from "@/components/ParallaxScrollView";
-import { sessions } from "@/utils/sessions";
+import { dailyRecommendations, sessions } from "@/utils/sessions";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
@@ -19,6 +19,10 @@ export default function Index() {
     // Filter out the featured session from the explore list
     const exploreSessions = useMemo(() => sessions.filter(s => s.id !== todaySession.id), [todaySession]);
 
+    const dailySessions = useMemo(() => dailyRecommendations, []);
+
+
+
     return (
         <ParallaxScrollView featuredSession={todaySession}>
             <View style={styles.header}>
@@ -36,6 +40,51 @@ export default function Index() {
                 contentContainerStyle={styles.listContent}
                 ItemSeparatorComponent={SessionSeparator}
             />
+
+            {/* Recommended Section */}
+            <View style={[styles.sectionHeader, { marginTop: 12, marginBottom: 4 }]}>
+                <Text style={styles.title}>For You</Text>
+                <Text style={styles.subtitle}>Curated for this evening</Text>
+            </View>
+            <View style={styles.verticalList}>
+                {dailySessions.map((session, index) => (
+                    <View
+                        key={session.id}
+                    >
+                        <Pressable
+                            onPress={() => router.push({ pathname: "/course/[courseId]", params: { courseId: session.id } })}
+                            android_ripple={{ color: 'rgba(0,0,0,0.05)' }}
+                            style={({ pressed }) => [
+                                styles.iosRow,
+                                { opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }
+                            ]}
+                        >
+                            <Image
+                                source={session.image}
+                                style={styles.iosThumbnail}
+                                placeholder={{ blurhash }}
+                                transition={300}
+                            />
+
+                            <View style={styles.iosTextContent}>
+                                <Text style={styles.iosTitle} numberOfLines={1}>{session.title}</Text>
+                                <View style={styles.iosMetaContainer}>
+                                    <Text style={styles.iosMetaText}>Meditation</Text>
+                                    <View style={styles.iosMetaDot} />
+                                    <Text style={styles.iosMetaText}>10 min</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.iosPlayButton}>
+                                <Ionicons name="play" size={14} color="#1A1A1A" style={{ marginLeft: 2 }} />
+                            </View>
+                        </Pressable>
+                        {index < dailySessions.length - 1 && <View style={styles.iosSeparator} />}
+                    </View>
+                ))}
+            </View>
+
+
             <View style={{ height: 40 }} />
         </ParallaxScrollView>
     );
@@ -105,6 +154,7 @@ const styles = StyleSheet.create({
         paddingBottom: 12,
         paddingTop: 24,
     },
+
     title: {
         fontSize: 25,
         fontWeight: "700",
@@ -176,5 +226,71 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 2,
+    },
+    sectionHeader: {
+        paddingHorizontal: 24,
+        paddingBottom: 16,
+    },
+    verticalList: {
+        paddingHorizontal: 24,
+        paddingBottom: 60,
+    },
+    iosRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        // No background color to keep it clean on white/light/system backgrounds
+    },
+    iosThumbnail: {
+        width: 60,
+        height: 60,
+        borderRadius: 12, // Apple style smooth corners
+        backgroundColor: '#F2F2F7', // iOS System Gray 6
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    iosTextContent: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingHorizontal: 16,
+        gap: 2,
+    },
+    iosTitle: {
+        fontSize: 17, // Standard iOS body size
+        fontWeight: '600',
+        color: '#1A1A1A',
+        letterSpacing: -0.4, // SF Pro tight tracking
+    },
+    iosMetaContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    iosMetaText: {
+        fontSize: 14, // Secondary text size
+        color: '#8E8E93', // iOS System Gray
+        fontWeight: '400',
+    },
+    iosMetaDot: {
+        width: 2,
+        height: 2,
+        borderRadius: 1,
+        backgroundColor: '#C7C7CC',
+    },
+    iosPlayButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        borderWidth: 1.5, // Slightly refined border
+        borderColor: '#E5E5EA', // iOS System Gray 5
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'transparent', // Minimal look
+    },
+    iosSeparator: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: '#C6C6C8', // iOS Separator Color
+        marginLeft: 76, // 60px image + 16px padding
+        opacity: 0.6,
     },
 });
