@@ -42,7 +42,7 @@ export default function Index() {
             />
 
             {/* Recommended Section */}
-            <View style={[styles.sectionHeader, { marginTop: 12, marginBottom: 4 }]}>
+            <View style={[styles.sectionHeader, { marginTop: 8 }]}>
                 <Text style={styles.title}>For You</Text>
                 <Text style={styles.subtitle}>Curated for this evening</Text>
             </View>
