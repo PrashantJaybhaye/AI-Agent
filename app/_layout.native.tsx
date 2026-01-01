@@ -2,7 +2,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { StatusBar } from "react-native";
+import { ActivityIndicator, StatusBar, View } from "react-native";
 import { UserProvider } from "../context/UserContext";
 
 function RootLayoutWithAuth() {
@@ -32,19 +32,18 @@ function RootLayoutWithAuth() {
   }, [isSignedIn, isLoaded, segments]);
 
   if (!isLoaded) {
-    // You can render a loading screen here
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8F7F4" }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="oauth-native-callback" options={{ headerShown: false }} />
-      <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="(protected)" options={{ headerShown: false }} />
-      </Stack.Protected>
-      <Stack.Protected guard={!isSignedIn}>
-        <Stack.Screen name="(public)" options={{ headerShown: false }} />
-      </Stack.Protected>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="oauth-native-callback" />
+      <Stack.Screen name="(protected)" />
+      <Stack.Screen name="(public)" />
     </Stack>
   )
 }

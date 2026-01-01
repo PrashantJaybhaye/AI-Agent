@@ -1,17 +1,17 @@
 import { useSignIn } from "@clerk/clerk-expo";
 import { SignInFirstFactor } from "@clerk/types";
 import React, { useState } from "react";
-import InitialSignInForm from "./forms/InitialSignInForm";
-import VerifyEmailCodeForm from "./forms/VerifyEmailCodeForm";
-import AlternateFirstFactorsForm from "./forms/AlternateFirstFactorsForm";
 import { ActivityIndicator, View } from "react-native";
+import AlternateFirstFactorsForm from "./forms/AlternateFirstFactorsForm";
 import EnterPasswordForm from "./forms/EnterPasswordForm";
 import ForgotPasswordForm from "./forms/ForgotPasswordForm";
+import InitialSignInForm from "./forms/InitialSignInForm";
 import NewPasswordForm from "./forms/NewPasswordForm";
+import VerifyEmailCodeForm from "./forms/VerifyEmailCodeForm";
 
 
 // Safely import expo-router
-let Router: any = { useRouter: () => ({ replace: () => {} }) };
+let Router: any = { useRouter: () => ({ replace: () => { } }) };
 try {
   Router = require("expo-router");
 } catch (error) {
@@ -38,15 +38,15 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
   const router = Router.useRouter();
   const { isLoaded, setActive } = useSignIn();
 
-  const [supportedFirstFactors, setSupportedFirstFactors] = useState<SignInFirstFactor[]>(  );
+  const [supportedFirstFactors, setSupportedFirstFactors] = useState<SignInFirstFactor[]>();
   const [formState, setFormState] = useState<FormState>(FormState.SignIn);
   const [selectedFirstFactor, setSelectedFirstFactor] = useState<SignInFirstFactor>();
   const [identifier, setIdentifier] = useState("");
 
   if (!isLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: '#F8F7F4' }}>
+        <ActivityIndicator size="large" color="#000" />
       </View>
     )
   }
@@ -64,7 +64,7 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
   switch (formState) {
     case FormState.SignIn:
       return (
-        <InitialSignInForm 
+        <InitialSignInForm
           onSetFirstFactor={(factor, identifier) => {
             setSelectedFirstFactor(factor);
             setFormState(FormState.VerifyFirstFactor);
@@ -78,11 +78,11 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
           }}
         />
       );
-    
+
     case FormState.VerifyFirstFactor:
-      if(selectedFirstFactor?.strategy == "email_code" || selectedFirstFactor?.strategy == "reset_password_email_code") {
+      if (selectedFirstFactor?.strategy == "email_code" || selectedFirstFactor?.strategy == "reset_password_email_code") {
         return (
-          <VerifyEmailCodeForm 
+          <VerifyEmailCodeForm
             emailAddress={(selectedFirstFactor as any).safeIdentifier || ""}
             onSelectAlternateMethod={() => {
               if (supportedFirstFactors && supportedFirstFactors.length > 1) {
@@ -100,10 +100,10 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
             onSignInComplete={onSignInComplete}
           />
         )
-      } 
-      if(selectedFirstFactor?.strategy == "password") {
+      }
+      if (selectedFirstFactor?.strategy == "password") {
         return (
-          <EnterPasswordForm 
+          <EnterPasswordForm
             emailAddress={identifier}
             onSelectAlternateMethod={() => {
               if (supportedFirstFactors && supportedFirstFactors.length > 1) {
@@ -120,9 +120,9 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
             onSignInComplete={onSignInComplete}
           />
         )
-      } 
+      }
       return null
-    
+
     case FormState.ForgotPassword:
       return (
         <ForgotPasswordForm scheme={scheme}
@@ -140,21 +140,21 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
 
     case FormState.NewPasswordNeeded:
       return (
-        <NewPasswordForm 
+        <NewPasswordForm
           onBackPressed={() => {
             setFormState(FormState.SignIn);
             setSelectedFirstFactor(undefined);
           }}
           onSignInComplete={onSignInComplete} />
       )
-    
+
     case FormState.AlternateFirstFactor:
       if (!supportedFirstFactors) {
         return null;
       }
-      
+
       return (
-        <AlternateFirstFactorsForm 
+        <AlternateFirstFactorsForm
           factors={supportedFirstFactors}
           onSelectFactor={(factor) => {
             setSelectedFirstFactor(factor);
@@ -166,7 +166,7 @@ export function SignIn({ scheme = "myapp://", signUpUrl = "/(auth)/sign-up", hom
           selectedFactor={selectedFirstFactor}
         />
       );
-    
+
     default:
       return null;
   }
