@@ -20,8 +20,11 @@ interface Session {
         difficulty: string;
         fullDescription: string;
         syllabus?: Array<{
+            id: number;
             title: string;
             duration: string;
+            videoUrl: string;
+            isLocked: boolean;
         }>;
         whyRecommended: Array<{
             icon: string;
@@ -110,13 +113,13 @@ export const dailyRecommendations: Session[] = [
             difficulty: "Beginner",
             fullDescription: "Discover the art of restful sleep through guided meditation. This 7-day journey will help you unwind, release tension, and prepare your mind and body for deep, restorative sleep. Each session uses calming visualization and breathing techniques.",
             syllabus: [
-                { title: "The Sleep Mindset", duration: "10 min" },
-                { title: "Body Scan for Sleep", duration: "12 min" },
-                { title: "Dreamy Visualization", duration: "15 min" },
-                { title: "Letting Go of the Day", duration: "10 min" },
-                { title: "Quietening the Mind", duration: "12 min" },
-                { title: "Deep Rest Technique", duration: "20 min" },
-                { title: "Complete Stillness", duration: "15 min" }
+                { id: 1, title: "The Sleep Mindset", duration: "10 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", isLocked: false },
+                { id: 2, title: "Body Scan for Sleep", duration: "12 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", isLocked: false },
+                { id: 3, title: "Dreamy Visualization", duration: "15 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", isLocked: true },
+                { id: 4, title: "Letting Go of the Day", duration: "10 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", isLocked: true },
+                { id: 5, title: "Quietening the Mind", duration: "12 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", isLocked: true },
+                { id: 6, title: "Deep Rest Technique", duration: "20 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", isLocked: true },
+                { id: 7, title: "Complete Stillness", duration: "15 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", isLocked: true }
             ],
             whyRecommended: [
                 { icon: "moon", label: "Sleep", color: "#9FA8DA", isActive: true },
@@ -143,11 +146,11 @@ export const dailyRecommendations: Session[] = [
             difficulty: "All levels",
             fullDescription: "Learn the fundamentals of meditation and mindfulness. You will meditate each day for several minutes, building skills to manage stress and anxiety. Perfect for those seeking calm in a busy world.",
             syllabus: [
-                { title: "Finding Your Breath", duration: "8 min" },
-                { title: "Labeling Thoughts", duration: "10 min" },
-                { title: "Anchoring in Chaos", duration: "12 min" },
-                { title: "Kindness for Self", duration: "10 min" },
-                { title: "The Nature of Anxiety", duration: "15 min" }
+                { id: 1, title: "Finding Your Breath", duration: "8 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", isLocked: false },
+                { id: 2, title: "Labeling Thoughts", duration: "10 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", isLocked: false },
+                { id: 3, title: "Anchoring in Chaos", duration: "12 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", isLocked: true },
+                { id: 4, title: "Kindness for Self", duration: "10 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4", isLocked: true },
+                { id: 5, title: "The Nature of Anxiety", duration: "15 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", isLocked: true }
             ],
             whyRecommended: [
                 { icon: "leaf", label: "Calm", color: "#80CBC4", isActive: false },
@@ -174,11 +177,11 @@ export const dailyRecommendations: Session[] = [
             difficulty: "Intermediate",
             fullDescription: "Sharpen your mind and boost productivity with focused meditation techniques. This course teaches you how to eliminate distractions, maintain concentration, and achieve flow state in your daily activities.",
             syllabus: [
-                { title: "Object Concentration", duration: "10 min" },
-                { title: "Counting the Breath", duration: "12 min" },
-                { title: "Open Awareness", duration: "15 min" },
-                { title: "The Flow State", duration: "15 min" },
-                { title: "Deep Productivity", duration: "20 min" }
+                { id: 1, title: "Object Concentration", duration: "10 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", isLocked: false },
+                { id: 2, title: "Counting the Breath", duration: "12 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", isLocked: false },
+                { id: 3, title: "Open Awareness", duration: "15 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", isLocked: true },
+                { id: 4, title: "The Flow State", duration: "15 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", isLocked: true },
+                { id: 5, title: "Deep Productivity", duration: "20 min", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", isLocked: true }
             ],
             whyRecommended: [
                 { icon: "flash", label: "Focus", color: "#FFD700", isActive: true },
