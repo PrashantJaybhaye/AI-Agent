@@ -110,7 +110,7 @@ export default function CourseDetailScreen() {
     if (!course) return null;
 
     const handleStart = () => {
-        router.push({ pathname: "/session/[sessionId]", params: { sessionId: course.id } });
+        router.push({ pathname: "/course/lecture", params: { courseId: course.id } });
     };
 
     const handleShare = async () => {

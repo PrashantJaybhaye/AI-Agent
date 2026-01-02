@@ -10,9 +10,11 @@ interface Session {
         secondary: string;
         accent: string;
     };
+    videoUrl?: string;
     courseDetails?: {
         participants: string;
         type: string;
+
         duration: string;
         lessons: number;
         difficulty: string;
@@ -99,6 +101,7 @@ export const dailyRecommendations: Session[] = [
             secondary: "#5C6BC0",
             accent: "#9FA8DA"
         },
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         courseDetails: {
             participants: "124K people started",
             type: "Course",
