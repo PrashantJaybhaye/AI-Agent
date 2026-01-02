@@ -12,7 +12,6 @@ import {
     Animated,
     Dimensions,
     PanResponder,
-    ScrollView,
     Share,
     StatusBar,
     StyleSheet,
@@ -35,7 +34,7 @@ export default function CourseDetailScreen() {
     // Slider State
     const slideAnim = React.useRef(new Animated.Value(0)).current;
 
-    // Reset on Focus (coming back from details)
+    // Reset on Focus
     useFocusEffect(
         useCallback(() => {
             setIsLoading(false);
@@ -44,7 +43,6 @@ export default function CourseDetailScreen() {
         }, [slideAnim])
     );
 
-    // Calculate total slide distance (screen width - padding - thumb width)
     const MAX_SLIDE = width - 48 - 48 - 14;
 
     const panResponder = React.useRef(
@@ -56,7 +54,6 @@ export default function CourseDetailScreen() {
             },
             onPanResponderMove: (_, gestureState) => {
                 if (loadingRef.current) return;
-                // Clamp the value
                 const newX = Math.max(0, Math.min(MAX_SLIDE, gestureState.dx));
                 slideAnim.setValue(newX);
             },
@@ -64,38 +61,26 @@ export default function CourseDetailScreen() {
                 if (loadingRef.current) return;
 
                 if (gestureState.dx > MAX_SLIDE * 0.65) {
-                    // Success detected
                     loadingRef.current = true;
                     setIsLoading(true);
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-                    // Snap to end (Smooth Soft Spring)
                     Animated.spring(slideAnim, {
                         toValue: MAX_SLIDE,
-                        stiffness: 100,
-                        damping: 18,
-                        mass: 1,
-                        useNativeDriver: true,
+                        stiffness: 100, damping: 18, mass: 1, useNativeDriver: true,
                     }).start(() => {
-                        // Trigger action after small delay for effect
                         handleStart();
                     });
                 } else {
-                    // Reset (Gentle Bounce)
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
                     Animated.spring(slideAnim, {
-                        toValue: 0,
-                        stiffness: 150,
-                        damping: 16,
-                        mass: 0.9,
-                        useNativeDriver: true,
+                        toValue: 0, stiffness: 150, damping: 16, mass: 0.9, useNativeDriver: true,
                     }).start();
                 }
             },
         })
     ).current;
 
-    // Data Guard
     const course = dailyRecommendations.find((c) => c.id === Number(courseId));
     const details = useMemo(() => course?.courseDetails || {
         participants: "2.4k",
@@ -115,62 +100,53 @@ export default function CourseDetailScreen() {
 
     const handleShare = async () => {
         try {
-            await Share.share({
-                message: `Check out this course: ${course.title}`,
-            });
-        } catch (error) {
-            console.log(error);
-        }
+            await Share.share({ message: `Check out this course: ${course.title}` });
+        } catch (error) { console.log(error); }
     };
 
     const renderItem = ({ item, index }: { item: any; index: number }) => {
         const isLast = index === (details.syllabus?.length || 0) - 1;
 
         return (
-            <View style={styles.timelineRow}>
-                {/* Timeline Connector */}
-                <View style={styles.timelineLeft}>
-                    <View style={[styles.timelineDot, index === 0 && styles.activeDot]}>
-                        {index === 0 && <View style={styles.innerDot} />}
-                    </View>
-                    {!isLast && <View style={styles.timelineLine} />}
+            <View style={styles.listRow}>
+                {/* Index / Status Column */}
+                <View style={styles.indexCol}>
+                    {item.isLocked ? (
+                        <MaterialCommunityIcons name="lock-outline" size={16} color="#C7C7CC" />
+                    ) : (
+                        <View style={styles.playIndexBox}>
+                            <Text style={styles.indexText}>{index + 1}</Text>
+                        </View>
+                    )}
                 </View>
 
-                <TouchableOpacity style={styles.episodeStrip} activeOpacity={0.7}>
-                    <View style={styles.episodeContent}>
-                        <Text style={[styles.episodeTitle, index === 0 && styles.activeEpisodeTitle]}>
+                {/* Content */}
+                <TouchableOpacity style={styles.listContent} activeOpacity={0.7} disabled={item.isLocked}>
+                    <View style={styles.textContainer}>
+                        <Text style={[styles.listTitle, !item.isLocked && styles.activeListTitle]} numberOfLines={1}>
                             {item.title}
                         </Text>
-                        <Text style={styles.episodeDuration}>
-                            {String(index + 1).padStart(2, '0')} • {item.duration}
-                        </Text>
+                        <Text style={styles.listSub}>{item.duration}</Text>
                     </View>
-                    <MaterialCommunityIcons
-                        name={item.isLocked ? "lock-outline" : "play-circle-outline"}
-                        size={24}
-                        color={item.isLocked ? "#CCC" : "#000"}
-                    />
+                    {!item.isLocked && (
+                        <MaterialCommunityIcons name="play-circle-outline" size={24} color="#000" />
+                    )}
                 </TouchableOpacity>
             </View>
         );
     };
 
-    const GoodToKnowCard = ({ icon, title, description }: { icon: keyof typeof Ionicons.glyphMap, title: string, description: string }) => (
-        <View style={styles.infoCard}>
-            <View style={styles.infoIconBox}>
-                <Ionicons name={icon} size={20} color="#1E1E1E" />
-            </View>
-            <View>
-                <Text style={styles.infoCardTitle}>{title}</Text>
-                <Text style={styles.infoCardDesc} numberOfLines={2}>{description}</Text>
-            </View>
+    const StatPill = ({ icon, label }: { icon: any, label: string }) => (
+        <View style={styles.statPill}>
+            <Ionicons name={icon} size={14} color="#666" />
+            <Text style={styles.statText}>{label}</Text>
         </View>
     );
 
     const headerContent = useMemo(() => (
-        <View style={styles.mainContent}>
-            {/* Cinematic Hero */}
-            <View style={styles.heroImageContainer}>
+        <View style={styles.headerWrapper}>
+            {/* Hero Image */}
+            <View style={styles.heroContainer}>
                 <Image
                     source={course.image}
                     style={styles.heroImage}
@@ -178,69 +154,52 @@ export default function CourseDetailScreen() {
                     transition={500}
                 />
                 <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+                    colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
                     style={styles.heroGradient}
                 />
-                <View style={styles.heroContent}>
-                    <View style={styles.tagRow}>
-                        <View style={styles.blurTag}>
-                            <Text style={styles.tagText}>{details.type}</Text>
-                        </View>
-                        <View style={styles.blurTag}>
-                            <Text style={styles.tagText}>{details.lessons} Sessions</Text>
-                        </View>
+                <View style={styles.heroTextContent}>
+                    <View style={styles.badgeRow}>
+                        <BlurView intensity={30} tint="light" style={styles.badge}>
+                            <Text style={styles.badgeText}>{details.type.toUpperCase()}</Text>
+                        </BlurView>
+                        <BlurView intensity={30} tint="light" style={styles.badge}>
+                            <Text style={styles.badgeText}>{details.difficulty}</Text>
+                        </BlurView>
                     </View>
-                    <Text style={styles.mainTitle}>{course.title}</Text>
+                    <Text style={styles.heroTitle}>{course.title}</Text>
                 </View>
             </View>
 
-            {/* White Sheet Content */}
+            {/* Sheet Content */}
             <View style={styles.sheetContainer}>
-                <View style={styles.handleBar} />
+                <View style={styles.handle} />
 
+                {/* Stats Row */}
+                <View style={styles.statsRow}>
+                    <StatPill icon="time-outline" label={details.duration} />
+                    <View style={styles.statDivider} />
+                    <StatPill icon="people-outline" label={details.participants} />
+                    <View style={styles.statDivider} />
+                    <StatPill icon="book-outline" label={`${details.lessons} Lessons`} />
+                </View>
+
+                <View style={styles.divider} />
+
+                {/* About Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionHeader}>About this course</Text>
-                    <Text
-                        style={styles.descriptionText}
-                        numberOfLines={isDescriptionExpanded ? undefined : 3}
-                    >
+                    <Text style={styles.sectionTitle}>About this Course</Text>
+                    <Text style={styles.description} numberOfLines={isDescriptionExpanded ? undefined : 3}>
                         {details.fullDescription}
                     </Text>
-                    <TouchableOpacity
-                        onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    >
-                        <Text style={styles.readMoreText}>
-                            {isDescriptionExpanded ? "Show Less" : "Read More"}
-                        </Text>
+                    <TouchableOpacity onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}>
+                        <Text style={styles.readMore}>{isDescriptionExpanded ? "Show Less" : "Read More"}</Text>
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.horizontalScrollContent}
-                >
-                    <GoodToKnowCard
-                        icon="trophy-outline"
-                        title="Certificate"
-                        description="Earn a certificate upon completion."
-                    />
-                    <GoodToKnowCard
-                        icon="infinite-outline"
-                        title="Lifetime Access"
-                        description="Learn at your own pace, forever."
-                    />
-                    <GoodToKnowCard
-                        icon="hardware-chip-outline"
-                        title="AI Powered"
-                        description="Personalized feedback on your progress."
-                    />
-                </ScrollView>
-
-                <View style={styles.section}>
-                    <View style={styles.syllabusHeaderRow}>
-                        <Text style={styles.sectionHeader}>Curriculum</Text>
-                        <Text style={styles.syllabusCount}>{details.syllabus?.length || 0} items</Text>
+                <View style={[styles.section, { paddingBottom: 8, paddingTop: 32 }]}>
+                    <View style={styles.curriculumHeader}>
+                        <Text style={styles.sectionTitle}>Curriculum</Text>
+                        <Text style={styles.itemCount}>{details.syllabus?.length} Episodes</Text>
                     </View>
                 </View>
             </View>
@@ -249,58 +208,49 @@ export default function CourseDetailScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            {/* Header / Navbar */}
+            {/* Navbar */}
             <View style={[styles.navBar, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity onPress={() => router.back()} activeOpacity={0.8}>
-                    <BlurView intensity={40} tint="dark" style={styles.navBtnGlass}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+                    <BlurView intensity={50} tint="dark" style={styles.blurBtn}>
                         <Ionicons name="chevron-back" size={24} color="#FFF" />
                     </BlurView>
                 </TouchableOpacity>
-                <View style={styles.navActions}>
-                    <TouchableOpacity onPress={handleShare} activeOpacity={0.8}>
-                        <BlurView intensity={40} tint="dark" style={styles.navBtnGlass}>
-                            <Ionicons name="share-outline" size={24} color="#FFF" />
+                <View style={styles.navRight}>
+                    <TouchableOpacity onPress={handleShare} style={styles.iconButton}>
+                        <BlurView intensity={50} tint="dark" style={styles.blurBtn}>
+                            <Ionicons name="share-outline" size={22} color="#FFF" />
                         </BlurView>
                     </TouchableOpacity>
-                    <TouchableOpacity activeOpacity={0.8}>
-                        <BlurView intensity={40} tint="dark" style={styles.navBtnGlass}>
-                            <Ionicons name="heart-outline" size={24} color="#FFF" />
+                    <TouchableOpacity style={styles.iconButton}>
+                        <BlurView intensity={50} tint="dark" style={styles.blurBtn}>
+                            <Ionicons name="heart-outline" size={22} color="#FFF" />
                         </BlurView>
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Main Scrollable Content */}
+            {/* List */}
             <FlashList
                 data={details.syllabus || []}
                 renderItem={renderItem}
-                // @ts-ignore
-                estimatedItemSize={70}
+                //@ts-ignore
+                estimatedItemSize={64}
                 ListHeaderComponent={headerContent}
-                contentContainerStyle={{ paddingBottom: 100, backgroundColor: "#FFF" }}
+                contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
             />
 
-            {/* Slide-to-Start Footer */}
+            {/* Footer */}
             <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
                 <BlurView intensity={30} tint="dark" style={styles.sliderTrack}>
                     <Text style={styles.sliderText}>Slide to start session</Text>
                     <Animated.View
-                        style={[
-                            styles.sliderThumb,
-                            {
-                                transform: [{ translateX: slideAnim }]
-                            }
-                        ]}
+                        style={[styles.sliderThumb, { transform: [{ translateX: slideAnim }] }]}
                         {...panResponder.panHandlers}
                     >
-                        {isLoading ? (
-                            <ActivityIndicator size="small" color="#000" />
-                        ) : (
-                            <Ionicons name="arrow-forward" size={24} color="#000" />
-                        )}
+                        {isLoading ? <ActivityIndicator color="#000" /> : <Ionicons name="arrow-forward" size={24} color="#000" />}
                     </Animated.View>
                 </BlurView>
             </View>
@@ -311,245 +261,214 @@ export default function CourseDetailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F8F7F4", // Creamy white
+        backgroundColor: "#121212", // Dark base
     },
+    // Nav
     navBar: {
         position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
+        top: 0, left: 0, right: 0,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
         paddingHorizontal: 20,
         zIndex: 100,
     },
-    navBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backdropFilter: 'blur(10px)', // Note: backdropFilter is web-only, but harmless here.
-    },
-    navBtnGlass: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        overflow: "hidden",
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.25)', // Slight tint for contrast
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    navActions: {
+    navRight: {
         flexDirection: 'row',
         gap: 12,
     },
-    mainContent: {
-        backgroundColor: "#000", // Dark bg behind sheet
+    iconButton: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
     },
-    heroImageContainer: {
-        width: width,
-        height: Dimensions.get('window').height * 0.55,
+    blurBtn: {
+        width: 44, height: 44,
+        borderRadius: 22,
+        overflow: 'hidden',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+    },
+    // Hero
+    headerWrapper: {
+        backgroundColor: '#FFF',
+    },
+    heroContainer: {
+        height: 420,
+        width: '100%',
         backgroundColor: '#000',
     },
     heroImage: {
-        width: '100%',
-        height: '100%',
-        opacity: 0.9,
+        width: '100%', height: '100%',
     },
     heroGradient: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: '80%',
+        ...StyleSheet.absoluteFillObject,
     },
-    heroContent: {
+    heroTextContent: {
         position: 'absolute',
-        bottom: 48, // Moved up to clear sheet
-        left: 0,
-        right: 0,
-        paddingHorizontal: 24,
-        paddingBottom: 24,
+        bottom: 48,
+        left: 20,
+        right: 20,
     },
-    tagRow: {
+    badgeRow: {
         flexDirection: 'row',
         gap: 8,
-        marginBottom: 16,
+        marginBottom: 12,
     },
-    blurTag: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+    badge: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
         borderRadius: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        overflow: 'hidden',
+        backgroundColor: 'rgba(255,255,255,0.2)',
     },
-    tagText: {
+    badgeText: {
         color: '#FFF',
-        fontSize: 13,
-        fontWeight: '600',
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
-    mainTitle: {
-        fontSize: 36,
+    heroTitle: {
+        fontSize: 34,
         fontWeight: '800',
         color: '#FFF',
-        letterSpacing: -1,
-        lineHeight: 40,
-        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        letterSpacing: -0.5,
+        textShadowColor: 'rgba(0,0,0,0.5)',
         textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
+        textShadowRadius: 6,
     },
+    // Sheet
     sheetContainer: {
-        marginTop: -40,
+        marginTop: -32,
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         backgroundColor: '#FFF',
-        paddingTop: 12,
-        paddingBottom: 20,
+        paddingVertical: 16,
+        paddingHorizontal: 24,
     },
-    handleBar: {
+    handle: {
         width: 40,
         height: 4,
         backgroundColor: '#E5E5EA',
         borderRadius: 2,
         alignSelf: 'center',
-        marginBottom: 24,
+        marginBottom: 20,
     },
-    section: {
-        paddingHorizontal: 24,
-    },
-    sectionHeader: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1C1C1E',
-        marginBottom: 12,
-    },
-    descriptionText: {
-        fontSize: 16,
-        lineHeight: 24,
-        color: '#555',
-        marginBottom: 8,
-    },
-    readMoreText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#007AFF',
-    },
-    // Good To Know 
-    horizontalScrollContent: {
-        paddingHorizontal: 24,
-        gap: 12,
-        marginBottom: 24,
-    },
-    infoCard: {
-        width: 150,
-        padding: 16,
-        backgroundColor: '#F9F9F9',
-        borderRadius: 20,
-        justifyContent: 'space-between',
-        height: 140,
-    },
-    infoIconBox: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: '#FFF',
+    // Stats
+    statsRow: {
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 20,
+    },
+    statPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    statText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#3A3A3C',
+    },
+    statDivider: {
+        width: 1,
+        height: 14,
+        backgroundColor: '#E5E5EA',
+        marginHorizontal: 16,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#F2F2F7',
+        marginBottom: 24,
+    },
+    // Content
+    section: {
+        marginBottom: 0,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#000',
         marginBottom: 12,
     },
-    infoCardTitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#1E1E1E',
-        marginBottom: 4,
-    },
-    infoCardDesc: {
-        fontSize: 12,
+    description: {
+        fontSize: 15,
+        lineHeight: 24,
         color: '#666',
-        lineHeight: 16,
     },
-    // Syllabus
-    syllabusHeaderRow: {
+    readMore: {
+        color: '#007AFF',
+        fontWeight: '600',
+        marginTop: 6,
+        fontSize: 15,
+    },
+    // Curriculum
+    curriculumHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'baseline',
     },
-    syllabusCount: {
-        fontSize: 14,
-        color: '#8E8E93',
-        fontWeight: '500',
-    },
-    // Timeline Episode
-    timelineRow: {
-        flexDirection: 'row',
-        paddingHorizontal: 24,
-    },
-    timelineLeft: {
-        alignItems: 'center',
-        marginRight: 16,
-        width: 20,
-    },
-    timelineDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#E0E0E0',
-        marginTop: 6,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    activeDot: {
-        backgroundColor: 'rgba(0,0,0,0.1)',
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        marginTop: 2,
-    },
-    innerDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#000',
-    },
-    timelineLine: {
-        width: 2,
-        flex: 1,
-        backgroundColor: '#F0F0F0',
-        marginVertical: 4,
-    },
-    episodeStrip: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingBottom: 24,
-    },
-    episodeContent: {
-        flex: 1,
-        marginRight: 12,
-    },
-    episodeTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1C1C1E',
-        marginBottom: 4,
-    },
-    activeEpisodeTitle: {
-        fontWeight: '700',
-        color: '#000',
-    },
-    episodeDuration: {
+    itemCount: {
         fontSize: 13,
         color: '#8E8E93',
         fontWeight: '500',
     },
-    // Footer (Slider Visual)
+    // List
+    listContainer: {
+        paddingBottom: 120,
+        backgroundColor: '#FFF',
+    },
+    listRow: {
+        flexDirection: 'row',
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        alignItems: 'center',
+    },
+    indexCol: {
+        width: 32,
+        alignItems: 'center',
+    },
+    playIndexBox: {
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 12,
+        backgroundColor: '#F2F2F7',
+    },
+    indexText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#8E8E93',
+    },
+    listContent: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 12,
+        justifyContent: 'space-between',
+    },
+    textContainer: {
+        flex: 1,
+        marginRight: 10,
+    },
+    listTitle: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#AAA', // Locked state
+    },
+    activeListTitle: {
+        color: '#000',
+        fontWeight: '600',
+    },
+    listSub: {
+        fontSize: 13,
+        color: '#8E8E93',
+        marginTop: 2,
+    },
+    // Footer
     footer: {
         position: 'absolute',
         bottom: 0,
