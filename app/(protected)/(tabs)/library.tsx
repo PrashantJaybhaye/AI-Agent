@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     card: {
         borderRadius: 20,
         overflow: 'visible',
-        minHeight: 100, // Compressed
+        minHeight: 120,
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
@@ -382,8 +382,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 15,
-        backgroundColor: '#E5E7EB', // Light gray background
-        alignSelf: 'flex-start', // Essential to wrap content
+        backgroundColor: '#F5F5F5',
+        alignSelf: 'flex-start',
     },
     durationText: {
         fontSize: 13, // Slightly bigger text in badge
