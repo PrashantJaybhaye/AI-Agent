@@ -40,7 +40,7 @@ export const sessions: Session[] = [
         id: 1,
         title: "Forest Serenity",
         description: "Mindful walking through nature",
-        image: require("@/assets/sessions/forest-path.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/forest-path.png" },
         themeColors: {
             primary: "#2D5016",
             secondary: "#7CB342",
@@ -51,7 +51,7 @@ export const sessions: Session[] = [
         id: 2,
         title: "Mountain Stillness",
         description: "Grounding mountain meditation practice",
-        image: require("@/assets/sessions/mountain-view.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/mountain-view.png" },
         themeColors: {
             primary: "#455A64",
             secondary: "#78909C",
@@ -62,7 +62,7 @@ export const sessions: Session[] = [
         id: 3,
         title: "Ocean Rhythms",
         description: "Relaxing ocean meditation practice",
-        image: require("@/assets/sessions/ocean-waves.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/ocean-waves.png" },
         themeColors: {
             primary: "#006064",
             secondary: "#0097A7",
@@ -73,7 +73,7 @@ export const sessions: Session[] = [
         id: 4,
         title: "Morning Glow",
         description: "Morning mindfulness practice",
-        image: require("@/assets/sessions/sunrise-sky.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/sunrise-sky.png" },
         themeColors: {
             primary: "#F57C00",
             secondary: "#FFB74D",
@@ -84,7 +84,7 @@ export const sessions: Session[] = [
         id: 5,
         title: "Zen Balance",
         description: "Focused balance practice",
-        image: require("@/assets/sessions/zen-stones.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/zen-stones.png" },
         themeColors: {
             primary: "#5D4037",
             secondary: "#8D6E63",
@@ -98,7 +98,7 @@ export const dailyRecommendations: Session[] = [
         id: 101,
         title: "Sleep Journey",
         description: "Drift off into deep relaxation",
-        image: require("@/assets/sessions/sleep-journey.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/sleep-journey.png" },
         themeColors: {
             primary: "#1A237E",
             secondary: "#5C6BC0",
@@ -132,7 +132,7 @@ export const dailyRecommendations: Session[] = [
         id: 102,
         title: "Anxiety Release",
         description: "Let go of daily stressors",
-        image: require("@/assets/sessions/anxiety-release.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/anxiety-release.png" },
         themeColors: {
             primary: "#00695C",
             secondary: "#4DB6AC",
@@ -163,7 +163,7 @@ export const dailyRecommendations: Session[] = [
         id: 103,
         title: "Focus Flow",
         description: "Enhance your concentration",
-        image: require("@/assets/sessions/focus-flow.png"),
+        image: { uri: "https://repo-asset.vercel.app/assets/focus-flow.png" },
         themeColors: {
             primary: "#E65100",
             secondary: "#FF9800",
