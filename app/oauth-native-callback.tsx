@@ -20,7 +20,7 @@ export default function OAuthCallback() {
 
             if (isSignedIn) {
 
-                router.replace("/(protected)");
+                router.replace("/(protected)/(tabs)");
             } else {
 
                 router.replace("/(public)");
