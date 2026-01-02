@@ -62,7 +62,8 @@
         "@elevenlabs/react-native"
       ],
       "expo-brightness",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

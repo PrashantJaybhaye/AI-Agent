@@ -1,9 +1,9 @@
 import LectureVideoControls from "@/components/lecture/LectureVideoControls";
 import { dailyRecommendations } from "@/utils/sessions";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import { useVideoPlayer, VideoView } from 'expo-video';
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,17 +17,15 @@ export default function CourseLectureScreen() {
     const { courseId } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const videoRef = useRef<Video>(null);
 
-    const [isLoading, setIsLoading] = useState(true);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     // Playback Logic
     const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
-    const [userPaused, setUserPaused] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [isBuffering, setIsBuffering] = useState(true);
 
     const parsedId = Array.isArray(courseId) ? parseInt(courseId[0], 10) : parseInt(courseId || "", 10);
     const course = dailyRecommendations.find((c) => c.id === parsedId);
@@ -36,31 +34,7 @@ export default function CourseLectureScreen() {
     const activeLesson = syllabus[currentLessonIndex];
     const videoSource = activeLesson?.videoUrl || course?.videoUrl || null;
 
-    const handleBack = () => {
-        if (videoRef.current) videoRef.current.pauseAsync();
-        router.back();
-    };
-
-    const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-        if (!status.isLoaded) {
-            setIsLoading(true);
-            if (status.error) {
-                console.error(`Playback Error: ${status.error}`);
-                setIsLoading(false);
-            }
-            return;
-        }
-
-        setIsPlaying(status.isPlaying);
-        setIsLoading(status.isBuffering && !status.isPlaying && status.shouldPlay);
-        setPosition(status.positionMillis);
-        setDuration(status.durationMillis || 0);
-
-        if (status.didJustFinish && !status.isLooping) {
-            playNextLesson();
-        }
-    };
-
+    // Helper to play next lesson
     const playNextLesson = () => {
         if (currentLessonIndex < syllabus.length - 1) {
             const nextIndex = currentLessonIndex + 1;
@@ -71,18 +45,58 @@ export default function CourseLectureScreen() {
         }
     };
 
+    // Expo Video Player
+    const player = useVideoPlayer(videoSource, (player) => {
+        player.loop = false;
+        player.play();
+    });
+
+    // Effect to handle listeners and auto-play logic
+    useEffect(() => {
+        const subPlaying = player.addListener('playingChange', (event) => {
+            setIsPlaying(event.isPlaying);
+            if (event.isPlaying) {
+                setIsBuffering(false);
+            }
+        });
+
+        const subEnd = player.addListener('playToEnd', () => {
+            playNextLesson();
+        });
+
+        // Polling for progress (every 250ms)
+        const interval = setInterval(() => {
+            // expo-video properties are in seconds
+            setPosition(player.currentTime * 1000);
+            setDuration(player.duration * 1000);
+        }, 250);
+
+        return () => {
+            subPlaying.remove();
+            subEnd.remove();
+            clearInterval(interval);
+        };
+    }, [player, currentLessonIndex]); // Re-bind if index changes (for playNextLesson closure)
+
+    const handleBack = () => {
+        player.pause();
+        router.back();
+    };
+
     const handleLessonPress = (index: number) => {
         setCurrentLessonIndex(index);
     };
 
     const handlePlayPause = () => {
-        setUserPaused(!userPaused);
+        if (player.playing) {
+            player.pause();
+        } else {
+            player.play();
+        }
     };
 
-    const handleSeek = async (newPos: number) => {
-        if (videoRef.current) {
-            await videoRef.current.setPositionAsync(newPos);
-        }
+    const handleSeek = (newPosMillis: number) => {
+        player.currentTime = newPosMillis / 1000;
     };
 
     if (!course || !videoSource) return null;
@@ -94,18 +108,15 @@ export default function CourseLectureScreen() {
             {/* Video Container (Pinned Top) */}
             <View style={[styles.videoContainer, { paddingTop: insets.top }]}>
                 <View style={styles.videoWrapper}>
-                    <Video
-                        key={videoSource}
-                        ref={videoRef}
-                        source={{ uri: videoSource }}
+                    <VideoView
+                        player={player}
                         style={styles.video}
-                        useNativeControls={false}
-                        resizeMode={ResizeMode.COVER}
-                        shouldPlay={!userPaused}
-                        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+                        contentFit="cover"
+                        nativeControls={false}
                     />
 
-                    {isLoading && (
+                    {/* Buffering Indicator */}
+                    {isBuffering && !isPlaying && (
                         <View style={styles.loadingOverlay}>
                             <ActivityIndicator color="#FFF" size="large" />
                         </View>
@@ -217,8 +228,6 @@ export default function CourseLectureScreen() {
                         );
                     })}
                 </View>
-
-
 
                 <View style={{ height: 40 }} />
             </ScrollView>
