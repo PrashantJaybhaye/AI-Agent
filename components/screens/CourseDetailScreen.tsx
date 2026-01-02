@@ -1,5 +1,5 @@
 import { dailyRecommendations } from "@/utils/sessions";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
@@ -145,10 +145,10 @@ export default function CourseDetailScreen() {
                             {String(index + 1).padStart(2, '0')} • {item.duration}
                         </Text>
                     </View>
-                    <Ionicons
-                        name={index === 0 ? "play-circle" : "lock-closed-outline"}
+                    <MaterialCommunityIcons
+                        name={item.isLocked ? "lock-outline" : "play-circle-outline"}
                         size={24}
-                        color={index === 0 ? "#000" : "#CCC"}
+                        color={item.isLocked ? "#CCC" : "#000"}
                     />
                 </TouchableOpacity>
             </View>
