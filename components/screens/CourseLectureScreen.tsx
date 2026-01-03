@@ -32,7 +32,7 @@ export default function CourseLectureScreen() {
 
     const syllabus = course?.courseDetails?.syllabus || [];
     const activeLesson = syllabus[currentLessonIndex];
-    const videoSource = activeLesson?.videoUrl || course?.videoUrl || null;
+    const videoSource = activeLesson?.videoUrl || null;
 
     // Helper to play next lesson
     const playNextLesson = () => {
