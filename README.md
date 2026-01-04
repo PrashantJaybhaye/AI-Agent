@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="./assets/images/logo-mic.jpg" alt="AI-Agent Logo" width="120" height="120" style="border-radius: 20px;">
+  <img src="./assets/images/logo-mic.jpg" alt="Siora Logo" width="120" height="120" style="border-radius: 20px;">
   
-  # AI-Agent (Siora)
+  # Siora
   
   **Your Personal AI-Powered Mindfulness Companion**
 
@@ -25,21 +25,80 @@
 
 ## 📝 Description
 
-**AI-Agent** (Siora) is a cutting-edge, cross-platform mobile application designed to bring mindfulness and inner peace through AI-driven voice conversations. Built with **React Native** and **Expo**, it leverages **LiveKit** and **ElevenLabs** to create immersive, real-time audio experiences.
+**Siora** is a cutting-edge, cross-platform mobile application designed to bring mindfulness and inner peace through AI-driven voice conversations and structured meditation courses. Built with **React Native** and **Expo**, it leverages **LiveKit** and **ElevenLabs** to create immersive, real-time audio experiences.
 
-Whether you're looking for a guided meditation session in a "Forest Path" or a calming chat with a virtual companion, AI-Agent adapts to your mood and provides personalized interactions. With secure authentication via **Clerk** and robust data management using **Firebase**, your wellness journey is private, secure, and seamless.
+Whether you're exploring guided meditation courses like "Sleep Journey" or "Anxiety Release", practicing with curated library sessions, or engaging in AI-powered mindfulness conversations, Siora adapts to your wellness needs. With secure authentication via **Clerk** and robust data management using **Firebase**, your wellness journey is private, secure, and seamless.
+
+## 📱 App Screens
+
+### 🏠 Home Dashboard
+
+Browse curated meditation sessions with beautiful parallax scrolling effects. Each session features:
+
+- Stunning background imagery
+- Session descriptions and themes
+- Quick access to start your practice
+
+### 📚 Library
+
+Access quick meditation sessions with customizable options:
+
+- **Morning Focus** (3 min) - Start your day with clarity
+- **Deep Relax** (5 min) - Take a mindful break
+- **Anxiety Relief** (4 min) - Find calm in chaos
+- **Sleep Well** (10 min) - Drift into peaceful sleep
+- Optional background audio for enhanced experience
+- Community group meditation sessions
+
+### 🎓 Courses
+
+Structured multi-day meditation programs with progressive learning:
+
+- **Course Detail Screen**: Beautiful slide-to-start gesture, course overview, syllabus preview
+- **Video Lectures**: Premium iOS-style video player with custom controls
+- **Progressive Unlocking**: Complete lessons to unlock the next
+- Track your progress through each course
+
+### 🧘 AI Sessions
+
+Real-time voice conversations with AI meditation guide:
+
+- Live audio streaming with LiveKit
+- Natural voice synthesis with ElevenLabs
+- Session summaries and insights
+- Token-based wisdom collection
+
+### 📊 Profile & Progress
+
+Track your mindfulness journey:
+
+- Session history with detailed analytics
+- Streak tracking and achievements
+- Personal statistics and milestones
+- Profile customization
 
 ## ✨ Features
 
-- **🤖 AI Voice Conversations**: Real-time, low-latency voice interactions powered by LiveKit and ElevenLabs.
-- **🧘‍♀️ Curated Sessions**: Choose from various themes like _Forest Path_, _Mountain View_, _Ocean Waves_, and _Zen Stones_.
-- **📊 Progress Tracking**: View your session history, including duration, date, and "tokens" of wisdom collected.
-- **🔐 Secure Authentication**: Seamless sign-up and sign-in flows using Clerk (Email, Google, Apple).
+- **🎓 Structured Courses**: Multi-day meditation courses with video lectures and progressive unlocking
+  - Sleep Journey (7 days)
+  - Anxiety Release (10 days)
+  - Focus Flow (14 days)
+- **📚 Meditation Library**: Quick meditation sessions with optional background audio
+  - Morning Focus, Deep Relax, Anxiety Relief, Sleep Well
+  - Customizable audio preferences
+- **🤖 AI Voice Conversations**: Real-time, low-latency voice interactions powered by LiveKit and ElevenLabs
+- **🧘‍♀️ Curated Sessions**: Choose from various themes like _Forest Serenity_, _Mountain Stillness_, _Ocean Rhythms_, and more
+- **🎥 Video Lectures**: Premium iOS-style video player with custom controls and lesson navigation
+- **🫁 Breathing Exercises**: Interactive breathing exercises with visual guidance and haptic feedback
+- **📊 Progress Tracking**: View your session history, streaks, and achievements
+- **🔐 Secure Authentication**: Seamless sign-up and sign-in flows using Clerk (Email, Google, Apple)
 - **🎨 Modern UI/UX**:
-  - **Parallax Scrolling**: Beautiful visual effects using `react-native-reanimated`.
-  - **Glassmorphism**: Sleek, modern design elements.
-  - **Smooth Animations**: Powered by Reanimated and Skia.
-- **📱 Cross-Platform**: Optimized for both iOS and Android.
+  - **iOS-Inspired Design**: Inset grouped lists, glassmorphism, and premium aesthetics
+  - **Parallax Scrolling**: Beautiful visual effects using `react-native-reanimated`
+  - **Smooth Animations**: Powered by Reanimated and Skia
+  - **Slide-to-Start**: Intuitive gesture-based course initiation
+- **📱 Cross-Platform**: Optimized for both iOS and Android
+- **👥 Community Features**: Group meditation sessions and social engagement
 
 ## 🛠️ Tech Stack
 
@@ -49,6 +108,7 @@ Whether you're looking for a guided meditation session in a "Forest Path" or a c
 | **Language**    | TypeScript                       | Type-safe code                       |
 | **Routing**     | Expo Router                      | File-based routing                   |
 | **Voice/Video** | LiveKit, ElevenLabs              | Real-time audio & AI voice synthesis |
+| **Video**       | Expo Video                       | Native video playback                |
 | **Auth**        | Clerk                            | User authentication & management     |
 | **Backend**     | Firebase                         | Database & backend services          |
 | **Styling**     | StyleSheet, Expo Linear Gradient | Native styling & gradients           |
@@ -62,7 +122,9 @@ Whether you're looking for a guided meditation session in a "Forest Path" or a c
 | [`@clerk/clerk-expo`](https://clerk.com/docs/quickstarts/expo)                          | `^2.19.4`  | **Authentication**: Secure user management and sign-in flows. |
 | [`@elevenlabs/react-native`](https://elevenlabs.io/docs/api-reference/react-native-sdk) | `^0.5.2`   | **AI Voice**: Realistic text-to-speech synthesis.             |
 | [`@livekit/react-native`](https://docs.livekit.io/client-sdk-react-native/)             | `^2.9.5`   | **Real-time**: Low-latency voice and video communication.     |
-| [`firebase`](https://firebase.google.com/docs/web/setup)                                | `^10.0.0`  | **Backend**: Database and cloud services.                     |
+| [`firebase`](https://firebase.google.com/docs/web/setup)                                | `^12.7.0`  | **Backend**: Database and cloud services.                     |
+| [`expo-video`](https://docs.expo.dev/versions/latest/sdk/video/)                        | `~3.0.15`  | **Video**: Native video playback for course lectures.         |
+| [`expo-audio`](https://docs.expo.dev/versions/latest/sdk/audio/)                        | `^1.1.1`   | **Audio**: Audio playback for meditation sessions.            |
 | [`react-native-reanimated`](https://docs.swmansion.com/react-native-reanimated/)        | `~4.1.1`   | **Animations**: High-performance, declarative animations.     |
 | [`expo`](https://docs.expo.dev/)                                                        | `~54.0.25` | **Framework**: The core platform for building universal apps. |
 
@@ -83,6 +145,7 @@ Follow these steps to set up the project locally.
     ```bash
     git clone https://github.com/PrashantJaybhaye/AI-Agent.git
     cd AI-Agent
+    # Note: The project folder is named 'siora' locally
     ```
 
 2.  **Install dependencies**
@@ -126,30 +189,54 @@ Follow these steps to set up the project locally.
 ## 📁 Project Structure
 
 ```
-AI-Agent/
+siora/
 ├── app/
 │   ├── (protected)/     # Authenticated routes
-│   │   ├── session/     # Session-specific pages
-│   │   ├── index.tsx    # Home dashboard
-│   │   ├── profile.tsx  # User profile
-│   │   └── summary.tsx  # Session summary
+│   │   ├── (tabs)/      # Tab navigation
+│   │   │   ├── index.tsx       # Home dashboard
+│   │   │   ├── library.tsx     # Meditation library
+│   │   │   ├── profile.tsx     # User profile
+│   │   │   └── history.tsx     # Session history
+│   │   ├── course/      # Course-related screens
+│   │   │   ├── [id].tsx        # Course detail
+│   │   │   └── lecture.tsx     # Video lecture player
+│   │   ├── session/     # Session screens
+│   │   │   ├── [id].tsx        # Active session
+│   │   │   └── summary.tsx     # Session summary
+│   │   ├── admin/       # Admin panel
+│   │   ├── meditate.tsx # Breathing exercise screen
+│   │   └── edit-profile.tsx
 │   ├── (public)/        # Public routes
 │   │   ├── index.tsx    # Landing page
 │   │   └── sign-up.tsx  # Registration
 │   ├── api/             # API route handlers
 │   └── _layout.tsx      # Root layout configuration
 ├── components/
-│   ├── clerk/           # Authentication components (SignIn, SignUp)
-│   ├── screens/         # Screen-level components (SessionScreen, SummaryScreen)
-│   ├── ParallaxScrollView.tsx # Custom scroll view with parallax effect
-│   └── ProfileIcon.tsx  # User avatar component
+│   ├── screens/         # Screen-level components
+│   │   ├── CourseDetailScreen.tsx    # Course detail UI
+│   │   ├── CourseLectureScreen.tsx   # Video lecture UI
+│   │   ├── SessionScreen.tsx         # AI session UI
+│   │   └── SummaryScreen.tsx         # Session summary UI
+│   ├── lecture/         # Lecture components
+│   │   └── LectureVideoControls.tsx  # Custom video controls
+│   ├── clerk/           # Authentication components
+│   ├── admin/           # Admin components
+│   ├── ui/              # Reusable UI components
+│   ├── BreathingExercise.tsx
+│   ├── ParallaxScrollView.tsx
+│   └── CustomTabBar.tsx
 ├── hooks/
-│   ├── useConversation.ts # Custom hook for LiveKit/ElevenLabs logic
-│   └── ...
+│   ├── useConversation.tsx        # LiveKit/ElevenLabs integration
+│   └── useConversation.native.ts  # Native implementation
+├── context/
+│   └── UserContext.tsx  # User state management
 ├── utils/
 │   ├── firebase.ts      # Firebase SDK configuration
-│   ├── sessions.ts      # Session data and types
-│   └── colors.ts        # Design system colors
+│   ├── sessions.ts      # Session & course data
+│   ├── types.ts         # TypeScript interfaces
+│   ├── colors.ts        # Design system colors
+│   ├── achievements.ts  # Achievement logic
+│   └── streak.ts        # Streak tracking
 ├── assets/
 │   ├── images/          # App icons and logos
 │   └── sessions/        # Session background images
@@ -174,12 +261,19 @@ Create a `.env` file in the root directory with the following variables:
 
 ## 🚧 Roadmap
 
-- [x] **Core**: Voice conversations with AI.
-- [x] **Auth**: Secure login with Clerk.
-- [x] **UI**: Modern, animated interface.
-- [ ] **History**: Advanced filtering and search for past sessions.
-- [ ] **Settings**: Customizable voice and theme options.
-- [ ] **Offline Mode**: Basic functionality without internet.
+- [x] **Core**: Voice conversations with AI
+- [x] **Auth**: Secure login with Clerk
+- [x] **UI**: Modern, animated interface with iOS-inspired design
+- [x] **Courses**: Multi-day structured meditation courses
+- [x] **Video**: Custom video player for course lectures
+- [x] **Library**: Quick meditation sessions with audio
+- [x] **Breathing**: Interactive breathing exercises
+- [x] **Progress**: Session history and streak tracking
+- [ ] **Achievements**: Expanded achievement system with badges
+- [ ] **Offline Mode**: Download courses for offline access
+- [ ] **Social**: Share progress with friends
+- [ ] **Customization**: Personalized themes and voice options
+- [ ] **Analytics**: Advanced insights into meditation patterns
 
 ## ❓ Troubleshooting
 
