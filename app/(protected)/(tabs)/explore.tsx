@@ -1,3 +1,4 @@
+import { useUserContext } from '@/context/UserContext';
 import { db } from '@/utils/firebase';
 import { User } from '@/utils/types';
 import { useAuth } from '@clerk/clerk-expo';
@@ -42,6 +43,7 @@ export default function ExploreScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { userId } = useAuth();
+    const { userData } = useUserContext();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
@@ -353,10 +355,18 @@ export default function ExploreScreen() {
                     <TouchableOpacity style={styles.iconButton}>
                         <Ionicons name="notifications-outline" size={24} color={COLORS.primary} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <View style={styles.profileIcon}>
-                            <Ionicons name="person" size={16} color={COLORS.cardBg} />
-                        </View>
+                    <TouchableOpacity
+                        style={styles.avatarButton}
+                        onPress={() => router.push('/profile')}
+                        activeOpacity={0.7}
+                    >
+                        {userData?.photoURL ? (
+                            <Image source={{ uri: userData.photoURL }} style={styles.avatarImage} />
+                        ) : (
+                            <View style={styles.avatarPlaceholder}>
+                                <Text style={styles.avatarInitial}>{userData?.displayName?.[0] || "U"}</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -451,13 +461,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    profileIcon: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: COLORS.primary,
+    avatarButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.1)',
+        backgroundColor: '#F2F2F7',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+    },
+    avatarPlaceholder: {
+        width: '100%',
+        height: '100%',
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    avatarInitial: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: COLORS.secondary,
     },
     searchContainer: {
         paddingHorizontal: 16,
