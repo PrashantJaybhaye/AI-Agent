@@ -1,3 +1,4 @@
+import { SuggestedUsers } from '@/components/SuggestedUsers';
 import { useUserContext } from '@/context/UserContext';
 import { db } from '@/utils/firebase';
 import { User } from '@/utils/types';
@@ -33,7 +34,7 @@ const COLORS = {
     tabActive: '#FFFFFF',
 };
 
-interface UserSearchResult extends User {
+export interface UserSearchResult extends User {
     id: string;
     username?: string;
     memberCount?: number;
@@ -169,6 +170,11 @@ export default function ExploreScreen() {
         }
     }, [userId, allUsers.length]);
 
+    // Fetch initial users for suggestions
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+
     // Search with debouncing
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -294,34 +300,32 @@ export default function ExploreScreen() {
         return (
             <Animated.View entering={FadeInDown.delay(index * 30)}>
                 <TouchableOpacity
-                    style={styles.userCard}
+                    style={styles.compactUserItem}
                     onPress={() => handleUserPress(item)}
                     activeOpacity={0.7}
                 >
                     <Image
-                        source={item.photoURL || 'https://via.placeholder.com/48'}
-                        style={styles.userAvatar}
+                        source={item.photoURL || 'https://via.placeholder.com/44'}
+                        style={styles.compactAvatar}
                         contentFit="cover"
                     />
-                    <View style={styles.userInfo}>
-                        <Text style={styles.userName} numberOfLines={1}>{item.displayName}</Text>
-                        <View style={styles.followerBadge}>
-                            <Text style={styles.memberCount} numberOfLines={1}>
-                                {item.memberCount || 0} followers
-                            </Text>
-                        </View>
+                    <View style={styles.compactInfo}>
+                        <Text style={styles.compactName} numberOfLines={1}>{item.displayName}</Text>
+                        <Text style={styles.compactFollowers} numberOfLines={1}>
+                            {item.memberCount || 0} followers
+                        </Text>
                     </View>
                     <TouchableOpacity
                         style={[
-                            styles.actionButton,
-                            isFollowing && styles.actionButtonFollowing
+                            styles.compactActionButton,
+                            isFollowing && styles.compactActionButtonFollowing
                         ]}
                         onPress={() => handleFollowPress(item)}
                         activeOpacity={0.8}
                     >
                         <Text style={[
-                            styles.actionButtonText,
-                            isFollowing && styles.actionButtonTextFollowing
+                            styles.compactActionText,
+                            isFollowing && styles.compactActionTextFollowing
                         ]}>
                             {isFollowing ? 'following' : 'follow'}
                         </Text>
@@ -347,7 +351,7 @@ export default function ExploreScreen() {
 
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <Text style={styles.headerTitle}>discover</Text>
+                <Text style={styles.headerTitle}>Discover</Text>
                 <View style={styles.headerIcons}>
                     <TouchableOpacity style={styles.iconButton}>
                         <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
@@ -422,11 +426,12 @@ export default function ExploreScreen() {
                         ListEmptyComponent={renderEmptyState}
                     />
                 ) : (
-                    <View style={styles.emptyState}>
-                        <Ionicons name="search" size={48} color={COLORS.secondary} />
-                        <Text style={styles.emptyTitle}>Start searching</Text>
-                        <Text style={styles.emptySubtitle}>Find people and communities</Text>
-                    </View>
+                    <SuggestedUsers
+                        users={allUsers}
+                        followedUsers={followedUsers}
+                        onFollowPress={handleFollowPress}
+                        onUserPress={handleUserPress}
+                    />
                 )}
             </View>
         </View>
@@ -537,59 +542,53 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingBottom: 20,
     },
-    userCard: {
+    compactUserItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.cardBg,
+        paddingVertical: 12,
+        gap: 16,
+    },
+    compactAvatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F2F2F7',
+    },
+    compactInfo: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    compactName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.primary,
+        letterSpacing: -0.1,
+    },
+    compactFollowers: {
+        fontSize: 14,
+        color: COLORS.secondary,
+        marginTop: 2,
+    },
+    compactActionButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 6,
         borderRadius: 18,
-        padding: 16,
-        marginBottom: 12,
-        gap: 12,
+        backgroundColor: COLORS.accent,
+        minWidth: 80,
+        alignItems: 'center',
+    },
+    compactActionText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+    compactActionButtonFollowing: {
+        backgroundColor: 'transparent',
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    userAvatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 50,
-    },
-    userInfo: {
-        flex: 1,
-        gap: 4,
-    },
-    userName: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: COLORS.primary,
-    },
-    memberCount: {
-        fontSize: 13,
+    compactActionTextFollowing: {
         color: COLORS.secondary,
-        fontWeight: '500',
-    },
-    followerBadge: {
-        backgroundColor: 'rgba(0,0,0,0.03)',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 8,
-        alignSelf: 'flex-start',
-    },
-    actionButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: COLORS.accent,
-    },
-    actionButtonText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: COLORS.cardBg,
-    },
-    actionButtonFollowing: {
-        backgroundColor: COLORS.tabBg,
-    },
-    actionButtonTextFollowing: {
-        color: COLORS.primary,
     },
     loadingContainer: {
         flex: 1,
