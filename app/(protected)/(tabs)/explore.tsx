@@ -1,18 +1,3 @@
-/**
- * Explore Screen - Clubhouse-style iOS Design
- * 
- * Features:
- * - User search with debouncing (300ms)
- * - Tab filtering (top, people, rooms, houses)
- * - Follow/Unfollow functionality with Firestore integration ✅
- * - Dynamic button states (follow/following) ✅
- * - Haptic feedback on interactions
- * - Animated user cards with staggered entrance
- * - Member count display
- * - Navigation to user profiles ✅
- * - Initial follow state fetched from Firestore ✅
- */
-
 import { db } from '@/utils/firebase';
 import { User } from '@/utils/types';
 import { useAuth } from '@clerk/clerk-expo';
@@ -37,12 +22,12 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
-    bg: '#F2F1ED',
+    bg: '#F9F9FB', // Suble iOS-style off-white
     cardBg: '#FFFFFF',
-    primary: '#000000',
-    secondary: '#8A8A8E',
+    primary: '#1C1C1E', // iOS Label Primary
+    secondary: '#8E8E93', // iOS Label Secondary
     accent: '#5B75F0',
-    border: '#E8E8E8',
+    border: '#E8E8E8', // More defined border for flat look
     tabBg: '#E8E8E8',
     tabActive: '#FFFFFF',
 };
@@ -318,9 +303,11 @@ export default function ExploreScreen() {
                     />
                     <View style={styles.userInfo}>
                         <Text style={styles.userName} numberOfLines={1}>{item.displayName}</Text>
-                        <Text style={styles.memberCount} numberOfLines={1}>
-                            {item.memberCount?.toLocaleString()} Members
-                        </Text>
+                        <View style={styles.followerBadge}>
+                            <Text style={styles.memberCount} numberOfLines={1}>
+                                {item.memberCount || 0} followers
+                            </Text>
+                        </View>
                     </View>
                     <TouchableOpacity
                         style={[
@@ -528,15 +515,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.cardBg,
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 16,
         marginBottom: 12,
         gap: 12,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     userAvatar: {
         width: 48,
         height: 48,
-        borderRadius: 12,
+        borderRadius: 50,
     },
     userInfo: {
         flex: 1,
@@ -548,8 +537,16 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
     },
     memberCount: {
-        fontSize: 15,
+        fontSize: 13,
         color: COLORS.secondary,
+        fontWeight: '500',
+    },
+    followerBadge: {
+        backgroundColor: 'rgba(0,0,0,0.03)',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
     },
     actionButton: {
         paddingHorizontal: 20,

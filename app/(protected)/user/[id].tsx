@@ -19,10 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
-    bg: '#F2F1ED',
+    bg: '#F9F9FB', // Suble iOS-style off-white
     cardBg: '#FFFFFF',
-    primary: '#000000',
-    secondary: '#8A8A8E',
+    primary: '#1C1C1E',
+    secondary: '#8E8E93',
     accent: '#5B75F0',
     border: '#E8E8E8',
 };
@@ -324,9 +324,14 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     username: {
-        fontSize: 16,
+        fontSize: 14,
         color: COLORS.secondary,
         marginBottom: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.03)',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+        overflow: 'hidden', // Required for borderRadius on some Text components
     },
     followButton: {
         paddingHorizontal: 32,
@@ -349,11 +354,13 @@ const styles = StyleSheet.create({
     statsContainer: {
         flexDirection: 'row',
         backgroundColor: COLORS.cardBg,
-        borderRadius: 16,
+        borderRadius: 24,
         padding: 20,
         width: '100%',
         alignItems: 'center',
         justifyContent: 'space-around',
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     statItem: {
         alignItems: 'center',
@@ -386,8 +393,10 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: COLORS.cardBg,
-        borderRadius: 16,
+        borderRadius: 24,
         padding: 20,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     emptyState: {
         alignItems: 'center',
