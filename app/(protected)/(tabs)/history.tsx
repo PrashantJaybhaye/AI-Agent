@@ -130,7 +130,7 @@ export default function HistoryScreen() {
 
     const renderHeader = () => (
         <View
-            style={[styles.glassHeader, { paddingTop: insets.top + 5 }]}
+            style={[styles.glassHeader, { paddingTop: insets.top + 12 }]}
             pointerEvents="box-none"
         >
             <View style={styles.headerContent}>
@@ -358,14 +358,14 @@ export default function HistoryScreen() {
                         styles.listContent,
                         {
                             paddingBottom: insets.bottom + 100,
-                            paddingTop: insets.top + 90,
+                            paddingTop: insets.top + 72,
                             flexGrow: 1,
                         }
                     ]}
                     ListEmptyComponent={renderEmptyState}
                     showsVerticalScrollIndicator={false}
                     stickySectionHeadersEnabled={false}
-                    topOffset={insets.top + 80}
+                    topOffset={insets.top + 64}
                 />
             </View>
         </GestureHandlerRootView>
@@ -391,17 +391,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     headerContent: {
-        height: 60,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
+        paddingBottom: 16,
     },
     headerTitleLarge: {
-        fontSize: 34,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontWeight: '700',
         color: '#000',
-        letterSpacing: 0.35,
     },
     headerRightButtons: {
         flexDirection: 'row',

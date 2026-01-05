@@ -95,7 +95,7 @@ export default function LibraryScreen() {
         <View style={styles.container}>
             {/* iOS Premium Header (Solid White) */}
             <View
-                style={[styles.glassHeader, { paddingTop: insets.top + 5, backgroundColor: '#FFFFFF' }]}
+                style={[styles.glassHeader, { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF' }]}
             >
                 <View style={styles.headerContent}>
                     <Text style={styles.headerTitleLarge}>Library</Text>
@@ -119,7 +119,7 @@ export default function LibraryScreen() {
             <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
-                    { paddingTop: insets.top + 90 }
+                    { paddingTop: insets.top + 72 }
                 ]}
                 showsVerticalScrollIndicator={false}
             >
@@ -286,17 +286,16 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.0)',
     },
     headerContent: {
-        height: 60,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
+        paddingBottom: 16,
     },
     headerTitleLarge: {
-        fontSize: 34,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontWeight: '700',
         color: '#000',
-        letterSpacing: 0.35,
     },
     headerRightButtons: {
         flexDirection: 'row',
