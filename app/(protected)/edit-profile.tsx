@@ -1,3 +1,4 @@
+import { IOSAlert } from "@/components/IOSAlert";
 import { db } from "@/utils/firebase";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from 'expo-haptics';
@@ -8,7 +9,6 @@ import { collection, doc, getDocs, query, updateDoc, where } from "firebase/fire
 import { useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -44,6 +44,16 @@ export default function EditProfileScreen() {
     const [location, setLocation] = useState(userData?.location || '');
     const [isSaving, setIsSaving] = useState(false);
     const [isLocating, setIsLocating] = useState(false);
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: [] as any[]
+    });
+
+    const showAlert = (title: string, message: string, buttons: any[] = [{ text: 'OK', onPress: () => setAlertConfig(prev => ({ ...prev, visible: false })) }]) => {
+        setAlertConfig({ visible: true, title, message, buttons });
+    };
 
     const handleGetCurrentLocation = async () => {
         try {
@@ -52,7 +62,7 @@ export default function EditProfileScreen() {
 
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission denied', 'Permission to access location was denied');
+                showAlert('Permission denied', 'Permission to access location was denied');
                 return;
             }
 
@@ -74,12 +84,12 @@ export default function EditProfileScreen() {
                     setLocation(locationString);
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 } else {
-                    Alert.alert('Location found', 'But could not determine city/country name.');
+                    showAlert('Location found', 'But could not determine city/country name.');
                 }
             }
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Could not fetch location. Please try again.');
+            showAlert('Error', 'Could not fetch location. Please try again.');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsLocating(false);
@@ -88,12 +98,12 @@ export default function EditProfileScreen() {
 
     const handleSave = async () => {
         if (!displayName.trim()) {
-            Alert.alert("Required", "Please enter your name.");
+            showAlert("Required", "Please enter your name.");
             return;
         }
 
         if (!username.trim()) {
-            Alert.alert("Required", "Please enter a username.");
+            showAlert("Required", "Please enter a username.");
             return;
         }
 
@@ -108,7 +118,7 @@ export default function EditProfileScreen() {
                 const usernameQuery = query(collection(db, "users"), where("username", "==", username.trim()));
                 const usernameSnap = await getDocs(usernameQuery);
                 if (!usernameSnap.empty) {
-                    Alert.alert("Unavailable", "This username is already taken. Please choose another one.");
+                    showAlert("Unavailable", "This username is already taken. Please choose another one.");
                     return;
                 }
             }
@@ -125,7 +135,7 @@ export default function EditProfileScreen() {
             router.back();
         } catch (error) {
             console.error("Error updating profile:", error);
-            Alert.alert("Error", "Could not update profile.");
+            showAlert("Error", "Could not update profile.");
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSaving(false);
@@ -194,7 +204,7 @@ export default function EditProfileScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Form Section */}
+                        {/* Identity Section */}
                         <View style={styles.sectionContainer}>
                             <View style={styles.formGroup}>
                                 <View style={styles.inputRow}>
@@ -215,60 +225,54 @@ export default function EditProfileScreen() {
                                 <View style={styles.inputRow}>
                                     <Text style={styles.label}>Username</Text>
                                     <TextInput
-                                        style={[styles.input, userData?.username ? { color: COLORS.subtext } : {}]}
+                                        style={styles.input}
                                         value={username}
                                         onChangeText={setUsername}
                                         placeholder="username"
                                         placeholderTextColor={COLORS.subtext}
                                         autoCapitalize="none"
                                         autoCorrect={false}
-                                        clearButtonMode={userData?.username ? "never" : "while-editing"}
-                                        editable={!userData?.username}
+                                        clearButtonMode="while-editing"
                                     />
-                                    {userData?.username && (
-                                        <Ionicons name="lock-closed-outline" size={16} color={COLORS.subtext} />
-                                    )}
-                                </View>
-
-                                <View style={styles.separator} />
-
-                                <View style={styles.inputRow}>
-                                    <Text style={styles.label}>Email</Text>
-                                    <TextInput
-                                        style={[styles.input, { color: COLORS.subtext }]}
-                                        value={userData?.email}
-                                        editable={false}
-                                    />
-                                    <Ionicons name="lock-closed-outline" size={16} color={COLORS.subtext} />
                                 </View>
                             </View>
                             <Text style={styles.footerText}>
-                                This is how your name will appear to other users in the community.
+                                This will be your unique handle in the community.
                             </Text>
                         </View>
 
                         {/* Bio Section */}
                         <View style={styles.sectionContainer}>
                             <View style={styles.formGroup}>
-                                <View style={[styles.inputRow, { alignItems: 'flex-start', paddingVertical: 12 }]}>
-                                    <Text style={[styles.label, { marginTop: 4 }]}>Bio</Text>
+                                <View style={[styles.inputRow, { alignItems: 'flex-start', paddingVertical: 11 }]}>
+                                    <Text style={[styles.label, { paddingTop: 4.5 }]}>Bio</Text>
                                     <TextInput
-                                        style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                                        style={[styles.input, { minHeight: 90, textAlignVertical: 'top', paddingTop: 0 }]}
                                         value={bio}
                                         onChangeText={setBio}
-                                        placeholder="Tell us about yourself..."
+                                        placeholder="Add a bio to your profile..."
                                         placeholderTextColor={COLORS.subtext}
                                         multiline
                                         maxLength={160}
                                     />
                                 </View>
+                                <View style={{
+                                    position: 'absolute',
+                                    bottom: 8,
+                                    right: 16,
+                                }}>
+                                    <Text style={{
+                                        fontSize: 12,
+                                        color: bio.length === 160 ? COLORS.destructive : COLORS.subtext,
+                                        fontWeight: '600'
+                                    }}>
+                                        {bio.length}/160
+                                    </Text>
+                                </View>
                             </View>
-                            <Text style={styles.footerText}>
-                                {bio.length}/160
-                            </Text>
                         </View>
 
-                        {/* Location Section */}
+                        {/* Details Section */}
                         <View style={styles.sectionContainer}>
                             <View style={styles.formGroup}>
                                 <View style={styles.inputRow}>
@@ -302,10 +306,22 @@ export default function EditProfileScreen() {
                                         <Ionicons name="lock-closed-outline" size={16} color={COLORS.subtext} />
                                     )}
                                 </View>
+
+                                <View style={styles.separator} />
+
+                                <View style={styles.inputRow}>
+                                    <Text style={styles.label}>Email</Text>
+                                    <TextInput
+                                        style={[styles.input, { color: COLORS.subtext }]}
+                                        value={userData?.email}
+                                        editable={false}
+                                    />
+                                    <Ionicons name="lock-closed-outline" size={16} color={COLORS.subtext} />
+                                </View>
                             </View>
                         </View>
 
-                        {/* Additional Info Section - e.g. Username/Bio could go here */}
+                        {/* System Section */}
                         <Animated.View
                             entering={FadeInDown.delay(200).duration(500)}
                             style={styles.sectionContainer}
@@ -313,11 +329,10 @@ export default function EditProfileScreen() {
                             <View style={styles.formGroup}>
                                 <View style={styles.inputRow}>
                                     <Text style={styles.label}>ID</Text>
-                                    <Text style={[styles.input, { color: COLORS.subtext }]} numberOfLines={1}>
+                                    <Text style={[styles.input, { color: COLORS.subtext, fontSize: 14 }]} numberOfLines={1}>
                                         {userData?.uid}
                                     </Text>
                                     <TouchableOpacity onPress={() => {
-                                        // Clipboard logic could go here
                                         Haptics.selectionAsync();
                                     }}>
                                         <Ionicons name="copy-outline" size={16} color={COLORS.primary} />
@@ -325,13 +340,21 @@ export default function EditProfileScreen() {
                                 </View>
                             </View>
                             <Text style={styles.footerText}>
-                                User ID is unique and cannot be changed.
+                                Unique user identifier
                             </Text>
                         </Animated.View>
 
                     </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            <IOSAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                buttons={alertConfig.buttons}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+            />
         </View>
     );
 }
@@ -371,23 +394,23 @@ const styles = StyleSheet.create({
         color: COLORS.text,
     },
     scrollContent: {
-        paddingTop: 20,
-        paddingBottom: 40,
+        paddingTop: 18,
+        paddingBottom: 35,
     },
     avatarSection: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 24,
     },
     avatarContainer: {
-        marginBottom: 12,
-        borderRadius: 50,
+        marginBottom: 10,
+        borderRadius: 45,
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 90,
+        height: 90,
+        borderRadius: 45,
         backgroundColor: COLORS.card, // Fallback
     },
     cameraBadge: {
@@ -395,9 +418,9 @@ const styles = StyleSheet.create({
         bottom: 0,
         right: 0,
         backgroundColor: '#000',
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
@@ -409,7 +432,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     sectionContainer: {
-        marginBottom: 24,
+        marginBottom: 20,
     },
     formGroup: {
         backgroundColor: COLORS.card,
@@ -420,9 +443,9 @@ const styles = StyleSheet.create({
     inputRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingVertical: 11,
         paddingHorizontal: 16,
-        minHeight: 48,
+        minHeight: 46,
     },
     label: {
         width: 80,
@@ -444,7 +467,7 @@ const styles = StyleSheet.create({
     footerText: {
         fontSize: 13,
         color: COLORS.subtext,
-        marginTop: 8,
+        marginTop: 7,
         marginHorizontal: 16,
     },
 });
