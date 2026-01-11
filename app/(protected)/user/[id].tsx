@@ -1,7 +1,9 @@
+import UserAchievements from '@/components/user/UserAchievements';
 import { db } from '@/utils/firebase';
 import { User } from '@/utils/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,23 +11,40 @@ import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, se
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    ScrollView,
+    Dimensions,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
+import Animated, {
+    Extrapolation,
+    interpolate,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const COLORS = {
-    bg: '#F9F9FB', // Suble iOS-style off-white
-    cardBg: '#FFFFFF',
-    primary: '#1C1C1E',
-    secondary: '#8E8E93',
-    accent: '#5B75F0',
-    border: '#E8E8E8',
+const { width } = Dimensions.get('window');
+
+// Permanent Light Theme Palette
+const THEME = {
+    bg: '#FFFFFF',
+    card: '#F8F9FA',
+    cardSecondary: '#F3F4F6',
+    text: '#111827',
+    textSecondary: '#6B7280',
+    textTertiary: '#9CA3AF',
+    border: '#E5E7EB',
+    primary: '#2563EB',
+    glass: 'rgba(255,255,255,0.95)',
+    shadow: 'rgba(0, 0, 0, 0.05)',
+    destructive: '#EF4444'
 };
+
+
 
 export default function UserProfileScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,16 +52,24 @@ export default function UserProfileScreen() {
     const insets = useSafeAreaInsets();
     const { userId } = useAuth();
 
+    const theme = THEME;
+
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
+    const [activeTab, setActiveTab] = useState<'achievements' | 'about'>('achievements');
+
+    const scrollY = useSharedValue(0);
+
+    const scrollHandler = useAnimatedScrollHandler((event) => {
+        scrollY.value = event.contentOffset.y;
+    });
 
     useEffect(() => {
         const fetchUser = async () => {
             if (!id) return;
-
             try {
                 const userDoc = await getDoc(doc(db, 'users', id));
                 if (userDoc.exists()) {
@@ -54,15 +81,12 @@ export default function UserProfileScreen() {
                 setLoading(false);
             }
         };
-
         fetchUser();
     }, [id]);
 
-    // Fetch initial follow state
     useEffect(() => {
         const checkFollowStatus = async () => {
             if (!userId || !id) return;
-
             try {
                 const followDoc = await getDoc(doc(db, 'follows', `${userId}_${id}`));
                 setIsFollowing(followDoc.exists());
@@ -70,38 +94,29 @@ export default function UserProfileScreen() {
                 console.error('Error checking follow status:', error);
             }
         };
-
         checkFollowStatus();
     }, [userId, id]);
 
-    // Fetch follower and following counts
     useEffect(() => {
         const fetchCounts = async () => {
             if (!id) return;
-
             try {
-                // Count followers
-                const followersQuery = query(
-                    collection(db, 'follows'),
-                    where('followingId', '==', id)
-                );
+                const followersQuery = query(collection(db, 'follows'), where('followingId', '==', id));
                 const followersSnapshot = await getDocs(followersQuery);
                 setFollowerCount(followersSnapshot.size);
 
-                // Count following
-                const followingQuery = query(
-                    collection(db, 'follows'),
-                    where('followerId', '==', id)
-                );
+                const followingQuery = query(collection(db, 'follows'), where('followerId', '==', id));
                 const followingSnapshot = await getDocs(followingQuery);
                 setFollowingCount(followingSnapshot.size);
             } catch (error) {
                 console.error('Error fetching counts:', error);
             }
         };
-
         fetchCounts();
     }, [id, isFollowing]);
+
+    // Fetch achievements
+
 
     const handleBack = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -112,12 +127,9 @@ export default function UserProfileScreen() {
         if (!userId || !id) return;
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-        // Optimistic update
         const wasFollowing = isFollowing;
         setIsFollowing(!isFollowing);
 
-        // Update counts optimistically
         if (wasFollowing) {
             setFollowerCount(prev => Math.max(0, prev - 1));
         } else {
@@ -126,7 +138,6 @@ export default function UserProfileScreen() {
 
         try {
             const followRef = doc(db, 'follows', `${userId}_${id}`);
-
             if (wasFollowing) {
                 await deleteDoc(followRef);
             } else {
@@ -138,118 +149,184 @@ export default function UserProfileScreen() {
             }
         } catch (error) {
             console.error('Error toggling follow:', error);
-            // Revert on error
             setIsFollowing(wasFollowing);
-            if (wasFollowing) {
-                setFollowerCount(prev => prev + 1);
-            } else {
-                setFollowerCount(prev => Math.max(0, prev - 1));
-            }
+            if (wasFollowing) setFollowerCount(prev => prev + 1);
+            else setFollowerCount(prev => Math.max(0, prev - 1));
         }
     };
 
+    // Animated Header Styles
+    const headerBorderOpacity = useAnimatedStyle(() => {
+        const opacity = interpolate(
+            scrollY.value,
+            [20, 50],
+            [0, 1],
+            Extrapolation.CLAMP
+        );
+        return { opacity };
+    });
+
+    const headerTitleOpacity = useAnimatedStyle(() => {
+        const opacity = interpolate(
+            scrollY.value,
+            [60, 100],
+            [0, 1],
+            Extrapolation.CLAMP
+        );
+        return { opacity };
+    });
+
     if (loading) {
         return (
-            <View style={styles.container}>
-                <StatusBar barStyle="dark-content" />
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={COLORS.accent} />
-                </View>
+            <View style={[styles.container, { backgroundColor: theme.bg }]}>
+                <ActivityIndicator size="large" color={theme.primary} />
             </View>
         );
     }
 
-    if (!user) {
-        return (
-            <View style={styles.container}>
-                <StatusBar barStyle="dark-content" />
-                <View style={styles.errorContainer}>
-                    <Ionicons name="person-outline" size={64} color={COLORS.secondary} />
-                    <Text style={styles.errorText}>User not found</Text>
-                    <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                        <Text style={styles.backButtonText}>Go Back</Text>
+    if (!user) return null;
+
+    return (
+        <View style={[styles.container, { backgroundColor: theme.bg }]}>
+            <StatusBar barStyle="dark-content" />
+
+            {/* Navbar */}
+            <View style={[styles.navbar, { paddingTop: insets.top, height: 50 + insets.top }]}>
+                <Animated.View style={[StyleSheet.absoluteFill, styles.navbarBg, headerBorderOpacity]}>
+                    <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+                    <View style={[styles.borderBottom, { borderBottomColor: theme.border }]} />
+                </Animated.View>
+
+                <View style={styles.navbarContent}>
+                    <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
+                        <Ionicons name="arrow-back" size={24} color={theme.text} />
+                    </TouchableOpacity>
+
+                    <Animated.Text style={[styles.navTitle, { color: theme.text }, headerTitleOpacity]} numberOfLines={1}>
+                        {user.displayName}
+                    </Animated.Text>
+
+                    <TouchableOpacity style={styles.iconBtn}>
+                        <Ionicons name="ellipsis-horizontal" size={24} color={theme.text} />
                     </TouchableOpacity>
                 </View>
             </View>
-        );
-    }
 
-    return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" />
+            <Animated.ScrollView
+                onScroll={scrollHandler}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.scrollContent, { paddingTop: 60 + insets.top }]}
+            >
+                {/* Profile Header Block */}
+                <View style={styles.profileHeader}>
+                    {/* Top Row: Avatar & Actions */}
+                    <View style={styles.topRow}>
+                        <View style={[styles.avatarContainer, { borderColor: theme.border }]}>
+                            <Image
+                                source={{ uri: user.photoURL || 'https://via.placeholder.com/150' }}
+                                style={styles.avatar}
+                            />
+                        </View>
 
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
-                    <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Profile</Text>
-                <TouchableOpacity style={styles.headerButton}>
-                    <Ionicons name="ellipsis-horizontal" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
-            </View>
+                        <View style={styles.actionsContainer}>
+                            {userId !== id && (
+                                <>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.btnPrimary,
+                                            isFollowing ? styles.btnOutline : styles.btnSolid,
+                                            {
+                                                backgroundColor: isFollowing ? 'transparent' : theme.text,
+                                                borderColor: theme.text
+                                            }
+                                        ]}
+                                        onPress={handleFollow}
+                                    >
+                                        <Text style={[
+                                            styles.btnText,
+                                            { color: isFollowing ? theme.text : '#FFF' }
+                                        ]}>
+                                            {isFollowing ? 'Following' : 'Follow'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.btnIcon, { borderColor: theme.border }]}>
+                                        <Ionicons name="mail-outline" size={20} color={theme.text} />
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </View>
+                    </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Profile Info */}
-                <View style={styles.profileSection}>
-                    <Image
-                        source={user.photoURL || 'https://via.placeholder.com/120'}
-                        style={styles.profileImage}
-                        contentFit="cover"
-                    />
-                    <Text style={styles.displayName}>{user.displayName}</Text>
-                    <Text style={styles.username}>
-                        @{user.displayName?.toLowerCase().replace(/\s+/g, '') || 'user'}
-                    </Text>
+                    {/* Info */}
+                    <View style={styles.infoBlock}>
+                        <Text style={[styles.displayName, { color: theme.text }]}>{user.displayName}</Text>
+                        <Text style={[styles.handle, { color: theme.textSecondary }]}>@{user.username || user.displayName?.toLowerCase().replace(/\s+/g, '')}</Text>
 
-                    {/* Follow Button */}
-                    {userId !== id && (
+                        <Text style={[styles.bio, { color: theme.text }]}>
+                            {user.bio || "No bio yet."}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Horizontal Divider */}
+                <View style={[styles.sectionDivider, { backgroundColor: theme.cardSecondary }]} />
+
+                {/* Stats Row */}
+                <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                        <Text style={[styles.statVal, { color: theme.text }]}>{followerCount}</Text>
+                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Followers</Text>
+                    </View>
+                    <View style={[styles.vertDivider, { backgroundColor: theme.border }]} />
+                    <View style={styles.statItem}>
+                        <Text style={[styles.statVal, { color: theme.text }]}>{followingCount}</Text>
+                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Following</Text>
+                    </View>
+                </View>
+
+                {/* Content Tabs */}
+                <View style={[styles.tabBar, { borderBottomColor: theme.border }]}>
+                    {['Achievements', 'About'].map((tab) => (
                         <TouchableOpacity
-                            style={[styles.followButton, isFollowing && styles.followingButton]}
-                            onPress={handleFollow}
-                            activeOpacity={0.8}
+                            key={tab}
+                            style={[styles.tabItem, activeTab === tab.toLowerCase() && styles.tabItemActive]}
+                            onPress={() => setActiveTab(tab.toLowerCase() as any)}
                         >
-                            <Text
-                                style={[
-                                    styles.followButtonText,
-                                    isFollowing && styles.followingButtonText,
-                                ]}
-                            >
-                                {isFollowing ? 'Following' : 'Follow'}
+                            <Text style={[
+                                styles.tabText,
+                                { color: activeTab === tab.toLowerCase() ? theme.text : theme.textSecondary }
+                            ]}>
+                                {tab}
                             </Text>
+                            {activeTab === tab.toLowerCase() && <View style={[styles.activeIndicator, { backgroundColor: theme.text }]} />}
                         </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Tab Content */}
+                <View style={styles.contentArea}>
+                    {activeTab === 'achievements' ? (
+                        <UserAchievements userId={id} />
+                    ) : (
+                        <View style={[styles.detailCard, { backgroundColor: theme.card }]}>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="calendar-outline" size={20} color={theme.textSecondary} />
+                                <Text style={[styles.detailText, { color: theme.text }]}>Joined January 2026</Text>
+                            </View>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="location-outline" size={20} color={theme.textSecondary} />
+                                <Text style={[styles.detailText, { color: theme.text }]}>{user.location || "Unknown Location"}</Text>
+                            </View>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="link-outline" size={20} color={theme.textSecondary} />
+                                <Text style={[styles.detailText, { color: theme.primary }]}>siora.app/u/user</Text>
+                            </View>
+                        </View>
                     )}
-
-                    {/* Stats */}
-                    <View style={styles.statsContainer}>
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>{followerCount}</Text>
-                            <Text style={styles.statLabel}>Followers</Text>
-                        </View>
-                        <View style={styles.statDivider} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>{followingCount}</Text>
-                            <Text style={styles.statLabel}>Following</Text>
-                        </View>
-                        <View style={styles.statDivider} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>0</Text>
-                            <Text style={styles.statLabel}>Sessions</Text>
-                        </View>
-                    </View>
                 </View>
 
-                {/* Activity Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Recent Activity</Text>
-                    <View style={styles.card}>
-                        <View style={styles.emptyState}>
-                            <Ionicons name="time-outline" size={40} color={COLORS.secondary} />
-                            <Text style={styles.emptyText}>No recent activity</Text>
-                        </View>
-                    </View>
-                </View>
-            </ScrollView>
+            </Animated.ScrollView>
         </View>
     );
 }
@@ -257,154 +334,195 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.bg,
     },
-    loadingContainer: {
-        flex: 1,
-        alignItems: 'center',
+    navbar: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
         justifyContent: 'center',
     },
-    errorContainer: {
+    navbarBg: {
+        // Blur and Border handled in inline styles
+    },
+    borderBottom: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        borderBottomWidth: 1,
+    },
+    navbarContent: {
         flex: 1,
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 40,
-        gap: 16,
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
     },
-    errorText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.primary,
-    },
-    backButton: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        backgroundColor: COLORS.accent,
-        borderRadius: 20,
-        marginTop: 8,
-    },
-    backButtonText: {
+    navTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: COLORS.cardBg,
     },
-    header: {
+    iconBtn: {
+        padding: 8,
+    },
+    scrollContent: {
+        paddingBottom: 40,
+    },
+
+    // Profile Header
+    profileHeader: {
+        paddingHorizontal: 20,
+        marginBottom: 20,
+    },
+    topRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 16,
+        alignItems: 'flex-start',
+        marginBottom: 16,
     },
-    headerButton: {
-        width: 40,
-        height: 40,
+    avatarContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        borderWidth: 1,
+        padding: 2,
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 40,
+    },
+    actionsContainer: {
+        flexDirection: 'row',
+        gap: 8,
+        paddingTop: 10,
+    },
+    btnPrimary: {
+        paddingVertical: 8,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        borderWidth: 1,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerTitle: {
-        fontSize: 17,
+    btnSolid: {
+        // Color set in inline
+    },
+    btnOutline: {
+        // Color set in inline
+    },
+    btnText: {
+        fontSize: 14,
         fontWeight: '600',
-        color: COLORS.primary,
     },
-    profileSection: {
+    btnIcon: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        borderWidth: 1,
         alignItems: 'center',
-        paddingVertical: 32,
-        paddingHorizontal: 20,
+        justifyContent: 'center',
     },
-    profileImage: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        marginBottom: 16,
+    infoBlock: {
+        gap: 4,
     },
     displayName: {
         fontSize: 24,
-        fontWeight: '700',
-        color: COLORS.primary,
-        marginBottom: 4,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    username: {
-        fontSize: 14,
-        color: COLORS.secondary,
-        marginBottom: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.03)',
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 12,
-        overflow: 'hidden', // Required for borderRadius on some Text components
+    handle: {
+        fontSize: 15,
+        marginBottom: 8,
     },
-    followButton: {
-        paddingHorizontal: 32,
-        paddingVertical: 10,
-        backgroundColor: COLORS.accent,
-        borderRadius: 20,
-        marginBottom: 24,
+    bio: {
+        fontSize: 15,
+        lineHeight: 22,
     },
-    followingButton: {
-        backgroundColor: COLORS.border,
-    },
-    followButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.cardBg,
-    },
-    followingButtonText: {
-        color: COLORS.primary,
-    },
-    statsContainer: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.cardBg,
-        borderRadius: 24,
-        padding: 20,
+
+    // Stats
+    sectionDivider: {
+        height: 8,
         width: '100%',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        marginBottom: 16,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        marginBottom: 24,
+        justifyContent: 'space-between', // Spread out
     },
     statItem: {
         alignItems: 'center',
         flex: 1,
     },
-    statDivider: {
+    vertDivider: {
         width: 1,
-        height: 40,
-        backgroundColor: COLORS.border,
+        height: '100%',
     },
-    statValue: {
-        fontSize: 20,
+    statVal: {
+        fontSize: 18,
         fontWeight: '700',
-        color: COLORS.primary,
-        marginBottom: 4,
+        marginBottom: 2,
     },
     statLabel: {
-        fontSize: 14,
-        color: COLORS.secondary,
+        fontSize: 13,
     },
-    section: {
+
+    // Tabs
+    tabBar: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        marginBottom: 20,
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 14,
+        position: 'relative',
+    },
+    tabItemActive: {
+        // logic handled logic
+    },
+    tabText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    activeIndicator: {
+        position: 'absolute',
+        bottom: 0,
+        height: 2,
+        width: '40%',
+        borderRadius: 2,
+    },
+
+    // Content
+    contentArea: {
         paddingHorizontal: 20,
-        marginBottom: 24,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: COLORS.primary,
-        marginBottom: 12,
-    },
-    card: {
-        backgroundColor: COLORS.cardBg,
-        borderRadius: 24,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: COLORS.border,
     },
     emptyState: {
         alignItems: 'center',
-        paddingVertical: 32,
+        paddingVertical: 40,
         gap: 12,
     },
     emptyText: {
-        fontSize: 16,
-        color: COLORS.secondary,
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    detailCard: {
+        borderRadius: 16,
+        padding: 20,
+        gap: 16,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    detailText: {
+        fontSize: 15,
     },
 });

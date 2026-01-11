@@ -70,6 +70,9 @@ export interface User {
     uid: string;
     email: string;
     displayName: string;
+    username?: string;
+    bio?: string;
+    location?: string;
     photoURL?: string;
     isAdmin: boolean;
     createdAt: any;

@@ -2,8 +2,9 @@ import { db } from "@/utils/firebase";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from 'expo-haptics';
 import { Image } from "expo-image";
+import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
-import { doc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { useState } from "react";
 import {
     ActivityIndicator,
@@ -38,11 +39,61 @@ export default function EditProfileScreen() {
     const insets = useSafeAreaInsets();
 
     const [displayName, setDisplayName] = useState(userData?.displayName || '');
+    const [username, setUsername] = useState(userData?.username || '');
+    const [bio, setBio] = useState(userData?.bio || '');
+    const [location, setLocation] = useState(userData?.location || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
+
+    const handleGetCurrentLocation = async () => {
+        try {
+            setIsLocating(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission denied', 'Permission to access location was denied');
+                return;
+            }
+
+            const location = await Location.getCurrentPositionAsync({});
+            const reverseGeocode = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            });
+
+            if (reverseGeocode.length > 0) {
+                const address = reverseGeocode[0];
+                // Prefer City, but fallback to subregion/district/name
+                const city = address.city || address.subregion || address.district || address.name;
+                const country = address.country || address.region;
+
+                const locationString = [city, country].filter(Boolean).join(', ');
+
+                if (locationString) {
+                    setLocation(locationString);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } else {
+                    Alert.alert('Location found', 'But could not determine city/country name.');
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Could not fetch location. Please try again.');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } finally {
+            setIsLocating(false);
+        }
+    };
 
     const handleSave = async () => {
         if (!displayName.trim()) {
             Alert.alert("Required", "Please enter your name.");
+            return;
+        }
+
+        if (!username.trim()) {
+            Alert.alert("Required", "Please enter a username.");
             return;
         }
 
@@ -52,9 +103,22 @@ export default function EditProfileScreen() {
             setIsSaving(true);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+            if (username.trim() !== userData.username) {
+                // Check if username is taken
+                const usernameQuery = query(collection(db, "users"), where("username", "==", username.trim()));
+                const usernameSnap = await getDocs(usernameQuery);
+                if (!usernameSnap.empty) {
+                    Alert.alert("Unavailable", "This username is already taken. Please choose another one.");
+                    return;
+                }
+            }
+
             const userRef = doc(db, "users", userData.uid);
             await updateDoc(userRef, {
-                displayName: displayName.trim()
+                displayName: displayName.trim(),
+                username: username.trim(),
+                bio: bio.trim(),
+                location: location.trim()
             });
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -149,6 +213,26 @@ export default function EditProfileScreen() {
                                 <View style={styles.separator} />
 
                                 <View style={styles.inputRow}>
+                                    <Text style={styles.label}>Username</Text>
+                                    <TextInput
+                                        style={[styles.input, userData?.username ? { color: COLORS.subtext } : {}]}
+                                        value={username}
+                                        onChangeText={setUsername}
+                                        placeholder="username"
+                                        placeholderTextColor={COLORS.subtext}
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        clearButtonMode={userData?.username ? "never" : "while-editing"}
+                                        editable={!userData?.username}
+                                    />
+                                    {userData?.username && (
+                                        <Ionicons name="lock-closed-outline" size={16} color={COLORS.subtext} />
+                                    )}
+                                </View>
+
+                                <View style={styles.separator} />
+
+                                <View style={styles.inputRow}>
                                     <Text style={styles.label}>Email</Text>
                                     <TextInput
                                         style={[styles.input, { color: COLORS.subtext }]}
@@ -161,6 +245,64 @@ export default function EditProfileScreen() {
                             <Text style={styles.footerText}>
                                 This is how your name will appear to other users in the community.
                             </Text>
+                        </View>
+
+                        {/* Bio Section */}
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.formGroup}>
+                                <View style={[styles.inputRow, { alignItems: 'flex-start', paddingVertical: 12 }]}>
+                                    <Text style={[styles.label, { marginTop: 4 }]}>Bio</Text>
+                                    <TextInput
+                                        style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                                        value={bio}
+                                        onChangeText={setBio}
+                                        placeholder="Tell us about yourself..."
+                                        placeholderTextColor={COLORS.subtext}
+                                        multiline
+                                        maxLength={160}
+                                    />
+                                </View>
+                            </View>
+                            <Text style={styles.footerText}>
+                                {bio.length}/160
+                            </Text>
+                        </View>
+
+                        {/* Location Section */}
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.formGroup}>
+                                <View style={styles.inputRow}>
+                                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                                        <Text style={styles.label}>Location</Text>
+                                        <TextInput
+                                            style={[styles.input, userData?.location ? { color: COLORS.subtext } : {}]}
+                                            value={location}
+                                            onChangeText={setLocation}
+                                            placeholder="City, Country"
+                                            placeholderTextColor={COLORS.subtext}
+                                            autoCorrect={false}
+                                            clearButtonMode={userData?.location ? "never" : "while-editing"}
+                                            editable={!userData?.location}
+                                        />
+                                    </View>
+                                    {!userData?.location && (
+                                        <TouchableOpacity
+                                            onPress={handleGetCurrentLocation}
+                                            disabled={isLocating}
+                                            style={{ padding: 4 }}
+                                        >
+                                            {isLocating ? (
+                                                <ActivityIndicator size="small" color={COLORS.primary} />
+                                            ) : (
+                                                <Ionicons name="location-outline" size={20} color={COLORS.primary} />
+                                            )}
+                                        </TouchableOpacity>
+                                    )}
+                                    {userData?.location && (
+                                        <Ionicons name="lock-closed-outline" size={16} color={COLORS.subtext} />
+                                    )}
+                                </View>
+                            </View>
                         </View>
 
                         {/* Additional Info Section - e.g. Username/Bio could go here */}
