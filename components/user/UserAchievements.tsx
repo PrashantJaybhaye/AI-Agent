@@ -2,14 +2,18 @@ import { db } from '@/utils/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 const THEME = {
-    card: '#F8F9FA',
+    card: '#FFFFFF',
     text: '#111827',
     textSecondary: '#6B7280',
     primary: '#2563EB',
     textTertiary: '#9CA3AF',
+    border: '#F3F4F6',
+    shadow: 'rgba(0,0,0,0.06)'
 };
 
 export interface Achievement {
@@ -27,38 +31,69 @@ interface UserAchievementsProps {
 
 const AchievementCard = ({ item }: { item: Achievement }) => {
     let iconName: any = 'trophy';
-    let color = THEME.primary;
 
-    // Switch case for icon/color logic based on achievement_type
+    let mainColor = '#FFC800';
+    let shadowColor = '#E5B400';
+
     switch (item.achievement_type) {
         case 'breathing_exercise_completed':
-            iconName = 'leaf';
-            color = '#10B981'; // Emerald/Green for breathing
+            iconName = 'headset';
+            mainColor = '#58CC02';
+            shadowColor = '#46A302';
             break;
 
         case 'first_follow':
-            iconName = 'person-add';
-            color = '#3B82F6'; // Blue
+            iconName = 'person-add-outline';
+            mainColor = '#1CB0F6';
+            shadowColor = '#1899D6';
             break;
 
         case 'five_followers':
             iconName = 'star';
-            color = '#F59E0B'; // Amber
+            mainColor = '#FFC800';
+            shadowColor = '#E5B400';
             break;
+
+        case 'pioneer':
+            iconName = 'rocket';
+            mainColor = '#CE82FF';
+            shadowColor = '#A545EE';
+            break;
+
         default:
             iconName = 'ribbon';
-            color = THEME.textSecondary;
+            mainColor = '#FF9600';
+            shadowColor = '#CC7500';
             break;
     }
 
+    const earnedDate = item.earned_at?.seconds
+        ? new Date(item.earned_at.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : null;
+
     return (
-        <View style={[styles.achievementItem, { backgroundColor: THEME.card }]}>
-            <View style={[styles.achievementIconBox, { backgroundColor: color + '15' }]}>
-                <Ionicons name={iconName} size={22} color={color} />
+        <View style={styles.cardContainer}>
+            {/* Left: Circular "Medal" Icon */}
+            <View style={[
+                styles.iconBox,
+                {
+                    backgroundColor: mainColor,
+                    borderBottomColor: shadowColor,
+                    borderColor: shadowColor
+                }
+            ]}>
+                {/* Inner Ring for Medal Effect */}
+                <View style={[styles.innerRing, { borderColor: 'rgba(255,255,255,0.3)' }]} />
+                <Ionicons name={iconName} size={24} color="#FFFFFF" />
             </View>
-            <View style={styles.achievementContent}>
-                <Text style={[styles.achievementTitle, { color: THEME.text }]}>{item.title}</Text>
-                <Text style={[styles.achievementDesc, { color: THEME.textSecondary }]}>{item.description}</Text>
+
+            {/* Right: Content */}
+            <View style={styles.cardContent}>
+                <View style={styles.headerRow}>
+                    <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
+                    {earnedDate && <Text style={styles.date}>{earnedDate}</Text>}
+                </View>
+                <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
             </View>
         </View>
     );
@@ -98,7 +133,7 @@ export default function UserAchievements({ userId }: UserAchievementsProps) {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                {/* Minimal loader or skeleton could go here */}
+                {/* Optional: Add skeleton here */}
             </View>
         );
     }
@@ -106,14 +141,16 @@ export default function UserAchievements({ userId }: UserAchievementsProps) {
     if (achievements.length === 0) {
         return (
             <View style={styles.emptyState}>
-                <Ionicons name="trophy-outline" size={32} color={THEME.textTertiary} />
-                <Text style={[styles.emptyText, { color: THEME.textSecondary }]}>No achievements yet</Text>
+                <View style={styles.emptyIconBg}>
+                    <Ionicons name="trophy" size={28} color="#E5E7EB" />
+                </View>
+                <Text style={styles.emptyText}>No achievements yet</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.achievementsList}>
+        <View style={styles.listContainer}>
             {achievements.map((item) => (
                 <AchievementCard key={item.id} item={item} />
             ))}
@@ -122,34 +159,70 @@ export default function UserAchievements({ userId }: UserAchievementsProps) {
 }
 
 const styles = StyleSheet.create({
-    achievementsList: {
-        gap: 12,
+    listContainer: {
+        gap: 12, // Tighter gap
+        paddingBottom: 20,
     },
-    achievementItem: {
+    cardContainer: {
         flexDirection: 'row',
+        backgroundColor: '#FFFFFF',
+        padding: 12, // Reduced padding
+        borderRadius: 12, // Slightly smaller radius
         alignItems: 'center',
-        padding: 16,
-        borderRadius: 16,
-        gap: 16,
+
+        // Compact 3D Look
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderBottomWidth: 3, // Thinner 3D edge
+        borderBottomColor: '#D1D5DB',
     },
-    achievementIconBox: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+    iconBox: {
+        width: 50,
+        height: 50,
+        borderRadius: 25, // Circular Medal
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: 12,
+        borderBottomWidth: 3,
+        borderWidth: 2, // Rim width
+        position: 'relative',
     },
-    achievementContent: {
+    innerRing: {
+        position: 'absolute',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        borderWidth: 2,
+        opacity: 0.6,
+    },
+    cardContent: {
         flex: 1,
     },
-    achievementTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        marginBottom: 2,
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 2, // Tighter spacing
     },
-    achievementDesc: {
-        fontSize: 14,
-        lineHeight: 20,
+    title: {
+        fontSize: 15, // Smaller title
+        fontWeight: '800',
+        color: '#4B5563',
+        letterSpacing: 0.1,
+        flex: 1,
+        marginRight: 8,
+    },
+    date: {
+        fontSize: 11,
+        color: '#9CA3AF',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    description: {
+        fontSize: 13, // Smaller description
+        color: '#6B7280',
+        fontWeight: '600',
+        lineHeight: 18,
     },
     loadingContainer: {
         padding: 20,
@@ -158,10 +231,23 @@ const styles = StyleSheet.create({
     emptyState: {
         alignItems: 'center',
         paddingVertical: 40,
-        gap: 12,
+        gap: 10,
+    },
+    emptyIconBg: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#F9FAFB',
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderBottomWidth: 4,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 6,
     },
     emptyText: {
-        fontSize: 15,
-        fontWeight: '500',
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#9CA3AF',
     },
 });
