@@ -68,3 +68,57 @@ export async function addBreathingExerciseAchievement(
 
     return { newlyAwarded: false };
 }
+
+export async function addFirstFollowAchievement(
+    userId: string
+): Promise<{ newlyAwarded: boolean }> {
+    const achievementType = 'first_follow';
+    const hasIt = await hasAchievement(userId, achievementType);
+
+    if (!hasIt) {
+        await addAchievement(
+            userId,
+            achievementType,
+            'First Connection',
+            'Followed your first user'
+        );
+        return { newlyAwarded: true };
+    }
+
+    return { newlyAwarded: false };
+}
+
+export async function checkFiveFollowersAchievement(
+    userId: string
+): Promise<{ newlyAwarded: boolean }> {
+    const achievementType = 'five_followers';
+    const hasIt = await hasAchievement(userId, achievementType);
+
+    if (hasIt) {
+        return { newlyAwarded: false };
+    }
+
+    try {
+        const followersQuery = query(
+            collection(db, 'follows'),
+            where('followingId', '==', userId)
+        );
+        const snapshot = await getDocs(followersQuery);
+        const followerCount = snapshot.size;
+
+        if (followerCount >= 5) {
+            await addAchievement(
+                userId,
+                achievementType,
+                'Rising Star',
+                'Gained 5 followers'
+            );
+            return { newlyAwarded: true };
+        }
+    } catch (error) {
+        console.error('Error checking five followers achievement:', error);
+    }
+
+    return { newlyAwarded: false };
+}
+

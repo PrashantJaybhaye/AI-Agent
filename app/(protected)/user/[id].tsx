@@ -1,4 +1,5 @@
 import UserAchievements from '@/components/user/UserAchievements';
+import { addFirstFollowAchievement, checkFiveFollowersAchievement } from '@/utils/achievements';
 import { db } from '@/utils/firebase';
 import { User } from '@/utils/types';
 import { useAuth } from '@clerk/clerk-expo';
@@ -115,6 +116,13 @@ export default function UserProfileScreen() {
         fetchCounts();
     }, [id, isFollowing]);
 
+    // Check for First Follow Achievement
+    useEffect(() => {
+        if (isFollowing && userId) {
+            addFirstFollowAchievement(userId);
+        }
+    }, [isFollowing, userId]);
+
     // Fetch achievements
 
 
@@ -146,6 +154,9 @@ export default function UserProfileScreen() {
                     followingId: id,
                     createdAt: serverTimestamp(),
                 });
+
+                // Check if the target user has reached 5 followers
+                await checkFiveFollowersAchievement(id);
             }
         } catch (error) {
             console.error('Error toggling follow:', error);

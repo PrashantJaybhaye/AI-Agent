@@ -35,21 +35,15 @@ const AchievementCard = ({ item }: { item: Achievement }) => {
             iconName = 'leaf';
             color = '#10B981'; // Emerald/Green for breathing
             break;
-        case 'pioneer':
-            iconName = 'flag';
-            color = '#F59E0B'; // Amber
-            break;
-        case 'voice_champion':
-            iconName = 'mic';
+
+        case 'first_follow':
+            iconName = 'person-add';
             color = '#3B82F6'; // Blue
             break;
-        case 'connector':
-            iconName = 'people';
-            color = '#8B5CF6'; // Violet
-            break;
-        case 'trendsetter':
-            iconName = 'trending-up';
-            color = '#EC4899'; // Pink
+
+        case 'five_followers':
+            iconName = 'star';
+            color = '#F59E0B'; // Amber
             break;
         default:
             iconName = 'ribbon';
