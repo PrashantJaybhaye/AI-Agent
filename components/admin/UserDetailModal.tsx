@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     heroName: {
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: '700',
         color: '#000',
     },
