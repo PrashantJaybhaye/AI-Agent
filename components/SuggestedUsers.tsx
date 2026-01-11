@@ -21,13 +21,22 @@ const COLORS = {
 };
 
 export const SuggestedUsers = ({ users, followedUsers, onFollowPress, onUserPress }: SuggestedUsersProps) => {
+    const [suggestedIds, setSuggestedIds] = React.useState<string[]>([]);
+
+    React.useEffect(() => {
+        if (suggestedIds.length === 0 && users && users.length > 0) {
+            const shuffled = [...users]
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3);
+            setSuggestedIds(shuffled.map(u => u.id));
+        }
+    }, [users, suggestedIds]);
+
     const displayedUsers = React.useMemo(() => {
-        if (!users || users.length === 0) return [];
-        // Shuffle users and take the first 3
-        return [...users]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 3);
-    }, [users]);
+        return suggestedIds
+            .map(id => users.find(u => u.id === id))
+            .filter((u): u is UserSearchResult => !!u);
+    }, [suggestedIds, users]);
 
     const renderUserItem = ({ item, index }: { item: UserSearchResult; index: number }) => {
         const isFollowing = followedUsers.has(item.id);

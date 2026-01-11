@@ -14,10 +14,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1C9BE9",
-        "foregroundImage": "./assets/images/adaptive-logo2.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFF3E2",
+        "foregroundImage": "./assets/images/adaptive-logo.png",
+        "backgroundImage": "./assets/images/android-icon-background.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -34,8 +33,7 @@
       "package": "com.prashanttt_214.siora"
     },
     "web": {
-      "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "output": "server"
     },
     "plugins": [
       "expo-router",
