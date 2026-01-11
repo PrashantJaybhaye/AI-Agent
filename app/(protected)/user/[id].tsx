@@ -312,7 +312,11 @@ export default function UserProfileScreen() {
                         <View style={[styles.detailCard, { backgroundColor: theme.card }]}>
                             <View style={styles.detailRow}>
                                 <Ionicons name="calendar-outline" size={20} color={theme.textSecondary} />
-                                <Text style={[styles.detailText, { color: theme.text }]}>Joined January 2026</Text>
+                                <Text style={[styles.detailText, { color: theme.text }]}>
+                                    Joined {user.createdAt?.seconds
+                                        ? new Date(user.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                                        : "Unknown"}
+                                </Text>
                             </View>
                             <View style={styles.detailRow}>
                                 <Ionicons name="location-outline" size={20} color={theme.textSecondary} />
@@ -326,8 +330,8 @@ export default function UserProfileScreen() {
                     )}
                 </View>
 
-            </Animated.ScrollView>
-        </View>
+            </Animated.ScrollView >
+        </View >
     );
 }
 
