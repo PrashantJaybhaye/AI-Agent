@@ -23,7 +23,7 @@ interface UserDetailModalProps {
     onClose: () => void;
     onDelete: () => void;
     onToggleAdmin: () => void;
-    onUpdate?: (data: { displayName: string; email: string }) => Promise<void>;
+    onUpdate?: (data: { displayName: string; email: string; username: string; bio: string; location: string }) => Promise<void>;
     isCurrentUser: boolean;
 }
 
@@ -45,11 +45,17 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     // Form State
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [bio, setBio] = useState('');
+    const [location, setLocation] = useState('');
 
     useEffect(() => {
         if (user) {
             setDisplayName(user.displayName || '');
             setEmail(user.email || '');
+            setUsername(user.username || '');
+            setBio(user.bio || '');
+            setLocation(user.location || '');
             setIsEditing(false);
         }
     }, [user, visible]);
@@ -61,7 +67,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
         setIsLoading(true);
         try {
-            await onUpdate({ displayName, email });
+            await onUpdate({ displayName, email, username, bio, location });
             setIsEditing(false);
         } catch (error) {
             Alert.alert('Error', 'Failed to update profile');
@@ -74,6 +80,9 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
         if (isEditing) {
             setDisplayName(user.displayName || '');
             setEmail(user.email || '');
+            setUsername(user.username || '');
+            setBio(user.bio || '');
+            setLocation(user.location || '');
             setIsEditing(false);
         } else {
             onClose();
@@ -182,10 +191,11 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                                         </View>
 
                                         {/* Info Rows */}
-                                        <View style={styles.section}>
-                                            <View style={styles.groupContainer}>
-                                                {isEditing ? (
-                                                    <View style={styles.formContent}>
+                                        {/* Edit Mode Layout */}
+                                        {isEditing ? (
+                                            <>
+                                                <View style={styles.section}>
+                                                    <View style={styles.groupContainer}>
                                                         <View style={styles.inputGroup}>
                                                             <Text style={styles.inputLabel}>Display Name</Text>
                                                             <TextInput
@@ -196,7 +206,18 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                                                                 placeholderTextColor="#999"
                                                             />
                                                         </View>
-                                                        <View style={[styles.inputGroup, styles.noBorder]}>
+                                                        <View style={styles.inputGroup}>
+                                                            <Text style={styles.inputLabel}>Username</Text>
+                                                            <TextInput
+                                                                style={styles.textInput}
+                                                                value={username}
+                                                                onChangeText={setUsername}
+                                                                placeholder="Enter username"
+                                                                placeholderTextColor="#999"
+                                                                autoCapitalize="none"
+                                                            />
+                                                        </View>
+                                                        <View style={styles.inputGroup}>
                                                             <Text style={styles.inputLabel}>Email Address</Text>
                                                             <TextInput
                                                                 style={styles.textInput}
@@ -208,20 +229,54 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                                                                 autoCapitalize="none"
                                                             />
                                                         </View>
+                                                        <View style={[styles.inputGroup, styles.noBorder]}>
+                                                            <Text style={styles.inputLabel}>Location</Text>
+                                                            <TextInput
+                                                                style={styles.textInput}
+                                                                value={location}
+                                                                onChangeText={setLocation}
+                                                                placeholder="Enter location"
+                                                                placeholderTextColor="#999"
+                                                            />
+                                                        </View>
                                                     </View>
-                                                ) : (
-                                                    <>
+                                                </View>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {/* Identity & Location */}
+                                                <View style={styles.section}>
+                                                    <View style={styles.groupContainer}>
+                                                        <InfoRow
+                                                            icon="at-outline"
+                                                            label="Username"
+                                                            value={user.username || 'N/A'}
+                                                            iconColor="#5856D6"
+                                                        />
+                                                        <InfoRow
+                                                            icon="location-outline"
+                                                            label="Location"
+                                                            value={user.location || 'N/A'}
+                                                            iconColor="#34C759"
+                                                            last
+                                                        />
+                                                    </View>
+                                                </View>
+
+                                                {/* System View */}
+                                                <View style={styles.section}>
+                                                    <View style={styles.groupContainer}>
                                                         <InfoRow
                                                             icon="calendar-outline"
                                                             label="Joined"
                                                             value={formatDate(user.createdAt)}
-                                                            iconColor="#007AFF"
+                                                            iconColor="#8E8E93"
                                                         />
                                                         <InfoRow
                                                             icon="time-outline"
                                                             label="Last Seen"
                                                             value={formatDate(user.lastLoginAt)}
-                                                            iconColor="#34C759"
+                                                            iconColor="#8E8E93"
                                                         />
                                                         <InfoRow
                                                             icon="finger-print-outline"
@@ -231,10 +286,10 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                                                             last
                                                             iconColor="#8E8E93"
                                                         />
-                                                    </>
-                                                )}
-                                            </View>
-                                        </View>
+                                                    </View>
+                                                </View>
+                                            </>
+                                        )}
 
                                         {/* Actions */}
                                         <View style={styles.section}>
@@ -273,19 +328,20 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                             </KeyboardAvoidingView>
                         </Animated.View>
                     </Animated.View>
-                )}
-            </View>
-        </Modal>
+                )
+                }
+            </View >
+        </Modal >
     );
 };
 
-const InfoRow = ({ icon, label, value, mono, last, iconColor = "#8E8E93" }: any) => (
-    <View style={[styles.infoRow, last && styles.noBorder]}>
-        <View style={styles.rowLabelGroup}>
+const InfoRow = ({ icon, label, value, mono, last, iconColor = "#8E8E93", multiline }: any) => (
+    <View style={[styles.infoRow, last && styles.noBorder, multiline && { alignItems: 'flex-start' }]}>
+        <View style={[styles.rowLabelGroup, multiline && { marginTop: 2 }]}>
             <Ionicons name={icon} size={20} color={iconColor} style={styles.rowIcon} />
             <Text style={styles.infoLabel}>{label}</Text>
         </View>
-        <Text style={[styles.infoValue, mono && styles.monoText]} numberOfLines={1}>
+        <Text style={[styles.infoValue, mono && styles.monoText, multiline && { textAlign: 'left', flex: 1, marginLeft: 32 }]} numberOfLines={multiline ? undefined : 1}>
             {value}
         </Text>
     </View>
@@ -395,6 +451,13 @@ const styles = StyleSheet.create({
     heroEmail: {
         fontSize: 15,
         color: '#8E8E93',
+    },
+    sectionTitle: {
+        fontSize: 13,
+        color: '#8E8E93',
+        marginBottom: 8,
+        marginLeft: 16,
+        textTransform: 'uppercase',
     },
     section: {
         paddingHorizontal: 16,
