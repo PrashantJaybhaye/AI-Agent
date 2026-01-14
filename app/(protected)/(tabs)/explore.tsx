@@ -1,3 +1,4 @@
+import { StartBrowsing } from '@/components/discovery/StartBrowsing';
 import { SuggestedUsers } from '@/components/SuggestedUsers';
 import { useUserContext } from '@/context/UserContext';
 import { db } from '@/utils/firebase';
@@ -13,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -24,7 +26,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
-    bg: '#F9F9FB', // Suble iOS-style off-white
+    bg: '#F9F9FB', // Subtle iOS-style off-white
     cardBg: '#FFFFFF',
     primary: '#1C1C1E', // iOS Label Primary
     secondary: '#8E8E93', // iOS Label Secondary
@@ -426,12 +428,18 @@ export default function ExploreScreen() {
                         ListEmptyComponent={renderEmptyState}
                     />
                 ) : (
-                    <SuggestedUsers
-                        users={allUsers}
-                        followedUsers={followedUsers}
-                        onFollowPress={handleFollowPress}
-                        onUserPress={handleUserPress}
-                    />
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        <StartBrowsing />
+                        <SuggestedUsers
+                            users={allUsers}
+                            followedUsers={followedUsers}
+                            onFollowPress={handleFollowPress}
+                            onUserPress={handleUserPress}
+                        />
+                    </ScrollView>
                 )}
             </View>
         </View>
@@ -542,6 +550,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingBottom: 20,
     },
+    scrollContent: {
+        paddingTop: 8,
+        paddingBottom: 100,
+    },
     compactUserItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -614,3 +626,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
+
