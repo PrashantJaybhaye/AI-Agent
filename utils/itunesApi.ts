@@ -34,8 +34,8 @@ export const searchItunes = async (term: string, entity: string = 'song', limit:
 
 export const getCategoryContent = async (categoryId: string) => {
     switch (categoryId) {
+        // Fetch some trending or genre specific music
         case 'music':
-            // Fetch some trending or genre specific music
             return await searchItunes('pop hits', 'song');
         case 'podcasts':
             return await searchItunes('meditation', 'podcastEpisode');
