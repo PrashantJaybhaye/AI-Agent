@@ -37,7 +37,7 @@ const CATEGORIES = [
     },
     {
         id: 'made',
-        title: 'Made For You',
+        title: 'Playlists',
         color: '#148A08', // Green
         image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=80',
         rotate: '25deg',

@@ -1,13 +1,9 @@
-
 export interface ItunesResult {
     trackId: number;
-    collectionId?: number;
     artistName: string;
-    collectionName: string;
     trackName: string;
     previewUrl: string;
-    artworkUrl100: string; // High res cover
-    kind: string;
+    artworkUrl100: string;
 }
 
 export const searchItunes = async (term: string, entity: string = 'song', limit: number = 20): Promise<ItunesResult[]> => {
@@ -20,12 +16,13 @@ export const searchItunes = async (term: string, entity: string = 'song', limit:
         return data.results
             .filter((item: any) => item.previewUrl && (item.trackId || item.collectionId))
             .map((item: any) => ({
-                ...item,
                 trackId: item.trackId || item.collectionId,
                 trackName: item.trackName || item.collectionName || 'Unknown Title',
                 artistName: item.artistName || 'Unknown Artist',
+                previewUrl: item.previewUrl,
                 artworkUrl100: item.artworkUrl100 || item.artworkUrl60 || '',
-            }));
+            }))
+            .sort((a: ItunesResult, b: ItunesResult) => a.trackName.localeCompare(b.trackName));
     } catch (error) {
         console.error('Error fetching from iTunes:', error);
         return [];
@@ -41,6 +38,8 @@ export const getCategoryContent = async (categoryId: string) => {
             return await searchItunes('meditation', 'podcastEpisode');
         case 'audiobooks':
             return await searchItunes('audiobook', 'audiobook');
+        case 'made':
+            return [];
         default:
             return await searchItunes('music', 'song');
     }

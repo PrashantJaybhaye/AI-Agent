@@ -3,6 +3,7 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, StatusBar, View } from "react-native";
+import { PlaylistProvider } from "../context/PlaylistContext";
 import { UserProvider } from "../context/UserContext";
 
 function RootLayoutWithAuth() {
@@ -55,8 +56,10 @@ export default function RootLayout() {
       publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
       <UserProvider>
-        <StatusBar backgroundColor="transparent" barStyle="dark-content" hidden={false} />
-        <RootLayoutWithAuth />
+        <PlaylistProvider>
+          <StatusBar backgroundColor="transparent" barStyle="dark-content" hidden={false} />
+          <RootLayoutWithAuth />
+        </PlaylistProvider>
       </UserProvider>
     </ClerkProvider>
   )

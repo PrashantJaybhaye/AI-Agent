@@ -1,3 +1,4 @@
+import { usePlaylist } from '@/context/PlaylistContext';
 import { getCategoryContent, ItunesResult } from '@/utils/itunesApi';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
@@ -49,19 +50,32 @@ export default function CategoryScreen() {
     const [isBuffering, setIsBuffering] = useState(false);
     const [progress, setProgress] = useState(0);
 
+    const { savedItems, addToPlaylist, removeFromPlaylist, isSaved, isLoading: isPlaylistLoading } = usePlaylist();
+
     // Tracks state (restored)
     const [tracks, setTracks] = useState<ItunesResult[]>([]);
 
+    // Sync 'Made For You' playlist separately
     useEffect(() => {
-        loadContent();
-    }, [categoryId]);
+        if (categoryId === 'made') {
+            setTracks(savedItems);
+            setLoading(isPlaylistLoading);
+        }
+    }, [categoryId, savedItems, isPlaylistLoading]);
 
-    const loadContent = async () => {
-        setLoading(true);
-        const data = await getCategoryContent(categoryId);
-        setTracks(data);
-        setLoading(false);
-    };
+    // Fetch API content only when category changes, not when items are saved
+    useEffect(() => {
+        if (categoryId === 'made') return;
+
+        const fetchContent = async () => {
+            setLoading(true);
+            const data = await getCategoryContent(categoryId);
+            setTracks(data);
+            setLoading(false);
+        };
+
+        fetchContent();
+    }, [categoryId]);
 
     const handleTrackPress = (track: ItunesResult) => {
         if (activeTrack?.trackId === track.trackId) {
@@ -96,6 +110,15 @@ export default function CategoryScreen() {
 
     const renderItem = ({ item, index }: { item: ItunesResult, index: number }) => {
         const isActive = activeTrack?.trackId === item.trackId;
+        const saved = isSaved(item.trackId);
+
+        const handleToggleSave = () => {
+            if (saved) {
+                removeFromPlaylist(item.trackId);
+            } else {
+                addToPlaylist(item);
+            }
+        };
 
         return (
             <TouchableOpacity
@@ -116,6 +139,22 @@ export default function CategoryScreen() {
                         {item.artistName}
                     </Text>
                 </View>
+
+                {/* Add/Remove Button */}
+                {categoryId !== 'made' && (
+                    <TouchableOpacity
+                        style={{ padding: 8 }}
+                        onPress={handleToggleSave}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Ionicons
+                            name={saved ? "add-circle" : "add-circle-outline"}
+                            size={28}
+                            color={saved ? categoryColor : "#C7C7CC"}
+                        />
+                    </TouchableOpacity>
+                )}
+
                 <View style={styles.playIconContainer}>
                     {isActive && isBuffering ? (
                         <ActivityIndicator size="small" color={categoryColor} />
@@ -145,7 +184,7 @@ export default function CategoryScreen() {
                         onPress={() => router.back()}
                         style={styles.backButton}
                     >
-                        <Ionicons name="arrow-back" size={24} color="white" />
+                        <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>{categoryTitle}</Text>
                     <View style={{ width: 40 }} />
@@ -169,12 +208,28 @@ export default function CategoryScreen() {
                         keyExtractor={(item, index) => item.trackId ? item.trackId.toString() : index.toString()}
                         contentContainerStyle={[
                             styles.listContent,
-                            { paddingBottom: activeTrack ? 120 : 40 }
+                            { paddingBottom: activeTrack ? 120 : 40 },
+                            tracks.length === 0 && { flex: 1, justifyContent: 'center' }
                         ]}
                         showsVerticalScrollIndicator={false}
                         ListEmptyComponent={() => (
                             <View style={styles.emptyState}>
-                                <Text style={styles.emptyText}>No content found</Text>
+                                <View style={styles.emptyIconContainer}>
+                                    <Ionicons
+                                        name={categoryId === 'made' ? "musical-notes" : "search-outline"}
+                                        size={48}
+                                        color={categoryColor}
+                                        style={{ opacity: 0.8 }}
+                                    />
+                                </View>
+                                <Text style={styles.emptyTitle}>
+                                    {categoryId === 'made' ? "Your Playlist is Empty" : "No Content Found"}
+                                </Text>
+                                <Text style={styles.emptySubtitle}>
+                                    {categoryId === 'made'
+                                        ? "Start building your personal collection by adding tracks from other categories."
+                                        : "We couldn't find any tracks for this category. Please try again later."}
+                                </Text>
                             </View>
                         )}
                     />
@@ -351,11 +406,31 @@ const styles = StyleSheet.create({
     },
     emptyState: {
         alignItems: 'center',
-        paddingTop: 40,
+        justifyContent: 'center',
+        paddingVertical: 60,
+        paddingHorizontal: 32,
     },
-    emptyText: {
+    emptyIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(0,0,0,0.03)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1C1C1E',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    emptySubtitle: {
+        fontSize: 15,
         color: '#8E8E93',
-        fontSize: 16,
+        textAlign: 'center',
+        lineHeight: 22,
     },
     miniPlayerWrapper: {
         position: 'absolute',
