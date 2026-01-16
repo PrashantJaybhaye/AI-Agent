@@ -1,4 +1,3 @@
-import { PromotionBanner } from '@/components/discovery/PromotionBanner';
 import { StartBrowsing } from '@/components/discovery/StartBrowsing';
 import { SuggestedUsers } from '@/components/SuggestedUsers';
 import { useUserContext } from '@/context/UserContext';
@@ -15,7 +14,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
-    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -429,19 +427,15 @@ export default function ExploreScreen() {
                         ListEmptyComponent={renderEmptyState}
                     />
                 ) : (
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.scrollContent}
-                    >
+                    <View style={{ flex: 1, paddingTop: 8 }}>
                         <StartBrowsing />
-                        <PromotionBanner />
                         <SuggestedUsers
                             users={allUsers}
                             followedUsers={followedUsers}
                             onFollowPress={handleFollowPress}
                             onUserPress={handleUserPress}
                         />
-                    </ScrollView>
+                    </View>
                 )}
             </View>
         </View>

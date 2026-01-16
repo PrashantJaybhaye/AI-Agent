@@ -27,7 +27,7 @@ export const SuggestedUsers = ({ users, followedUsers, onFollowPress, onUserPres
         if (suggestedIds.length === 0 && users && users.length > 0) {
             const shuffled = [...users]
                 .sort(() => 0.5 - Math.random())
-                .slice(0, 3);
+                .slice(0, 4);
             setSuggestedIds(shuffled.map(u => u.id));
         }
     }, [users, suggestedIds]);
