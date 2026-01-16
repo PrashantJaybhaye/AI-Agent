@@ -50,7 +50,7 @@ const SESSIONS = [
     {
         id: '4',
         title: 'Sleep Well',
-        description: 'Drift away into a peaceful slumber.',
+        description: 'Drift away into a peaceful slumber night.',
         duration: '10 min',
         icon: 'bed',
         // Softer Purple/Lavender
@@ -119,7 +119,7 @@ export default function LibraryScreen() {
             <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
-                    { paddingTop: insets.top + 72 }
+                    { paddingTop: insets.top + 92 }
                 ]}
                 showsVerticalScrollIndicator={false}
             >
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     divider: {
         height: 1,
         backgroundColor: '#F3F4F6',
-        marginVertical: 24,
+        marginVertical: 22, // Compact spacing
     },
     // Header Styles (Preserved)
     glassHeader: {
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     },
 
     scrollContent: {
-        paddingHorizontal: 24,
+        paddingHorizontal: 20,
         paddingBottom: 40,
     },
     cardList: {
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     card: {
         borderRadius: 20,
         overflow: 'visible',
-        minHeight: 120,
+        minHeight: 138,
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
