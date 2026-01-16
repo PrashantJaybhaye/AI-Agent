@@ -1,3 +1,4 @@
+import { PromotionBanner } from '@/components/discovery/PromotionBanner';
 import { StartBrowsing } from '@/components/discovery/StartBrowsing';
 import { SuggestedUsers } from '@/components/SuggestedUsers';
 import { useUserContext } from '@/context/UserContext';
@@ -433,6 +434,7 @@ export default function ExploreScreen() {
                         contentContainerStyle={styles.scrollContent}
                     >
                         <StartBrowsing />
+                        <PromotionBanner />
                         <SuggestedUsers
                             users={allUsers}
                             followedUsers={followedUsers}
