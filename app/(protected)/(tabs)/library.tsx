@@ -1,63 +1,72 @@
-import { useUserContext } from '@/context/UserContext';
-import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUserContext } from "@/context/UserContext";
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+    Dimensions,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 // Enhanced data with slightly softer, more sophisticated colors
 const SESSIONS = [
     {
-        id: '1',
-        title: 'Morning Focus',
-        description: 'Start your day with clarity and purpose.',
-        duration: '3 min',
-        icon: 'sunny',
+        id: "1",
+        title: "Morning Focus",
+        description: "Start your day with clarity and purpose.",
+        duration: "3 min",
+        icon: "sunny",
         // Softer Orange/Peach
-        accentColor: '#FBBF24', // Yellow 500
-        bgColor: '#FFFBEB', // Lightest Yellow bg
-        iconColor: '#92400E',
-        audioUri: 'https://repo-asset.vercel.app/assets/nature.mp3',
+        accentColor: "#FBBF24", // Yellow 500
+        bgColor: "#FFFBEB", // Lightest Yellow bg
+        iconColor: "#92400E",
+        audioUri: "https://repo-asset.vercel.app/assets/nature.mp3",
     },
     {
-        id: '2',
-        title: 'Deep Relax',
-        description: 'For times when you really need a break.',
-        duration: '5 min',
-        icon: 'moon',
+        id: "2",
+        title: "Deep Relax",
+        description: "For times when you really need a break.",
+        duration: "5 min",
+        icon: "moon",
         // Softer Pink/Rose
-        accentColor: '#F9A8D4', // Pink 300
-        bgColor: '#FFF7FB', // Lightest Pink bg
-        iconColor: '#9D174D',
-        audioUri: 'https://repo-asset.vercel.app/assets/piano-music.mp3',
+        accentColor: "#F9A8D4", // Pink 300
+        bgColor: "#FFF7FB", // Lightest Pink bg
+        iconColor: "#9D174D",
+        audioUri: "https://repo-asset.vercel.app/assets/piano-music.mp3",
     },
     {
-        id: '3',
-        title: 'Anxiety Relief',
-        description: 'Mindfulness tips to deepen your practice.',
-        duration: '4 min',
-        icon: 'leaf',
+        id: "3",
+        title: "Anxiety Relief",
+        description: "Mindfulness tips to deepen your practice.",
+        duration: "7 min",
+        icon: "leaf",
         // Softer Green/Teal
-        accentColor: '#6EE7B7', // Emerald 300
-        bgColor: '#F0FFF4', // Lightest Green bg
-        iconColor: '#065F46',
-        audioUri: 'https://repo-asset.vercel.app/assets/anxiety.ogg',
+        accentColor: "#6EE7B7", // Emerald 300
+        bgColor: "#F0FFF4", // Lightest Green bg
+        iconColor: "#065F46",
+        audioUri: "https://repo-asset.vercel.app/assets/anxiety.ogg",
     },
     {
-        id: '4',
-        title: 'Sleep Well',
-        description: 'Drift away into a peaceful slumber night.',
-        duration: '10 min',
-        icon: 'bed',
+        id: "4",
+        title: "Sleep Well",
+        description: "Drift away into a peaceful slumber night.",
+        duration: "10 min",
+        icon: "bed",
         // Softer Purple/Lavender
-        accentColor: '#C4B5FD', // Violet 300
-        bgColor: '#FAF5FF', // Lightest Purple bg
-        iconColor: '#5B21B6',
-        audioUri: 'https://repo-asset.vercel.app/assets/sleep.mp3',
+        accentColor: "#C4B5FD", // Violet 300
+        bgColor: "#FAF5FF", // Lightest Purple bg
+        iconColor: "#5B21B6",
+        audioUri: "https://repo-asset.vercel.app/assets/sleep.mp3",
     },
 ];
 
@@ -67,10 +76,12 @@ export default function LibraryScreen() {
     const { userData } = useUserContext();
 
     // State for modal
-    const [selectedSession, setSelectedSession] = useState<typeof SESSIONS[0] | null>(null);
+    const [selectedSession, setSelectedSession] = useState<
+        (typeof SESSIONS)[0] | null
+    >(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    const handleSessionPress = (session: typeof SESSIONS[0]) => {
+    const handleSessionPress = (session: (typeof SESSIONS)[0]) => {
         setSelectedSession(session);
         setModalVisible(true);
     };
@@ -79,10 +90,10 @@ export default function LibraryScreen() {
         if (!selectedSession) return;
         setModalVisible(false);
         router.push({
-            pathname: '/meditate',
+            pathname: "/meditate",
             params: {
                 ...selectedSession,
-                playAudio: withAudio ? 'true' : 'false' // Pass as string param
+                playAudio: withAudio ? "true" : "false", // Pass as string param
             },
         });
     };
@@ -95,7 +106,10 @@ export default function LibraryScreen() {
         <View style={styles.container}>
             {/* iOS Premium Header (Solid White) */}
             <View
-                style={[styles.glassHeader, { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF' }]}
+                style={[
+                    styles.glassHeader,
+                    { paddingTop: insets.top + 12, backgroundColor: "#FFFFFF" },
+                ]}
             >
                 <View style={styles.headerContent}>
                     <Text style={styles.headerTitleLarge}>Library</Text>
@@ -105,10 +119,15 @@ export default function LibraryScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.avatarButton}>
                             {userData?.photoURL ? (
-                                <Image source={{ uri: userData.photoURL }} style={styles.avatarImage} />
+                                <Image
+                                    source={{ uri: userData.photoURL }}
+                                    style={styles.avatarImage}
+                                />
                             ) : (
                                 <View style={styles.avatarPlaceholder}>
-                                    <Text style={styles.avatarInitial}>{userData?.displayName?.[0] || "U"}</Text>
+                                    <Text style={styles.avatarInitial}>
+                                        {userData?.displayName?.[0] || "U"}
+                                    </Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -119,11 +138,10 @@ export default function LibraryScreen() {
             <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
-                    { paddingTop: insets.top + 92 }
+                    { paddingTop: insets.top + 92 },
                 ]}
                 showsVerticalScrollIndicator={false}
             >
-
                 <View style={styles.cardList}>
                     {SESSIONS.map((session, index) => (
                         <Animated.View
@@ -143,15 +161,31 @@ export default function LibraryScreen() {
                                         </Text>
                                         <View style={styles.durationBadge}>
                                             <Ionicons name="time-outline" size={14} color="#6B7280" />
-                                            <Text style={styles.durationText}>{session.duration}</Text>
+                                            <Text style={styles.durationText}>
+                                                {session.duration}
+                                            </Text>
                                         </View>
                                     </View>
 
                                     <View style={styles.graphicContainer}>
-                                        <View style={[styles.graphicCircle, { backgroundColor: session.accentColor }]}>
-                                            <Ionicons name={session.icon as any} size={30} color={session.iconColor} />
+                                        <View
+                                            style={[
+                                                styles.graphicCircle,
+                                                { backgroundColor: session.accentColor },
+                                            ]}
+                                        >
+                                            <Ionicons
+                                                name={session.icon as any}
+                                                size={30}
+                                                color={session.iconColor}
+                                            />
                                         </View>
-                                        <View style={[styles.graphicBlob, { backgroundColor: session.accentColor, opacity: 0.4 }]} />
+                                        <View
+                                            style={[
+                                                styles.graphicBlob,
+                                                { backgroundColor: session.accentColor, opacity: 0.4 },
+                                            ]}
+                                        />
                                     </View>
                                 </View>
                             </TouchableOpacity>
@@ -191,14 +225,41 @@ export default function LibraryScreen() {
 
                         {/* Right Visuals - Minimalist Avatars */}
                         <View style={styles.avatarStack}>
-                            <View style={[styles.avatarCircle, { backgroundColor: '#E0E7FF', zIndex: 3, right: 30 }]}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#4338CA' }}>JD</Text>
+                            <View
+                                style={[
+                                    styles.avatarCircle,
+                                    { backgroundColor: "#E0E7FF", zIndex: 3, right: 30 },
+                                ]}
+                            >
+                                <Text
+                                    style={{ fontSize: 10, fontWeight: "600", color: "#4338CA" }}
+                                >
+                                    JD
+                                </Text>
                             </View>
-                            <View style={[styles.avatarCircle, { backgroundColor: '#FCE7F3', zIndex: 2, right: 15 }]}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#BE185D' }}>AL</Text>
+                            <View
+                                style={[
+                                    styles.avatarCircle,
+                                    { backgroundColor: "#FCE7F3", zIndex: 2, right: 15 },
+                                ]}
+                            >
+                                <Text
+                                    style={{ fontSize: 10, fontWeight: "600", color: "#BE185D" }}
+                                >
+                                    AL
+                                </Text>
                             </View>
-                            <View style={[styles.avatarCircle, { backgroundColor: '#F3F4F6', zIndex: 1, right: 0 }]}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#4B5563' }}>+40</Text>
+                            <View
+                                style={[
+                                    styles.avatarCircle,
+                                    { backgroundColor: "#F3F4F6", zIndex: 1, right: 0 },
+                                ]}
+                            >
+                                <Text
+                                    style={{ fontSize: 10, fontWeight: "600", color: "#4B5563" }}
+                                >
+                                    +40
+                                </Text>
                             </View>
                         </View>
                     </View>
@@ -219,18 +280,28 @@ export default function LibraryScreen() {
                     activeOpacity={1}
                     onPress={() => setModalVisible(false)}
                 >
-                    <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
+                    <BlurView
+                        intensity={20}
+                        tint="light"
+                        style={StyleSheet.absoluteFill}
+                    />
 
                     <TouchableOpacity
                         activeOpacity={1}
                         onPress={(e) => e.stopPropagation()}
                     >
                         <View style={styles.alertContainer}>
-                            <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+                            <BlurView
+                                intensity={80}
+                                tint="light"
+                                style={StyleSheet.absoluteFill}
+                            />
 
                             <View style={styles.alertContent}>
                                 <Text style={styles.alertTitle}>Start Session</Text>
-                                <Text style={styles.alertMessage}>Would you like to play background audio?</Text>
+                                <Text style={styles.alertMessage}>
+                                    Would you like to play background audio?
+                                </Text>
                             </View>
 
                             <View style={styles.alertButtons}>
@@ -261,78 +332,78 @@ export default function LibraryScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
     },
     // New Styles for Headings and Divider
     sectionHeading: {
         fontSize: 20,
-        fontWeight: '700',
-        color: '#1F2937',
+        fontWeight: "700",
+        color: "#1F2937",
         marginBottom: 16,
         paddingHorizontal: 4, // Align visually with cards
     },
     divider: {
         height: 1,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: "#F3F4F6",
         marginVertical: 22, // Compact spacing
     },
     // Header Styles (Preserved)
     glassHeader: {
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         left: 0,
         right: 0,
         zIndex: 100,
-        backgroundColor: 'rgba(255,255,255,0.0)',
+        backgroundColor: "rgba(255,255,255,0.0)",
     },
     headerContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         paddingHorizontal: 20,
         paddingBottom: 16,
     },
     headerTitleLarge: {
         fontSize: 28,
-        fontWeight: '700',
-        color: '#000',
+        fontWeight: "700",
+        color: "#000",
     },
     headerRightButtons: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 12,
     },
     moreButton: {
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#F2F2F7',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: "#F2F2F7",
+        alignItems: "center",
+        justifyContent: "center",
     },
     avatarButton: {
         width: 36,
         height: 36,
         borderRadius: 18,
-        overflow: 'hidden',
+        overflow: "hidden",
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.1)',
+        borderColor: "rgba(0,0,0,0.1)",
     },
     avatarImage: {
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
     },
     avatarPlaceholder: {
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#E5E5EA',
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#E5E5EA",
+        alignItems: "center",
+        justifyContent: "center",
     },
     avatarInitial: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#8E8E93',
+        fontWeight: "600",
+        color: "#8E8E93",
     },
 
     scrollContent: {
@@ -345,16 +416,16 @@ const styles = StyleSheet.create({
     },
     card: {
         borderRadius: 20,
-        overflow: 'visible',
+        overflow: "visible",
         minHeight: 138,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: "#E5E7EB",
     },
     cardContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        overflow: 'hidden', // Keep content inside the rounded corners
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        overflow: "hidden", // Keep content inside the rounded corners
         borderRadius: 24,
     },
     textContainer: {
@@ -364,48 +435,48 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontSize: 17,
-        fontWeight: '700',
-        color: '#1F2937',
+        fontWeight: "700",
+        color: "#1F2937",
         marginBottom: 6,
     },
     cardDescription: {
         fontSize: 13,
-        color: '#4B5563',
+        color: "#4B5563",
         lineHeight: 18,
         marginBottom: 10,
     },
     durationBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 4,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 15,
-        backgroundColor: '#F5F5F5',
-        alignSelf: 'flex-start',
+        backgroundColor: "#F5F5F5",
+        alignSelf: "flex-start",
     },
     durationText: {
         fontSize: 13, // Slightly bigger text in badge
-        color: '#4B5563',
-        fontWeight: '600',
+        color: "#4B5563",
+        fontWeight: "600",
     },
     graphicContainer: {
         width: 90,
         height: 100,
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
     },
     graphicCircle: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 2,
     },
     graphicBlob: {
-        position: 'absolute',
+        position: "absolute",
         width: 70,
         height: 70,
         borderRadius: 35,
@@ -418,140 +489,140 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     groupCard: {
-        backgroundColor: '#F9FAFB', // iOS System Gray 6 (ish)
+        backgroundColor: "#F9FAFB", // iOS System Gray 6 (ish)
         borderRadius: 24,
         padding: 24,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: "#F3F4F6",
     },
     groupMainContent: {
         flex: 1,
         paddingRight: 16,
     },
     groupBadgeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         marginBottom: 8,
     },
     liveDotPulse: {
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: '#10B981', // Emerald 500
+        backgroundColor: "#10B981", // Emerald 500
         marginRight: 6,
     },
     groupBadgeText: {
         fontSize: 10,
-        fontWeight: '700',
-        color: '#6B7280', // Gray 500
+        fontWeight: "700",
+        color: "#6B7280", // Gray 500
         letterSpacing: 0.5,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
     },
     groupCardTitle: {
         fontSize: 18,
-        fontWeight: '700',
-        color: '#111827',
+        fontWeight: "700",
+        color: "#111827",
         marginBottom: 4,
     },
     groupCardSubtitle: {
         fontSize: 13,
-        color: '#6B7280',
+        color: "#6B7280",
         lineHeight: 18,
         marginBottom: 16,
     },
     minimalButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         paddingVertical: 8,
         paddingHorizontal: 14,
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
         borderRadius: 100,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
-        alignSelf: 'flex-start',
+        borderColor: "#E5E7EB",
+        alignSelf: "flex-start",
         gap: 6,
     },
     minimalButtonText: {
         fontSize: 12,
-        fontWeight: '600',
-        color: '#111827',
+        fontWeight: "600",
+        color: "#111827",
     },
     avatarStack: {
         width: 80,
         height: 40,
-        position: 'relative',
-        justifyContent: 'center',
+        position: "relative",
+        justifyContent: "center",
     },
     avatarCircle: {
         width: 32,
         height: 32,
         borderRadius: 16,
         borderWidth: 2,
-        borderColor: '#F9FAFB', // Match card bg
-        position: 'absolute',
-        alignItems: 'center',
-        justifyContent: 'center',
+        borderColor: "#F9FAFB", // Match card bg
+        position: "absolute",
+        alignItems: "center",
+        justifyContent: "center",
     },
 
     // Modal Styles
     modalOverlay: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0,0,0,0.4)",
     },
     alertContainer: {
         width: 270,
         borderRadius: 14,
-        overflow: 'hidden',
-        backgroundColor: 'rgba(245,245,245,0.85)',
+        overflow: "hidden",
+        backgroundColor: "rgba(245,245,245,0.85)",
     },
     alertContent: {
         paddingTop: 20,
         paddingHorizontal: 16,
         paddingBottom: 20,
-        alignItems: 'center',
+        alignItems: "center",
     },
     alertTitle: {
         fontSize: 17,
-        fontWeight: '600',
-        color: '#000',
-        textAlign: 'center',
+        fontWeight: "600",
+        color: "#000",
+        textAlign: "center",
         marginBottom: 4,
     },
     alertMessage: {
         fontSize: 13,
-        color: '#000',
-        textAlign: 'center',
+        color: "#000",
+        textAlign: "center",
         lineHeight: 18,
     },
     alertButtons: {
-        flexDirection: 'row',
+        flexDirection: "row",
         borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: '#3C3C4336',
+        borderTopColor: "#3C3C4336",
     },
     alertButton: {
         flex: 1,
         height: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     alertButtonSeparator: {
         width: StyleSheet.hairlineWidth,
-        backgroundColor: '#3C3C4336',
-        height: '100%',
+        backgroundColor: "#3C3C4336",
+        height: "100%",
     },
     alertButtonTextCancel: {
         fontSize: 17,
-        color: '#007AFF',
-        fontWeight: '400',
+        color: "#007AFF",
+        fontWeight: "400",
     },
     alertButtonTextConfirm: {
         fontSize: 17,
-        color: '#007AFF',
-        fontWeight: '600',
+        color: "#007AFF",
+        fontWeight: "600",
     },
 });

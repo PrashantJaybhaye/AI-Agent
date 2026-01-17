@@ -18,6 +18,7 @@ import Animated, {
     Easing,
     interpolate,
     runOnJS,
+    useAnimatedProps,
     useAnimatedStyle,
     useDerivedValue,
     useSharedValue,
@@ -64,14 +65,14 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
     const durationString = session?.duration || "3 min";
     const initialSeconds = parseInt(durationString) * 60;
     const [remainingSeconds, setRemainingSeconds] = useState(
-        initialSeconds || 180
+        initialSeconds || 180,
     );
 
     const blobColor = session?.accentColor || colors.teal;
 
     // Audio State
     const [isAudioEnabled, setIsAudioEnabled] = useState(
-        session?.playAudio === "true"
+        session?.playAudio === "true",
     );
     // Audio State handled by expo-audio hook
     const player = useAudioPlayer(session?.audioUri || null);
@@ -123,7 +124,7 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
             });
 
             const achievementResult = await addBreathingExerciseAchievement(
-                userData.uid
+                userData.uid,
             );
 
             // Check if a new achievement was earned
@@ -159,11 +160,11 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
             });
         }, 1000);
 
-        const duration = 4000;
+        const duration = 5000;
         progress.value = withRepeat(
-            withTiming(1, { duration, easing: Easing.inOut(Easing.quad) }),
+            withTiming(1, { duration, easing: Easing.inOut(Easing.sin) }),
             -1,
-            true
+            true,
         );
 
         return () => clearInterval(timer);
@@ -198,7 +199,7 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
             opacity: interpolate(
                 progress.value,
                 [0, 0.05, 0.95, 1],
-                [0.5, 1, 1, 0.5]
+                [0.5, 1, 1, 0.5],
             ),
         };
     });
@@ -209,6 +210,16 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
         const scaleY = interpolate(progress.value, [0, 1], [1, 1.05]);
         return {
             transform: [{ translateY }, { scaleY }],
+        };
+    });
+
+    // Mouth Animation - smile grows during inhale, shrinks during exhale
+    const mouthAnimatedProps = useAnimatedProps(() => {
+        // When breathing in (progress 0->1), smile gets bigger (more curve)
+        // When breathing out (progress 1->0), smile gets smaller
+        const smileIntensity = interpolate(progress.value, [0, 1], [85, 105]);
+        return {
+            d: `M 40 80 Q 80 ${smileIntensity} 120 80`,
         };
     });
 
@@ -314,9 +325,9 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
                             strokeWidth="6"
                             strokeLinecap="round"
                         />
-                        {/* Mouth */}
-                        <Path
-                            d="M 40 80 Q 80 100 120 80"
+                        {/* Mouth - Animated Smile */}
+                        <AnimatedPath
+                            animatedProps={mouthAnimatedProps}
                             fill="none"
                             stroke="#5C5C5C"
                             strokeWidth="6"
@@ -328,6 +339,8 @@ export default function BreathingExercise({ session }: BreathingExerciseProps) {
         </View>
     );
 }
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const styles = StyleSheet.create({
     container: {
