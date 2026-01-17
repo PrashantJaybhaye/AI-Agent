@@ -43,9 +43,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#FFF3E2",
+          "backgroundColor": "#F9ECDB",
           "dark": {
-            "backgroundColor": "#FFF3E2"
+            "backgroundColor": "#F9ECDB"
           }
         }
       ],
@@ -55,10 +55,7 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for AI voice conversations"
         }
       ],
-      [
-        "@livekit/react-native-expo-plugin",
-        "@elevenlabs/react-native"
-      ],
+      ["@livekit/react-native-expo-plugin", "@elevenlabs/react-native"],
       "expo-brightness",
       "expo-web-browser",
       "expo-video",

@@ -61,5 +61,21 @@
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "description": "Your Personal AI-Powered Mindfulness Companion",
+  "author": "Prashant Jaybhaye",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PrashantJaybhaye/AI-Agent.git"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "mindfulness",
+    "ai",
+    "meditation",
+    "livekit",
+    "elevenlabs"
+  ]
 }
