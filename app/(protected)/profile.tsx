@@ -1,5 +1,4 @@
 import { db } from "@/utils/firebase";
-import { getStreakEntries } from "@/utils/streak";
 import { Session, StreakEntry } from "@/utils/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +6,13 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+    collection,
+    onSnapshot,
+    orderBy,
+    query,
+    where,
+} from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
     Dimensions,
@@ -21,14 +26,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import Animated, {
-    Easing,
-    cancelAnimation,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withTiming,
-} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUserContext } from "../../context/UserContext";
 
@@ -192,15 +189,9 @@ export default function ProfileScreen() {
         currentStreak: 0,
         dailyActivity: [0, 0, 0, 0, 0, 0, 0],
     });
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [streakEntries, setStreakEntries] = useState<StreakEntry[]>([]);
     const [settingsVisible, setSettingsVisible] = useState(false);
-
-    const spinValue = useSharedValue(0);
-    const animatedSpinStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ rotate: `${spinValue.value * 360}deg` }],
-        };
-    });
 
     const handleShare = async () => {
         const message = `I'm on a ${stats.currentStreak}-day streak with Siora! 🧘‍♂️\n\nTotal Focus: ${stats.totalDurationMinutes} mins\nSessions: ${stats.totalSessions}\n\nCheck out my profile: https://siora.app/u/${userData?.uid}`;
@@ -225,7 +216,7 @@ export default function ProfileScreen() {
     };
 
     const processSessions = useCallback(
-        async (sessions: Session[], streakEntries: StreakEntry[]) => {
+        (sessions: Session[], streakEntries: StreakEntry[]) => {
             const totalSessions = sessions.length; // Call sessions
             const totalDurationSecs = sessions.reduce(
                 (acc, s) => acc + (s.call_duration_secs || 0),
@@ -239,7 +230,7 @@ export default function ProfileScreen() {
             );
 
             // Weekly activity from breathing exercises
-            const breathingActivity = await calculateBreathingActivity(streakEntries);
+            const breathingActivity = calculateBreathingActivity(streakEntries);
 
             // Streak from breathing exercises
             const breathingStreak = calculateBreathingStreak(streakEntries);
@@ -258,54 +249,56 @@ export default function ProfileScreen() {
         []
     );
 
+    // Real-time listener for sessions
     useEffect(() => {
         if (!userData) return;
 
-        setIsRefreshing(true);
-
-        // Fetch sessions
         const sessionsRef = collection(db, "session");
         const q = query(sessionsRef, where("user_id", "==", userData.uid));
 
-        const unsubscribe = onSnapshot(
-            q,
-            async (querySnapshot) => {
-                const sessions: Session[] = [];
-                querySnapshot.forEach((doc) =>
-                    sessions.push({ id: doc.id, ...doc.data() } as Session)
-                );
-
-                // Fetch streak entries
-                const streakEntries = await getStreakEntries(userData.uid);
-
-                await processSessions(sessions, streakEntries);
-                setIsRefreshing(false);
-            },
-            (error) => {
-                console.error("Error fetching session data:", error);
-                setIsRefreshing(false);
-            }
-        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(
+                (doc) =>
+                    ({
+                        id: doc.id,
+                        ...doc.data(),
+                    }) as Session
+            );
+            setSessions(data);
+        });
 
         return () => unsubscribe();
-    }, [userData, processSessions]);
+    }, [userData]);
 
-    const onRefresh = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setIsRefreshing(true);
-        spinValue.value = withRepeat(
-            withTiming(1, { duration: 1000, easing: Easing.linear }),
-            -1,
-            false
+    // Real-time listener for streak entries
+    useEffect(() => {
+        if (!userData) return;
+
+        const streakRef = collection(db, "streak");
+        const q = query(
+            streakRef,
+            where("user_id", "==", userData.uid),
+            orderBy("completion_time", "desc")
         );
 
-        // Simulate refresh duration
-        setTimeout(() => {
-            setIsRefreshing(false);
-            spinValue.value = 0; // Reset spinner
-            cancelAnimation(spinValue);
-        }, 1500);
-    };
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(
+                (doc) =>
+                    ({
+                        id: doc.id,
+                        ...doc.data(),
+                    }) as StreakEntry
+            );
+            setStreakEntries(data);
+        });
+
+        return () => unsubscribe();
+    }, [userData]);
+
+    // Update stats when data changes
+    useEffect(() => {
+        processSessions(sessions, streakEntries);
+    }, [sessions, streakEntries, processSessions]);
 
     const calculateStreak = (sessions: Session[]) => {
         if (!sessions.length) return 0;
@@ -424,7 +417,7 @@ export default function ProfileScreen() {
         return streak;
     };
 
-    const calculateBreathingActivity = async (streakEntries: StreakEntry[]) => {
+    const calculateBreathingActivity = (streakEntries: StreakEntry[]) => {
         const activity = [0, 0, 0, 0, 0, 0, 0];
         const today = new Date();
         const day = today.getDay();
@@ -476,11 +469,6 @@ export default function ProfileScreen() {
                             />
                         </TouchableOpacity>
                     )}
-                    <TouchableOpacity style={styles.settingsBtn} onPress={onRefresh}>
-                        <Animated.View style={animatedSpinStyle}>
-                            <Ionicons name="refresh" size={20} color={COLORS.primary} />
-                        </Animated.View>
-                    </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.settingsBtn}
                         onPress={() => setSettingsVisible(true)}

@@ -1,40 +1,54 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ConfirmModal } from '../../../components/admin/ConfirmModal';
-import { SessionCard } from '../../../components/admin/SessionCard';
-import { UserCard } from '../../../components/admin/UserCard';
-import { UserDetailModal } from '../../../components/admin/UserDetailModal';
-import { useUserContext } from '../../../context/UserContext';
-import { db } from '../../../utils/firebase';
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import {
+    collection,
+    deleteDoc,
+    doc,
+    getDocs,
+    orderBy,
+    query,
+    updateDoc,
+    where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import Animated, { FadeInUp } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ConfirmModal } from "../../../components/admin/ConfirmModal";
+import { SessionCard } from "../../../components/admin/SessionCard";
+import { UserCard } from "../../../components/admin/UserCard";
+import { UserDetailModal } from "../../../components/admin/UserDetailModal";
+import { useUserContext } from "../../../context/UserContext";
+import { db } from "../../../utils/firebase";
 
 const COLORS = {
-    bg: '#F2F2F7', // iOS System Gray 6
-    card: '#FFFFFF',
-    cardBorder: 'rgba(0,0,0,0.04)', // Very subtle border/shadow outline
-    primary: '#000000',
-    secondary: '#8E8E93', // iOS System Gray
-    accent: '#007AFF', // iOS System Blue
-    danger: '#FF3B30', // iOS System Red
-    success: '#34C759', // iOS System Green
+    bg: "#F2F2F7", // iOS System Gray 6
+    card: "#FFFFFF",
+    cardBorder: "rgba(0,0,0,0.04)", // Very subtle border/shadow outline
+    primary: "#000000",
+    secondary: "#8E8E93", // iOS System Gray
+    accent: "#007AFF", // iOS System Blue
+    danger: "#FF3B30", // iOS System Red
+    success: "#34C759", // iOS System Green
 };
 
-type ContentTab = 'users' | 'sessions';
+type ContentTab = "users" | "sessions";
 
 const BentoCard = ({ children, style, delay = 0, colSpan = 1 }: any) => (
     <Animated.View
         entering={FadeInUp.delay(delay)}
-        style={[
-            styles.bentoCard,
-            { flex: colSpan },
-            style
-        ]}
+        style={[styles.bentoCard, { flex: colSpan }, style]}
     >
         {children}
     </Animated.View>
@@ -44,13 +58,18 @@ const ActivityBar = ({ height, label, active }: any) => (
     <View style={styles.activityBarContainer}>
         <View style={styles.barTrack}>
             <LinearGradient
-                colors={active ? ['#3B82F6', '#60A5FA'] : ['#E5E7EB', '#F3F4F6']}
+                colors={active ? ["#3B82F6", "#60A5FA"] : ["#E5E7EB", "#F3F4F6"]}
                 start={{ x: 0, y: 1 }}
                 end={{ x: 0, y: 0 }}
-                style={[styles.activityBarGradient, { height: `${height}%`, opacity: 1 }]}
+                style={[
+                    styles.activityBarGradient,
+                    { height: `${height}%`, opacity: 1 },
+                ]}
             />
         </View>
-        <Text style={[styles.activityLabel, active && styles.activeLabel]}>{label}</Text>
+        <Text style={[styles.activityLabel, active && styles.activeLabel]}>
+            {label}
+        </Text>
         {active && <View style={styles.activeDot} />}
     </View>
 );
@@ -68,7 +87,7 @@ export default function AdminDashboard() {
     const [refreshing, setRefreshing] = useState(false);
 
     // Content tab
-    const [activeContentTab, setActiveContentTab] = useState<ContentTab>('users');
+    const [activeContentTab, setActiveContentTab] = useState<ContentTab>("users");
 
     // Users management
     const [users, setUsers] = useState<any[]>([]);
@@ -87,8 +106,8 @@ export default function AdminDashboard() {
         destructive?: boolean;
     }>({
         visible: false,
-        title: '',
-        message: '',
+        title: "",
+        message: "",
         onConfirm: () => { },
         destructive: false,
     });
@@ -96,38 +115,38 @@ export default function AdminDashboard() {
     // Fetch total users
     const fetchTotalUsers = async () => {
         try {
-            const usersRef = collection(db, 'users');
+            const usersRef = collection(db, "users");
             const usersSnapshot = await getDocs(usersRef);
             setTotalUsers(usersSnapshot.size);
         } catch (error) {
-            console.error('Error fetching total users:', error);
+            console.error("Error fetching total users:", error);
         }
     };
 
     // Fetch users list
     const fetchUsers = async () => {
         try {
-            const usersRef = collection(db, 'users');
-            const usersQuery = query(usersRef, orderBy('displayName', 'asc'));
+            const usersRef = collection(db, "users");
+            const usersQuery = query(usersRef, orderBy("displayName", "asc"));
             const usersSnapshot = await getDocs(usersQuery);
-            const usersList = usersSnapshot.docs.map(doc => ({
+            const usersList = usersSnapshot.docs.map((doc) => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
             }));
             setUsers(usersList);
         } catch (error) {
-            console.error('Error fetching users:', error);
+            console.error("Error fetching users:", error);
         }
     };
 
     // Fetch sessions
     const fetchSessions = async () => {
         try {
-            const sessionsRef = collection(db, 'session');
+            const sessionsRef = collection(db, "session");
             const sessionsSnapshot = await getDocs(sessionsRef);
-            const sessionsList = sessionsSnapshot.docs.map(doc => ({
+            const sessionsList = sessionsSnapshot.docs.map((doc) => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
             }));
 
             // Sort by created_at in memory (since it's a string ISO date)
@@ -140,7 +159,7 @@ export default function AdminDashboard() {
             setSessions(sessionsList);
             console.log(`Fetched ${sessionsList.length} sessions`);
         } catch (error) {
-            console.error('Error fetching sessions:', error);
+            console.error("Error fetching sessions:", error);
         }
     };
 
@@ -152,19 +171,19 @@ export default function AdminDashboard() {
 
         setConfirmModal({
             visible: true,
-            title: 'Delete User',
+            title: "Delete User",
             message: `Are you sure you want to delete ${user.displayName || user.email}? This action cannot be undone.`,
             destructive: true,
             onConfirm: async () => {
                 try {
-                    await deleteDoc(doc(db, 'users', user.id));
+                    await deleteDoc(doc(db, "users", user.id));
                     await fetchUsers();
                     await fetchTotalUsers();
                     setConfirmModal({ ...confirmModal, visible: false });
                 } catch (error) {
-                    console.error('Error deleting user:', error);
+                    console.error("Error deleting user:", error);
                 }
-            }
+            },
         });
     };
 
@@ -176,13 +195,13 @@ export default function AdminDashboard() {
 
         setConfirmModal({
             visible: true,
-            title: user.isAdmin ? 'Revoke Admin' : 'Grant Admin',
-            message: `Are you sure you want to ${user.isAdmin ? 'revoke admin privileges from' : 'grant admin privileges to'} ${user.displayName || user.email}?`,
+            title: user.isAdmin ? "Revoke Admin" : "Grant Admin",
+            message: `Are you sure you want to ${user.isAdmin ? "revoke admin privileges from" : "grant admin privileges to"} ${user.displayName || user.email}?`,
             destructive: user.isAdmin,
             onConfirm: async () => {
                 try {
-                    await updateDoc(doc(db, 'users', user.id), {
-                        isAdmin: !user.isAdmin
+                    await updateDoc(doc(db, "users", user.id), {
+                        isAdmin: !user.isAdmin,
                     });
                     await fetchUsers();
                     if (showUserDetail && selectedUser?.id === user.id) {
@@ -190,9 +209,9 @@ export default function AdminDashboard() {
                     }
                     setConfirmModal({ ...confirmModal, visible: false });
                 } catch (error) {
-                    console.error('Error updating user:', error);
+                    console.error("Error updating user:", error);
                 }
-            }
+            },
         });
     };
 
@@ -200,26 +219,27 @@ export default function AdminDashboard() {
     const handleDeleteSession = (session: any) => {
         setConfirmModal({
             visible: true,
-            title: 'Delete Session',
-            message: 'Are you sure you want to delete this session? This action cannot be undone.',
+            title: "Delete Session",
+            message:
+                "Are you sure you want to delete this session? This action cannot be undone.",
             destructive: true,
             onConfirm: async () => {
                 try {
-                    await deleteDoc(doc(db, 'session', session.id));
+                    await deleteDoc(doc(db, "session", session.id));
                     await fetchSessions();
                     await fetchWeeklyActivity();
                     setConfirmModal({ ...confirmModal, visible: false });
                 } catch (error) {
-                    console.error('Error deleting session:', error);
+                    console.error("Error deleting session:", error);
                 }
-            }
+            },
         });
     };
 
     // Fetch weekly activity
     const fetchWeeklyActivity = async () => {
         try {
-            const sessionsRef = collection(db, 'session');
+            const sessionsRef = collection(db, "session");
 
             const now = new Date();
             const currentDay = now.getDay();
@@ -232,8 +252,8 @@ export default function AdminDashboard() {
             // Querying strings with >= works for ISO dates, so we use startOfWeek.toISOString()
             const weekQuery = query(
                 sessionsRef,
-                where('created_at', '>=', startOfWeek.toISOString()),
-                orderBy('created_at', 'asc')
+                where("created_at", ">=", startOfWeek.toISOString()),
+                orderBy("created_at", "asc")
             );
 
             const sessionsSnapshot = await getDocs(weekQuery);
@@ -257,13 +277,13 @@ export default function AdminDashboard() {
             });
 
             const maxActivity = Math.max(...activityData, 1);
-            const normalizedActivity = activityData.map(count =>
+            const normalizedActivity = activityData.map((count) =>
                 maxActivity > 0 ? Math.round((count / maxActivity) * 100) : 0
             );
 
             setWeeklyActivity(normalizedActivity);
         } catch (error) {
-            console.error('Error fetching weekly activity:', error);
+            console.error("Error fetching weekly activity:", error);
             // Fallback to zeros instead of fake data to show real state
             setWeeklyActivity([0, 0, 0, 0, 0, 0, 0]);
         }
@@ -272,13 +292,13 @@ export default function AdminDashboard() {
     // Calculate retention rate
     const calculateRetention = async () => {
         try {
-            const sessionsRef = collection(db, 'session');
+            const sessionsRef = collection(db, "session");
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
             const recentQuery = query(
                 sessionsRef,
-                where('created_at', '>=', thirtyDaysAgo.toISOString())
+                where("created_at", ">=", thirtyDaysAgo.toISOString())
             );
 
             const recentSnapshot = await getDocs(recentQuery);
@@ -292,10 +312,11 @@ export default function AdminDashboard() {
             });
 
             const activeUsers = uniqueUsers.size;
-            const retention = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
+            const retention =
+                totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
             setRetentionRate(retention);
         } catch (error) {
-            console.error('Error calculating retention:', error);
+            console.error("Error calculating retention:", error);
             setRetentionRate(85);
         }
     };
@@ -308,7 +329,7 @@ export default function AdminDashboard() {
                 fetchTotalUsers(),
                 fetchWeeklyActivity(),
                 fetchUsers(),
-                fetchSessions()
+                fetchSessions(),
             ]);
             setLoading(false);
         };
@@ -330,40 +351,66 @@ export default function AdminDashboard() {
             fetchTotalUsers(),
             fetchWeeklyActivity(),
             fetchUsers(),
-            fetchSessions()
+            fetchSessions(),
         ]);
         setRefreshing(false);
     };
 
     return (
         <View style={styles.container}>
+            <LinearGradient
+                colors={["#FFFFFF", "#F2F2F7"]}
+                style={StyleSheet.absoluteFill}
+            />
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top }]}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity
-                        style={styles.backBtn}
-                        onPress={() => router.back()}
-                    >
-                        <Ionicons name="chevron-back" size={28} color={COLORS.accent} />
-                        <Text style={styles.backText}>Back</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.headerTitleContainer}>
+            <BlurView
+                intensity={80}
+                tint="light"
+                style={[
+                    styles.header,
+                    {
+                        paddingTop: insets.top,
+                        height: 60 + insets.top,
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 100,
+                    },
+                ]}
+            >
+                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+                    <Ionicons name="chevron-back" size={28} color={COLORS.accent} />
+                    <Text style={styles.backText}>Back</Text>
+                </TouchableOpacity>
+                <View
+                    style={[styles.titleWrapper, { top: insets.top, height: 60 }]}
+                    pointerEvents="none"
+                >
                     <Text style={styles.headerTitle}>Dashboard</Text>
                 </View>
-            </View>
+            </BlurView>
 
             {loading ? (
-                <View style={styles.loadingContainer}>
+                <View
+                    style={[styles.loadingContainer, { paddingTop: insets.top + 72 }]}
+                >
                     <ActivityIndicator size="large" color={COLORS.accent} />
                     <Text style={styles.loadingText}>Loading dashboard...</Text>
                 </View>
             ) : (
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { paddingTop: insets.top + 72 },
+                    ]}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.accent]} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={[COLORS.accent]}
+                        />
                     }
                 >
                     {/* Overview Section */}
@@ -372,7 +419,11 @@ export default function AdminDashboard() {
                             {/* Activity Chart - Compact */}
                             <BentoCard colSpan={2} delay={100} style={{ height: 150 }}>
                                 <View style={styles.cardHeader}>
-                                    <Ionicons name="bar-chart" size={14} color={COLORS.secondary} />
+                                    <Ionicons
+                                        name="bar-chart"
+                                        size={14}
+                                        color={COLORS.secondary}
+                                    />
                                     <Text style={styles.cardLabel}>ACTIVITY</Text>
                                 </View>
                                 <View style={styles.chartContainer}>
@@ -380,7 +431,7 @@ export default function AdminDashboard() {
                                         <ActivityBar
                                             key={index}
                                             height={val}
-                                            label={['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]}
+                                            label={["M", "T", "W", "T", "F", "S", "S"][index]}
                                             active={new Date().getDay() === (index + 1) % 7}
                                         />
                                     ))}
@@ -388,19 +439,31 @@ export default function AdminDashboard() {
                             </BentoCard>
 
                             {/* Profile Card - Compact */}
-                            <BentoCard colSpan={1} delay={200} style={{ height: 150, justifyContent: 'space-between', backgroundColor: '#FFF' }}>
+                            <BentoCard
+                                colSpan={1}
+                                delay={200}
+                                style={{
+                                    height: 150,
+                                    justifyContent: "space-between",
+                                    backgroundColor: "#FFF",
+                                }}
+                            >
                                 <View style={styles.cardHeader}>
                                     <Ionicons name="person" size={14} color={COLORS.secondary} />
                                     <Text style={styles.cardLabel}>PROFILE</Text>
                                 </View>
 
                                 <View style={styles.profileContent}>
-                                    <Image source={userData?.photoURL} style={styles.avatar} contentFit="cover" />
+                                    <Image
+                                        source={userData?.photoURL}
+                                        style={styles.avatar}
+                                        contentFit="cover"
+                                    />
                                     <View style={styles.proBadge}>
                                         <Text style={styles.proBadgeText}>ADMIN</Text>
                                     </View>
                                     <Text style={styles.profileName} numberOfLines={1}>
-                                        {userData?.displayName || 'Admin'}
+                                        {userData?.displayName || "Admin"}
                                     </Text>
                                 </View>
                             </BentoCard>
@@ -408,49 +471,85 @@ export default function AdminDashboard() {
 
                         <View style={styles.gridRow}>
                             <BentoCard colSpan={1} delay={300}>
-                                <Text style={styles.cardValueSmall}>{totalUsers.toLocaleString()}</Text>
+                                <Text style={styles.cardValueSmall}>
+                                    {totalUsers.toLocaleString()}
+                                </Text>
                                 <Text style={styles.cardLabelBottom}>TOTAL USERS</Text>
                             </BentoCard>
                             <BentoCard colSpan={1} delay={400}>
                                 <Text style={styles.cardValueSmall}>{retentionRate}%</Text>
                                 <Text style={styles.cardLabelBottom}>RETENTION</Text>
                             </BentoCard>
-                            <BentoCard colSpan={1} delay={500} style={{ alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.accent }}>
+                            <BentoCard
+                                colSpan={1}
+                                delay={500}
+                                style={{
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    backgroundColor: COLORS.accent,
+                                }}
+                            >
                                 <Ionicons name="add" size={28} color="#FFF" />
                             </BentoCard>
                         </View>
                     </View>
 
                     {/* Segmented Control */}
-                    <Animated.View entering={FadeInUp.delay(500)} style={styles.tabsContainer}>
+                    <Animated.View
+                        entering={FadeInUp.delay(500)}
+                        style={styles.tabsContainer}
+                    >
                         <TouchableOpacity
-                            style={[styles.tab, activeContentTab === 'users' && styles.activeTab]}
-                            onPress={() => setActiveContentTab('users')}
+                            style={[
+                                styles.tab,
+                                activeContentTab === "users" && styles.activeTab,
+                            ]}
+                            onPress={() => setActiveContentTab("users")}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.tabText, activeContentTab === 'users' && styles.activeTabText]}>
+                            <Text
+                                style={[
+                                    styles.tabText,
+                                    activeContentTab === "users" && styles.activeTabText,
+                                ]}
+                            >
                                 Users
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.tab, activeContentTab === 'sessions' && styles.activeTab]}
-                            onPress={() => setActiveContentTab('sessions')}
+                            style={[
+                                styles.tab,
+                                activeContentTab === "sessions" && styles.activeTab,
+                            ]}
+                            onPress={() => setActiveContentTab("sessions")}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.tabText, activeContentTab === 'sessions' && styles.activeTabText]}>
+                            <Text
+                                style={[
+                                    styles.tabText,
+                                    activeContentTab === "sessions" && styles.activeTabText,
+                                ]}
+                            >
                                 Sessions
                             </Text>
                         </TouchableOpacity>
                     </Animated.View>
 
                     {/* Content Section */}
-                    <Animated.View entering={FadeInUp.delay(500)} style={styles.contentSection}>
-                        {activeContentTab === 'users' ? (
+                    <Animated.View
+                        entering={FadeInUp.delay(500)}
+                        style={styles.contentSection}
+                    >
+                        {activeContentTab === "users" ? (
                             <View style={styles.listContainer}>
                                 {users.length === 0 ? (
                                     <View style={styles.emptyState}>
-                                        <Ionicons name="people-outline" size={48} color={COLORS.secondary} />
+                                        <Ionicons
+                                            name="people-outline"
+                                            size={48}
+                                            color={COLORS.secondary}
+                                        />
                                         <Text style={styles.emptyText}>No users found</Text>
                                     </View>
                                 ) : (
@@ -474,7 +573,11 @@ export default function AdminDashboard() {
                             <View style={styles.listContainer}>
                                 {sessions.length === 0 ? (
                                     <View style={styles.emptyState}>
-                                        <Ionicons name="time-outline" size={48} color={COLORS.secondary} />
+                                        <Ionicons
+                                            name="time-outline"
+                                            size={48}
+                                            color={COLORS.secondary}
+                                        />
                                         <Text style={styles.emptyText}>No sessions found</Text>
                                     </View>
                                 ) : (
@@ -523,12 +626,12 @@ export default function AdminDashboard() {
                 onUpdate={async (data) => {
                     if (!selectedUser) return;
                     try {
-                        const userRef = doc(db, 'users', selectedUser.id);
+                        const userRef = doc(db, "users", selectedUser.id);
                         await updateDoc(userRef, data);
                         await fetchUsers(); // Refresh list
                         setSelectedUser({ ...selectedUser, ...data });
                     } catch (error) {
-                        console.error('Error updating profile:', error);
+                        console.error("Error updating profile:", error);
                         throw error;
                     }
                 }}
@@ -544,29 +647,32 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.bg,
     },
     header: {
-        backgroundColor: COLORS.bg,
-        paddingBottom: 8,
-    },
-    headerTop: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         paddingHorizontal: 8,
-        height: 44,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(0,0,0,0.05)",
+        zIndex: 100,
     },
-    headerTitleContainer: {
-        paddingHorizontal: 20,
-        marginTop: 8,
+    titleWrapper: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        alignItems: "center",
+        justifyContent: "center",
     },
     headerTitle: {
-        fontSize: 34,
-        fontWeight: '700',
+        fontSize: 20,
+        fontWeight: "700",
         color: COLORS.primary,
-        letterSpacing: 0.3,
+        letterSpacing: -0.4,
     },
     backBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 4,
+        height: "100%",
+        zIndex: 10,
     },
     backText: {
         fontSize: 17,
@@ -574,18 +680,19 @@ const styles = StyleSheet.create({
         marginLeft: -4,
     },
     scrollContent: {
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
     },
     gridContainer: {
         gap: 12,
         marginBottom: 20,
     },
     gridRow: {
-        flexDirection: 'row',
+        flexDirection: "row",
         gap: 12,
     },
     bentoCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: "#FFF",
         borderRadius: 18,
         padding: 16,
         shadowColor: "#000",
@@ -598,55 +705,55 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 6,
         marginBottom: 12,
     },
     cardLabel: {
         color: COLORS.secondary,
         fontSize: 11,
-        fontWeight: '600',
+        fontWeight: "600",
         letterSpacing: 0.4,
     },
     chartContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        justifyContent: "space-between",
         flex: 1,
-        alignItems: 'flex-end',
+        alignItems: "flex-end",
         paddingBottom: 4,
         paddingHorizontal: 4,
     },
     activityBarContainer: {
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        height: '100%',
+        alignItems: "center",
+        justifyContent: "flex-end",
+        height: "100%",
         gap: 6,
         width: 20,
     },
     barTrack: {
         width: 12,
         flex: 1,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: "#F2F2F7",
         borderRadius: 6,
-        overflow: 'hidden',
-        justifyContent: 'flex-end',
+        overflow: "hidden",
+        justifyContent: "flex-end",
     },
     activityBarGradient: {
-        width: '100%',
+        width: "100%",
         borderRadius: 6,
     },
     activityLabel: {
         color: COLORS.secondary,
         fontSize: 9,
-        fontWeight: '600',
+        fontWeight: "600",
     },
     activeLabel: {
         color: COLORS.accent,
-        fontWeight: '700',
+        fontWeight: "700",
     },
     activeDot: {
-        position: 'absolute',
+        position: "absolute",
         bottom: -8,
         width: 4,
         height: 4,
@@ -654,8 +761,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.accent,
     },
     profileContent: {
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         flex: 1,
         gap: 8,
     },
@@ -664,65 +771,65 @@ const styles = StyleSheet.create({
         height: 48,
         borderRadius: 24,
         borderWidth: 2,
-        borderColor: '#E5E5EA',
+        borderColor: "#E5E5EA",
         marginBottom: 4,
     },
     profileName: {
         fontSize: 13,
-        fontWeight: '600',
+        fontWeight: "600",
         color: COLORS.primary,
-        textAlign: 'center',
+        textAlign: "center",
         letterSpacing: -0.2,
     },
     profileEmail: {
         fontSize: 11,
         color: COLORS.secondary,
-        textAlign: 'center',
+        textAlign: "center",
     },
     proBadge: {
         paddingHorizontal: 8,
         paddingVertical: 4,
-        backgroundColor: '#FDE047',
+        backgroundColor: "#FDE047",
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: '#F59E0B',
+        borderColor: "#F59E0B",
     },
     proBadgeText: {
         fontSize: 9,
-        fontWeight: '800',
-        color: '#92400E',
+        fontWeight: "800",
+        color: "#92400E",
         letterSpacing: 0.5,
     },
     cardValueSmall: {
         color: COLORS.primary,
         fontSize: 28,
-        fontWeight: '700',
+        fontWeight: "700",
         letterSpacing: -0.8,
         marginBottom: 2,
     },
     cardLabelBottom: {
         color: COLORS.secondary,
         fontSize: 11,
-        fontWeight: '600',
+        fontWeight: "600",
         marginTop: 4,
         letterSpacing: 0.6,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
     },
     loadingContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
         gap: 12,
     },
     loadingText: {
         fontSize: 15,
         color: COLORS.secondary,
-        fontWeight: '400',
+        fontWeight: "400",
         letterSpacing: -0.2,
     },
     tabsContainer: {
-        flexDirection: 'row',
-        backgroundColor: '#E5E5EA', // iOS Segmented Control Background
+        flexDirection: "row",
+        backgroundColor: "#E5E5EA", // iOS Segmented Control Background
         padding: 2,
         borderRadius: 9,
         marginBottom: 16,
@@ -730,14 +837,14 @@ const styles = StyleSheet.create({
     },
     tab: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
         borderRadius: 7,
     },
     activeTab: {
-        backgroundColor: '#FFFFFF',
-        shadowColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: "#FFFFFF",
+        shadowColor: "rgba(0,0,0,0.12)",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 1,
         shadowRadius: 3,
@@ -745,12 +852,12 @@ const styles = StyleSheet.create({
     },
     tabText: {
         fontSize: 13,
-        fontWeight: '500',
-        color: '#000',
+        fontWeight: "500",
+        color: "#000",
         letterSpacing: -0.1,
     },
     activeTabText: {
-        fontWeight: '600',
+        fontWeight: "600",
     },
     contentSection: {
         gap: 0,
@@ -759,20 +866,19 @@ const styles = StyleSheet.create({
         gap: 0,
     },
     emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         paddingVertical: 48,
         gap: 10,
-        backgroundColor: '#FFF',
+        backgroundColor: "#FFF",
         borderRadius: 16,
         marginTop: 8,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: "#E5E5EA",
     },
     emptyText: {
         fontSize: 15,
         color: COLORS.secondary,
-        fontWeight: '400',
+        fontWeight: "400",
     },
 });
-
