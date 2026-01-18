@@ -3,6 +3,14 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
+} from "react-native-reanimated";
+
 import {
     collection,
     deleteDoc,
@@ -23,7 +31,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmModal } from "../../../components/admin/ConfirmModal";
 import { SessionCard } from "../../../components/admin/SessionCard";
@@ -46,12 +54,139 @@ const COLORS = {
 type ContentTab = "users" | "sessions";
 
 const BentoCard = ({ children, style, delay = 0, colSpan = 1 }: any) => (
-    <Animated.View
-        entering={FadeInUp.delay(delay)}
-        style={[styles.bentoCard, { flex: colSpan }, style]}
-    >
-        {children}
-    </Animated.View>
+    <View style={[styles.bentoCard, { flex: colSpan }, style]}>{children}</View>
+);
+
+const SkeletonItem = ({ style, borderRadius = 8 }: any) => {
+    const opacity = useSharedValue(0.3);
+
+    useEffect(() => {
+        opacity.value = withRepeat(
+            withSequence(
+                withTiming(0.7, { duration: 1000 }),
+                withTiming(0.3, { duration: 1000 }),
+            ),
+            -1,
+            true,
+        );
+    }, []);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
+    return (
+        <Animated.View
+            style={[
+                { backgroundColor: "#E1E9EE", borderRadius },
+                style,
+                animatedStyle,
+            ]}
+        />
+    );
+};
+
+const DashboardSkeleton = () => (
+    <View style={styles.gridContainer}>
+        <View style={styles.gridRow}>
+            {/* Activity Chart Skeleton */}
+            <BentoCard colSpan={2} style={{ height: 150 }}>
+                <View
+                    style={{
+                        marginBottom: 12,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                    }}
+                >
+                    <SkeletonItem style={{ width: 14, height: 14, borderRadius: 4 }} />
+                    <SkeletonItem style={{ width: 45, height: 10 }} />
+                </View>
+                <View
+                    style={{
+                        flex: 1,
+                        flexDirection: "row",
+                        alignItems: "flex-end",
+                        justifyContent: "space-between",
+                        paddingBottom: 5,
+                        paddingHorizontal: 8,
+                    }}
+                >
+                    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                        <SkeletonItem
+                            key={i}
+                            style={{
+                                width: 12,
+                                height: 30 + Math.random() * 50,
+                                borderRadius: 6,
+                            }}
+                        />
+                    ))}
+                </View>
+            </BentoCard>
+
+            {/* Profile Skeleton */}
+            <BentoCard
+                colSpan={1}
+                style={{ height: 150, justifyContent: "space-between" }}
+            >
+                <View
+                    style={{
+                        marginBottom: 12,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                    }}
+                >
+                    <SkeletonItem style={{ width: 14, height: 14, borderRadius: 4 }} />
+                    <SkeletonItem style={{ width: 40, height: 10 }} />
+                </View>
+                <View
+                    style={{
+                        alignItems: "center",
+                        gap: 8,
+                        flex: 1,
+                        justifyContent: "center",
+                    }}
+                >
+                    <SkeletonItem style={{ width: 44, height: 44, borderRadius: 22 }} />
+                    <SkeletonItem style={{ width: 50, height: 18, borderRadius: 6 }} />
+                    <SkeletonItem style={{ width: 60, height: 10 }} />
+                </View>
+            </BentoCard>
+        </View>
+
+        <View style={styles.gridRow}>
+            <BentoCard
+                colSpan={1}
+                style={{ aspectRatio: 1, justifyContent: "space-between" }}
+            >
+                <View>
+                    <SkeletonItem style={{ width: 60, height: 28, marginBottom: 8 }} />
+                    <SkeletonItem style={{ width: 70, height: 10 }} />
+                </View>
+            </BentoCard>
+            <BentoCard
+                colSpan={1}
+                style={{ aspectRatio: 1, justifyContent: "space-between" }}
+            >
+                <View>
+                    <SkeletonItem style={{ width: 45, height: 28, marginBottom: 8 }} />
+                    <SkeletonItem style={{ width: 65, height: 10 }} />
+                </View>
+            </BentoCard>
+            <BentoCard
+                colSpan={1}
+                style={{
+                    aspectRatio: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            >
+                <SkeletonItem style={{ width: 32, height: 32, borderRadius: 16 }} />
+            </BentoCard>
+        </View>
+    </View>
 );
 
 const ActivityBar = ({ height, label, active }: any) => (
@@ -253,7 +388,7 @@ export default function AdminDashboard() {
             const weekQuery = query(
                 sessionsRef,
                 where("created_at", ">=", startOfWeek.toISOString()),
-                orderBy("created_at", "asc")
+                orderBy("created_at", "asc"),
             );
 
             const sessionsSnapshot = await getDocs(weekQuery);
@@ -278,7 +413,7 @@ export default function AdminDashboard() {
 
             const maxActivity = Math.max(...activityData, 1);
             const normalizedActivity = activityData.map((count) =>
-                maxActivity > 0 ? Math.round((count / maxActivity) * 100) : 0
+                maxActivity > 0 ? Math.round((count / maxActivity) * 100) : 0,
             );
 
             setWeeklyActivity(normalizedActivity);
@@ -298,7 +433,7 @@ export default function AdminDashboard() {
 
             const recentQuery = query(
                 sessionsRef,
-                where("created_at", ">=", thirtyDaysAgo.toISOString())
+                where("created_at", ">=", thirtyDaysAgo.toISOString()),
             );
 
             const recentSnapshot = await getDocs(recentQuery);
@@ -391,29 +526,24 @@ export default function AdminDashboard() {
                 </View>
             </BlurView>
 
-            {loading ? (
-                <View
-                    style={[styles.loadingContainer, { paddingTop: insets.top + 72 }]}
-                >
-                    <ActivityIndicator size="large" color={COLORS.accent} />
-                    <Text style={styles.loadingText}>Loading dashboard...</Text>
-                </View>
-            ) : (
-                <ScrollView
-                    contentContainerStyle={[
-                        styles.scrollContent,
-                        { paddingTop: insets.top + 72 },
-                    ]}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            colors={[COLORS.accent]}
-                        />
-                    }
-                >
-                    {/* Overview Section */}
+            <ScrollView
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { paddingTop: insets.top + 72 },
+                ]}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[COLORS.accent]}
+                    />
+                }
+            >
+                {/* Overview Section */}
+                {loading ? (
+                    <DashboardSkeleton />
+                ) : (
                     <View style={styles.gridContainer}>
                         <View style={styles.gridRow}>
                             {/* Activity Chart - Compact */}
@@ -493,108 +623,113 @@ export default function AdminDashboard() {
                             </BentoCard>
                         </View>
                     </View>
+                )}
 
-                    {/* Segmented Control */}
-                    <Animated.View
-                        entering={FadeInUp.delay(500)}
-                        style={styles.tabsContainer}
+                {/* Segmented Control */}
+                <View style={styles.tabsContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.tab,
+                            activeContentTab === "users" && styles.activeTab,
+                        ]}
+                        onPress={() => setActiveContentTab("users")}
+                        activeOpacity={0.7}
                     >
-                        <TouchableOpacity
+                        <Text
                             style={[
-                                styles.tab,
-                                activeContentTab === "users" && styles.activeTab,
+                                styles.tabText,
+                                activeContentTab === "users" && styles.activeTabText,
                             ]}
-                            onPress={() => setActiveContentTab("users")}
-                            activeOpacity={0.7}
                         >
-                            <Text
-                                style={[
-                                    styles.tabText,
-                                    activeContentTab === "users" && styles.activeTabText,
-                                ]}
-                            >
-                                Users
-                            </Text>
-                        </TouchableOpacity>
+                            Users
+                        </Text>
+                    </TouchableOpacity>
 
-                        <TouchableOpacity
-                            style={[
-                                styles.tab,
-                                activeContentTab === "sessions" && styles.activeTab,
-                            ]}
-                            onPress={() => setActiveContentTab("sessions")}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.tabText,
-                                    activeContentTab === "sessions" && styles.activeTabText,
-                                ]}
-                            >
-                                Sessions
-                            </Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-
-                    {/* Content Section */}
-                    <Animated.View
-                        entering={FadeInUp.delay(500)}
-                        style={styles.contentSection}
+                    <TouchableOpacity
+                        style={[
+                            styles.tab,
+                            activeContentTab === "sessions" && styles.activeTab,
+                        ]}
+                        onPress={() => setActiveContentTab("sessions")}
+                        activeOpacity={0.7}
                     >
-                        {activeContentTab === "users" ? (
-                            <View style={styles.listContainer}>
-                                {users.length === 0 ? (
-                                    <View style={styles.emptyState}>
-                                        <Ionicons
-                                            name="people-outline"
-                                            size={48}
-                                            color={COLORS.secondary}
-                                        />
-                                        <Text style={styles.emptyText}>No users found</Text>
-                                    </View>
-                                ) : (
-                                    users.map((user, index) => (
-                                        <UserCard
-                                            key={user.id}
-                                            user={user}
-                                            onPress={() => {
-                                                setSelectedUser(user);
-                                                setShowUserDetail(true);
-                                            }}
-                                            onToggleAdmin={() => handleToggleAdmin(user)}
-                                            onDelete={() => handleDeleteUser(user)}
-                                            isCurrentUser={user.id === userData?.uid}
-                                            delay={index * 50}
-                                        />
-                                    ))
-                                )}
-                            </View>
-                        ) : (
-                            <View style={styles.listContainer}>
-                                {sessions.length === 0 ? (
-                                    <View style={styles.emptyState}>
-                                        <Ionicons
-                                            name="time-outline"
-                                            size={48}
-                                            color={COLORS.secondary}
-                                        />
-                                        <Text style={styles.emptyText}>No sessions found</Text>
-                                    </View>
-                                ) : (
-                                    sessions.map((session, index) => (
-                                        <SessionCard
-                                            key={session.id}
-                                            session={session}
-                                            onDelete={() => handleDeleteSession(session)}
-                                            delay={index * 50}
-                                        />
-                                    ))
-                                )}
-                            </View>
-                        )}
-                    </Animated.View>
-                </ScrollView>
-            )}
+                        <Text
+                            style={[
+                                styles.tabText,
+                                activeContentTab === "sessions" && styles.activeTabText,
+                            ]}
+                        >
+                            Sessions
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Content Section */}
+                <View style={[styles.contentSection, loading && { flex: 1 }]}>
+                    {loading ? (
+                        <View
+                            style={{
+                                flex: 1,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                minHeight: 300,
+                            }}
+                        >
+                            <ActivityIndicator size="large" color={COLORS.secondary} />
+                        </View>
+                    ) : activeContentTab === "users" ? (
+                        <View style={styles.listContainer}>
+                            {users.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Ionicons
+                                        name="people-outline"
+                                        size={48}
+                                        color={COLORS.secondary}
+                                    />
+                                    <Text style={styles.emptyText}>No users found</Text>
+                                </View>
+                            ) : (
+                                users.map((user, index) => (
+                                    <UserCard
+                                        key={user.id}
+                                        user={user}
+                                        onPress={() => {
+                                            setSelectedUser(user);
+                                            setShowUserDetail(true);
+                                        }}
+                                        onToggleAdmin={() => handleToggleAdmin(user)}
+                                        onDelete={() => handleDeleteUser(user)}
+                                        isCurrentUser={user.id === userData?.uid}
+                                        delay={index * 50}
+                                    />
+                                ))
+                            )}
+                        </View>
+                    ) : (
+                        <View style={styles.listContainer}>
+                            {sessions.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Ionicons
+                                        name="time-outline"
+                                        size={48}
+                                        color={COLORS.secondary}
+                                    />
+                                    <Text style={styles.emptyText}>No sessions found</Text>
+                                </View>
+                            ) : (
+                                sessions.map((session, index) => (
+                                    <SessionCard
+                                        key={session.id}
+                                        session={session}
+                                        onDelete={() => handleDeleteSession(session)}
+                                        delay={index * 50}
+                                    />
+                                ))
+                            )}
+                        </View>
+                    )}
+                </View>
+            </ScrollView>
 
             {/* Confirm Modal */}
             <ConfirmModal
@@ -695,14 +830,8 @@ const styles = StyleSheet.create({
         backgroundColor: "#FFF",
         borderRadius: 18,
         padding: 16,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: "rgba(0,0,0,0.10)",
     },
     cardHeader: {
         flexDirection: "row",

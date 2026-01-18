@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import React from "react";
+// ... imports
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface UserCardProps {
     user: any;
@@ -22,7 +22,7 @@ export const UserCard: React.FC<UserCardProps> = ({
     delay = 0,
 }) => {
     return (
-        <Animated.View entering={FadeInUp.delay(delay)}>
+        <View>
             <TouchableOpacity
                 style={styles.card}
                 onPress={onPress}
@@ -36,7 +36,7 @@ export const UserCard: React.FC<UserCardProps> = ({
                     />
                     <View style={styles.info}>
                         <Text style={styles.name} numberOfLines={1}>
-                            {user.displayName || 'Unknown'}
+                            {user.displayName || "Unknown"}
                         </Text>
                         <Text style={styles.email} numberOfLines={1}>
                             {user.email}
@@ -52,9 +52,7 @@ export const UserCard: React.FC<UserCardProps> = ({
 
                 <View style={styles.actions}>
                     <TouchableOpacity
-                        style={[
-                            styles.actionBtn
-                        ]}
+                        style={[styles.actionBtn]}
                         onPress={(e) => {
                             e.stopPropagation();
                             onToggleAdmin();
@@ -69,10 +67,7 @@ export const UserCard: React.FC<UserCardProps> = ({
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[
-                            styles.actionBtn,
-                            isCurrentUser && styles.disabledBtn
-                        ]}
+                        style={[styles.actionBtn, isCurrentUser && styles.disabledBtn]}
                         onPress={(e) => {
                             e.stopPropagation();
                             onDelete();
@@ -82,30 +77,30 @@ export const UserCard: React.FC<UserCardProps> = ({
                         <Ionicons name="trash-outline" size={16} color="#FF3B30" />
                     </TouchableOpacity>
                 </View>
-            </TouchableOpacity >
-        </Animated.View >
+            </TouchableOpacity>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     card: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         padding: 12,
-        backgroundColor: '#FFF',
+        backgroundColor: "#FFF",
         borderRadius: 14,
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.03)',
+        borderColor: "rgba(0,0,0,0.03)",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.02,
         shadowRadius: 2,
     },
     leftSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         flex: 1,
         gap: 12,
     },
@@ -113,7 +108,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: "#F2F2F7",
     },
     info: {
         flex: 1,
@@ -121,44 +116,43 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#000000',
+        fontWeight: "600",
+        color: "#000000",
         letterSpacing: -0.3,
     },
     email: {
         fontSize: 13,
-        color: '#8E8E93',
-        fontWeight: '400',
+        color: "#8E8E93",
+        fontWeight: "400",
     },
     adminBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 4,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: "#F2F2F7",
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 4,
-        alignSelf: 'flex-start',
+        alignSelf: "flex-start",
     },
     adminBadgeText: {
         fontSize: 10,
-        fontWeight: '600',
-        color: '#000',
+        fontWeight: "600",
+        color: "#000",
     },
     actions: {
-        flexDirection: 'row',
+        flexDirection: "row",
         gap: 8,
     },
     actionBtn: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F2F2F7',
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#F2F2F7",
     },
     disabledBtn: {
         opacity: 0.25,
     },
 });
-
