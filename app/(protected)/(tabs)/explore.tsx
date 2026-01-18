@@ -1,18 +1,29 @@
-import { StartBrowsing } from '@/components/discovery/StartBrowsing';
-import { SuggestedUsers } from '@/components/SuggestedUsers';
-import { useUserContext } from '@/context/UserContext';
-import { db } from '@/utils/firebase';
-import { User } from '@/utils/types';
-import { useAuth } from '@clerk/clerk-expo';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { collection, deleteDoc, doc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
-import { useCallback, useEffect, useState } from 'react';
+import { StartBrowsing } from "@/components/discovery/StartBrowsing";
+import { ExploreSkeleton } from "@/components/ExploreSkeleton";
+import { SuggestedUsers } from "@/components/SuggestedUsers";
+import { useUserContext } from "@/context/UserContext";
+import { db } from "@/utils/firebase";
+import { User } from "@/utils/types";
+import { useAuth } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import {
-    ActivityIndicator,
+    collection,
+    deleteDoc,
+    doc,
+    getDocs,
+    limit,
+    orderBy,
+    query,
+    serverTimestamp,
+    setDoc,
+    where,
+} from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
+import {
     FlatList,
     StatusBar,
     StyleSheet,
@@ -20,19 +31,19 @@ import {
     TextInput,
     TouchableOpacity,
     View
-} from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const COLORS = {
-    bg: '#F9F9FB', // Subtle iOS-style off-white
-    cardBg: '#FFFFFF',
-    primary: '#1C1C1E', // iOS Label Primary
-    secondary: '#8E8E93', // iOS Label Secondary
-    accent: '#5B75F0',
-    border: '#E8E8E8', // More defined border for flat look
-    tabBg: '#E8E8E8',
-    tabActive: '#FFFFFF',
+    bg: "#F9F9FB", // Subtle iOS-style off-white
+    cardBg: "#FFFFFF",
+    primary: "#1C1C1E", // iOS Label Primary
+    secondary: "#8E8E93", // iOS Label Secondary
+    accent: "#5B75F0",
+    border: "#E8E8E8", // More defined border for flat look
+    tabBg: "#E8E8E8",
+    tabActive: "#FFFFFF",
 };
 
 export interface UserSearchResult extends User {
@@ -47,10 +58,11 @@ export default function ExploreScreen() {
     const { userId } = useAuth();
     const { userData } = useUserContext();
 
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set());
 
     // Fetch initial follow state from Firestore
@@ -59,8 +71,8 @@ export default function ExploreScreen() {
             if (!userId) return;
 
             try {
-                const followsRef = collection(db, 'follows');
-                const q = query(followsRef, where('followerId', '==', userId));
+                const followsRef = collection(db, "follows");
+                const q = query(followsRef, where("followerId", "==", userId));
                 const snapshot = await getDocs(q);
 
                 const followedIds = new Set<string>();
@@ -71,7 +83,7 @@ export default function ExploreScreen() {
 
                 setFollowedUsers(followedIds);
             } catch (error) {
-                console.error('Error fetching follow state:', error);
+                console.error("Error fetching follow state:", error);
             }
         };
 
@@ -86,8 +98,8 @@ export default function ExploreScreen() {
 
                 try {
                     // Refetch follow state
-                    const followsRef = collection(db, 'follows');
-                    const q = query(followsRef, where('followerId', '==', userId));
+                    const followsRef = collection(db, "follows");
+                    const q = query(followsRef, where("followerId", "==", userId));
                     const snapshot = await getDocs(q);
 
                     const followedIds = new Set<string>();
@@ -101,48 +113,52 @@ export default function ExploreScreen() {
                     // Update user counts if we have users loaded
                     if (allUsers.length > 0) {
                         // Fetch all follows to recalculate counts
-                        const allFollowsSnapshot = await getDocs(collection(db, 'follows'));
+                        const allFollowsSnapshot = await getDocs(collection(db, "follows"));
 
                         const followerCounts = new Map<string, number>();
                         allFollowsSnapshot.forEach((doc) => {
                             const data = doc.data();
                             const followingId = data.followingId;
-                            followerCounts.set(followingId, (followerCounts.get(followingId) || 0) + 1);
+                            followerCounts.set(
+                                followingId,
+                                (followerCounts.get(followingId) || 0) + 1,
+                            );
                         });
 
                         // Update counts in user lists
                         const updateCounts = (users: UserSearchResult[]) => {
-                            return users.map(u => ({
+                            return users.map((u) => ({
                                 ...u,
-                                memberCount: followerCounts.get(u.id) || 0
+                                memberCount: followerCounts.get(u.id) || 0,
                             }));
                         };
 
-                        setAllUsers(prev => updateCounts(prev));
-                        setSearchResults(prev => updateCounts(prev));
+                        setAllUsers((prev) => updateCounts(prev));
+                        setSearchResults((prev) => updateCounts(prev));
                     }
                 } catch (error) {
-                    console.error('Error refreshing follow state:', error);
+                    console.error("Error refreshing follow state:", error);
                 }
             };
 
             refreshFollowState();
-        }, [userId, allUsers.length])
+        }, [userId, allUsers.length]),
     );
 
     // Fetch users from Firestore
     const fetchUsers = useCallback(async () => {
         if (allUsers.length > 0) return;
 
+        setIsLoading(true);
         try {
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, orderBy('displayName', 'asc'), limit(100));
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, orderBy("displayName", "asc"), limit(100));
             const snapshot = await getDocs(q);
 
             const usersList: UserSearchResult[] = [];
 
             // Fetch all follows to calculate follower counts
-            const followsRef = collection(db, 'follows');
+            const followsRef = collection(db, "follows");
             const followsSnapshot = await getDocs(followsRef);
 
             // Count followers for each user
@@ -150,7 +166,10 @@ export default function ExploreScreen() {
             followsSnapshot.forEach((doc) => {
                 const data = doc.data();
                 const followingId = data.followingId;
-                followerCounts.set(followingId, (followerCounts.get(followingId) || 0) + 1);
+                followerCounts.set(
+                    followingId,
+                    (followerCounts.get(followingId) || 0) + 1,
+                );
             });
 
             snapshot.forEach((doc) => {
@@ -159,7 +178,7 @@ export default function ExploreScreen() {
                     usersList.push({
                         id: doc.id,
                         ...userData,
-                        username: userData.displayName?.toLowerCase().replace(/\s+/g, ''),
+                        username: userData.displayName?.toLowerCase().replace(/\s+/g, ""),
                         memberCount: followerCounts.get(doc.id) || 0, // Real follower count
                     });
                 }
@@ -167,7 +186,9 @@ export default function ExploreScreen() {
 
             setAllUsers(usersList);
         } catch (error) {
-            console.error('Error fetching users:', error);
+            console.error("Error fetching users:", error);
+        } finally {
+            setIsLoading(false);
         }
     }, [userId, allUsers.length]);
 
@@ -179,7 +200,7 @@ export default function ExploreScreen() {
     // Search with debouncing
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (searchQuery.trim() === '') {
+            if (searchQuery.trim() === "") {
                 setSearchResults([]);
                 setIsSearching(false);
             } else {
@@ -190,9 +211,10 @@ export default function ExploreScreen() {
                 }
 
                 const query = searchQuery.toLowerCase();
-                const filtered = allUsers.filter((user) =>
-                    user.displayName?.toLowerCase().includes(query) ||
-                    user.username?.includes(query)
+                const filtered = allUsers.filter(
+                    (user) =>
+                        user.displayName?.toLowerCase().includes(query) ||
+                        user.username?.includes(query),
                 );
 
                 setSearchResults(filtered);
@@ -214,14 +236,14 @@ export default function ExploreScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         if (!userId) {
-            console.error('No userId found');
+            console.error("No userId found");
             return;
         }
 
         const isFollowing = followedUsers.has(user.id);
 
         // Optimistic update - update follow state
-        setFollowedUsers(prev => {
+        setFollowedUsers((prev) => {
             const newSet = new Set(prev);
             if (isFollowing) {
                 newSet.delete(user.id);
@@ -233,24 +255,24 @@ export default function ExploreScreen() {
 
         // Optimistic update - update follower count in user lists
         const updateUserCount = (users: UserSearchResult[]) => {
-            return users.map(u => {
+            return users.map((u) => {
                 if (u.id === user.id) {
                     return {
                         ...u,
                         memberCount: isFollowing
                             ? Math.max(0, (u.memberCount || 0) - 1)
-                            : (u.memberCount || 0) + 1
+                            : (u.memberCount || 0) + 1,
                     };
                 }
                 return u;
             });
         };
 
-        setAllUsers(prev => updateUserCount(prev));
-        setSearchResults(prev => updateUserCount(prev));
+        setAllUsers((prev) => updateUserCount(prev));
+        setSearchResults((prev) => updateUserCount(prev));
 
         try {
-            const followRef = doc(db, 'follows', `${userId}_${user.id}`);
+            const followRef = doc(db, "follows", `${userId}_${user.id}`);
 
             if (isFollowing) {
                 await deleteDoc(followRef);
@@ -262,10 +284,10 @@ export default function ExploreScreen() {
                 });
             }
         } catch (error: any) {
-            console.error('Error toggling follow:', error);
+            console.error("Error toggling follow:", error);
 
             // Revert follow state on error
-            setFollowedUsers(prev => {
+            setFollowedUsers((prev) => {
                 const newSet = new Set(prev);
                 if (isFollowing) {
                     newSet.add(user.id);
@@ -277,25 +299,31 @@ export default function ExploreScreen() {
 
             // Revert count on error
             const revertUserCount = (users: UserSearchResult[]) => {
-                return users.map(u => {
+                return users.map((u) => {
                     if (u.id === user.id) {
                         return {
                             ...u,
                             memberCount: isFollowing
                                 ? (u.memberCount || 0) + 1
-                                : Math.max(0, (u.memberCount || 0) - 1)
+                                : Math.max(0, (u.memberCount || 0) - 1),
                         };
                     }
                     return u;
                 });
             };
 
-            setAllUsers(prev => revertUserCount(prev));
-            setSearchResults(prev => revertUserCount(prev));
+            setAllUsers((prev) => revertUserCount(prev));
+            setSearchResults((prev) => revertUserCount(prev));
         }
     };
 
-    const renderUserItem = ({ item, index }: { item: UserSearchResult; index: number }) => {
+    const renderUserItem = ({
+        item,
+        index,
+    }: {
+        item: UserSearchResult;
+        index: number;
+    }) => {
         const isFollowing = followedUsers.has(item.id);
 
         return (
@@ -306,12 +334,14 @@ export default function ExploreScreen() {
                     activeOpacity={0.7}
                 >
                     <Image
-                        source={item.photoURL || 'https://via.placeholder.com/44'}
+                        source={item.photoURL || "https://via.placeholder.com/44"}
                         style={styles.compactAvatar}
                         contentFit="cover"
                     />
                     <View style={styles.compactInfo}>
-                        <Text style={styles.compactName} numberOfLines={1}>{item.displayName}</Text>
+                        <Text style={styles.compactName} numberOfLines={1}>
+                            {item.displayName}
+                        </Text>
                         <Text style={styles.compactFollowers} numberOfLines={1}>
                             {item.memberCount || 0} followers
                         </Text>
@@ -319,16 +349,18 @@ export default function ExploreScreen() {
                     <TouchableOpacity
                         style={[
                             styles.compactActionButton,
-                            isFollowing && styles.compactActionButtonFollowing
+                            isFollowing && styles.compactActionButtonFollowing,
                         ]}
                         onPress={() => handleFollowPress(item)}
                         activeOpacity={0.8}
                     >
-                        <Text style={[
-                            styles.compactActionText,
-                            isFollowing && styles.compactActionTextFollowing
-                        ]}>
-                            {isFollowing ? 'following' : 'follow'}
+                        <Text
+                            style={[
+                                styles.compactActionText,
+                                isFollowing && styles.compactActionTextFollowing,
+                            ]}
+                        >
+                            {isFollowing ? "following" : "follow"}
                         </Text>
                     </TouchableOpacity>
                 </TouchableOpacity>
@@ -344,8 +376,6 @@ export default function ExploreScreen() {
         </View>
     );
 
-
-
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -358,18 +388,27 @@ export default function ExploreScreen() {
                         <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Ionicons name="notifications-outline" size={24} color={COLORS.primary} />
+                        <Ionicons
+                            name="notifications-outline"
+                            size={24}
+                            color={COLORS.primary}
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.avatarButton}
-                        onPress={() => router.push('/profile')}
+                        onPress={() => router.push("/profile")}
                         activeOpacity={0.7}
                     >
                         {userData?.photoURL ? (
-                            <Image source={{ uri: userData.photoURL }} style={styles.avatarImage} />
+                            <Image
+                                source={{ uri: userData.photoURL }}
+                                style={styles.avatarImage}
+                            />
                         ) : (
                             <View style={styles.avatarPlaceholder}>
-                                <Text style={styles.avatarInitial}>{userData?.displayName?.[0] || "U"}</Text>
+                                <Text style={styles.avatarInitial}>
+                                    {userData?.displayName?.[0] || "U"}
+                                </Text>
                             </View>
                         )}
                     </TouchableOpacity>
@@ -382,11 +421,7 @@ export default function ExploreScreen() {
                 style={styles.searchContainer}
             >
                 <View style={styles.searchBar}>
-                    <Ionicons
-                        name="search"
-                        size={20}
-                        color={COLORS.secondary}
-                    />
+                    <Ionicons name="search" size={20} color={COLORS.secondary} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search people"
@@ -400,12 +435,16 @@ export default function ExploreScreen() {
                     {searchQuery.length > 0 && (
                         <TouchableOpacity
                             onPress={() => {
-                                setSearchQuery('');
+                                setSearchQuery("");
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             }}
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
-                            <Ionicons name="close-circle" size={18} color={COLORS.secondary} />
+                            <Ionicons
+                                name="close-circle"
+                                size={18}
+                                color={COLORS.secondary}
+                            />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -414,10 +453,8 @@ export default function ExploreScreen() {
             {/* Content */}
             <View style={styles.content}>
                 {isSearching ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color={COLORS.accent} />
-                    </View>
-                ) : searchQuery.trim() !== '' ? (
+                    <ExploreSkeleton />
+                ) : searchQuery.trim() !== "" ? (
                     <FlatList
                         data={searchResults}
                         renderItem={renderUserItem}
@@ -434,6 +471,7 @@ export default function ExploreScreen() {
                             followedUsers={followedUsers}
                             onFollowPress={handleFollowPress}
                             onUserPress={handleUserPress}
+                            isLoading={isLoading}
                         />
                     </View>
                 )}
@@ -448,50 +486,50 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.bg,
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
         paddingHorizontal: 20,
         paddingBottom: 16,
     },
     headerTitle: {
         fontSize: 28,
-        fontWeight: '700',
+        fontWeight: "700",
         color: COLORS.primary,
     },
     headerIcons: {
-        flexDirection: 'row',
+        flexDirection: "row",
         gap: 12,
-        alignItems: 'center',
+        alignItems: "center",
     },
     iconButton: {
         width: 32,
         height: 32,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     avatarButton: {
         width: 36,
         height: 36,
         borderRadius: 18,
-        overflow: 'hidden',
+        overflow: "hidden",
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.1)',
-        backgroundColor: '#F2F2F7',
+        borderColor: "rgba(0,0,0,0.1)",
+        backgroundColor: "#F2F2F7",
     },
     avatarImage: {
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
     },
     avatarPlaceholder: {
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: "100%",
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
     },
     avatarInitial: {
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: "600",
         color: COLORS.secondary,
     },
     searchContainer: {
@@ -499,9 +537,9 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#E8E8E8',
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#E8E8E8",
         borderRadius: 28,
         paddingHorizontal: 16,
         paddingVertical: 12,
@@ -511,11 +549,11 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 16,
         color: COLORS.primary,
-        fontWeight: '400',
+        fontWeight: "400",
         paddingVertical: 0,
     },
     tabsContainer: {
-        flexDirection: 'row',
+        flexDirection: "row",
         paddingHorizontal: 20,
         marginBottom: 16,
         gap: 8,
@@ -531,12 +569,12 @@ const styles = StyleSheet.create({
     },
     tabText: {
         fontSize: 15,
-        fontWeight: '500',
+        fontWeight: "500",
         color: COLORS.secondary,
     },
     tabTextActive: {
         color: COLORS.primary,
-        fontWeight: '600',
+        fontWeight: "600",
     },
     content: {
         flex: 1,
@@ -551,8 +589,8 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     compactUserItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         paddingVertical: 12,
         gap: 16,
     },
@@ -560,15 +598,15 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: "#F2F2F7",
     },
     compactInfo: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: "center",
     },
     compactName: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: COLORS.primary,
         letterSpacing: -0.1,
     },
@@ -583,15 +621,15 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         backgroundColor: COLORS.accent,
         minWidth: 80,
-        alignItems: 'center',
+        alignItems: "center",
     },
     compactActionText: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#FFFFFF',
+        fontWeight: "600",
+        color: "#FFFFFF",
     },
     compactActionButtonFollowing: {
-        backgroundColor: 'transparent',
+        backgroundColor: "transparent",
         borderWidth: 1,
         borderColor: COLORS.border,
     },
@@ -600,26 +638,25 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     emptyState: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         paddingHorizontal: 40,
         gap: 12,
         marginBottom: 120,
     },
     emptyTitle: {
         fontSize: 20,
-        fontWeight: '600',
+        fontWeight: "600",
         color: COLORS.primary,
     },
     emptySubtitle: {
         fontSize: 15,
         color: COLORS.secondary,
-        textAlign: 'center',
+        textAlign: "center",
     },
 });
-

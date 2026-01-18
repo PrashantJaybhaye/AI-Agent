@@ -2,12 +2,13 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, StatusBar, View } from "react-native";
+import { StatusBar } from "react-native";
 import { PlaylistProvider } from "../context/PlaylistContext";
+
+import { HomeSkeleton } from "@/components/HomeSkeleton";
 import { UserProvider } from "../context/UserContext";
 
 function RootLayoutWithAuth() {
-
   const { isSignedIn, isLoaded } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -33,11 +34,7 @@ function RootLayoutWithAuth() {
   }, [isSignedIn, isLoaded, segments]);
 
   if (!isLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8F7F4" }}>
-        <ActivityIndicator size="large" color="#000" />
-      </View>
-    );
+    return <HomeSkeleton />;
   }
 
   return (
@@ -46,7 +43,7 @@ function RootLayoutWithAuth() {
       <Stack.Screen name="(protected)" />
       <Stack.Screen name="(public)" />
     </Stack>
-  )
+  );
 }
 
 export default function RootLayout() {
@@ -57,10 +54,14 @@ export default function RootLayout() {
     >
       <UserProvider>
         <PlaylistProvider>
-          <StatusBar backgroundColor="transparent" barStyle="dark-content" hidden={false} />
+          <StatusBar
+            backgroundColor="transparent"
+            barStyle="dark-content"
+            hidden={false}
+          />
           <RootLayoutWithAuth />
         </PlaylistProvider>
       </UserProvider>
     </ClerkProvider>
-  )
+  );
 }

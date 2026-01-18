@@ -5,7 +5,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { PropsWithChildren, ReactNode, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Animated, { interpolate, useAnimatedRef, useAnimatedStyle, useScrollOffset } from "react-native-reanimated";
+import Animated, {
+    interpolate,
+    useAnimatedRef,
+    useAnimatedStyle,
+    useScrollOffset,
+} from "react-native-reanimated";
 import Button from "./Button";
 
 export const blurhash = "L6D]4w~q4n?b?bD%IUM{4n-;M{Rj";
@@ -13,33 +18,36 @@ const HEADER_HEIGHT = 410;
 
 type ParallaxScrollViewProps = PropsWithChildren<{
     headerRight?: ReactNode;
-    featuredSession?: typeof sessions[0];
+    featuredSession?: (typeof sessions)[0];
 }>;
 
-export default function ParallaxScrollView({ children, headerRight, featuredSession }: ParallaxScrollViewProps) {
+export default function ParallaxScrollView({
+    children,
+    headerRight,
+    featuredSession,
+}: ParallaxScrollViewProps) {
     const router = useRouter();
-    const todaySession = useMemo(() => featuredSession || sessions[Math.floor(Math.random() * sessions.length)], [featuredSession]);
+    const todaySession = useMemo(
+        () =>
+            featuredSession || sessions[Math.floor(Math.random() * sessions.length)],
+        [featuredSession],
+    );
     const scrollRef = useAnimatedRef<Animated.ScrollView>();
     const scrollOffset = useScrollOffset(scrollRef);
 
     const headerAnimatedStyle = useAnimatedStyle(() => {
-
         const translateY =
             scrollOffset.value <= 0
                 ? interpolate(
                     scrollOffset.value,
                     [-HEADER_HEIGHT, 0],
-                    [-HEADER_HEIGHT / 2, 0]
+                    [-HEADER_HEIGHT / 2, 0],
                 )
                 : 0;
 
         const scale =
             scrollOffset.value <= 0
-                ? interpolate(
-                    scrollOffset.value,
-                    [-HEADER_HEIGHT, 0],
-                    [2, 1]
-                )
+                ? interpolate(scrollOffset.value, [-HEADER_HEIGHT, 0], [2, 1])
                 : 1;
 
         return {
@@ -49,7 +57,7 @@ export default function ParallaxScrollView({ children, headerRight, featuredSess
                 },
                 {
                     scale,
-                }
+                },
             ],
         };
     });
@@ -72,25 +80,35 @@ export default function ParallaxScrollView({ children, headerRight, featuredSess
                     />
                 </Animated.View>
                 <LinearGradient
-                    colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.55)']}
+                    colors={["rgba(0,0,0,0.0)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.55)"]}
                     style={styles.headerContainer}
                 >
-
                     <View style={{ flex: 1 }} />
 
                     <View style={styles.headerContent}>
-                        <BlurView intensity={20} tint="light" style={styles.subtitleContainer}>
+                        <BlurView
+                            intensity={20}
+                            tint="light"
+                            style={styles.subtitleContainer}
+                        >
                             <Text style={styles.headerSubtitle}>FEATURED SESSION</Text>
                         </BlurView>
                         <Text style={styles.headerTitle}>{todaySession.title}</Text>
-                        <Text style={styles.headerDescription}>{todaySession.description}</Text>
-                        <Button onPress={() => router.push({ pathname: "/session/[sessionId]", params: { sessionId: todaySession.id } })}>
+                        <Text style={styles.headerDescription}>
+                            {todaySession.description}
+                        </Text>
+                        <Button
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/session/[sessionId]",
+                                    params: { sessionId: todaySession.id },
+                                })
+                            }
+                        >
                             <Text style={styles.buttonText}>Start Session</Text>
                         </Button>
                         <View style={{ flex: 1 }} />
                     </View>
-
-
                 </LinearGradient>
                 {children}
             </Animated.ScrollView>
@@ -103,21 +121,21 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     buttonText: {
-        color: 'white',
-        fontWeight: '700',
+        color: "white",
+        fontWeight: "700",
         fontSize: 13,
         letterSpacing: 0.5,
     },
     subtitleContainer: {
         paddingHorizontal: 12,
         paddingVertical: 5,
-        backgroundColor: 'transparent',
+        backgroundColor: "transparent",
         borderWidth: 0.5,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: "rgba(255, 255, 255, 0.5)",
         borderRadius: 20,
-        marginBottom: 12,
-        overflow: 'hidden',
-        alignSelf: 'center',
+        marginBottom: 6,
+        overflow: "hidden",
+        alignSelf: "center",
     },
     headerSubtitle: {
         fontSize: 10,
@@ -129,21 +147,21 @@ const styles = StyleSheet.create({
         fontSize: 38,
         fontWeight: "700",
         color: "white",
-        textAlign: 'center',
-        marginBottom: 8,
+        textAlign: "center",
+        marginBottom: 4,
         letterSpacing: -0.5,
     },
     headerDescription: {
         fontSize: 16,
         color: "rgba(255, 255, 255, 0.9)",
-        textAlign: 'center',
-        marginBottom: 24,
-        maxWidth: '80%',
+        textAlign: "center",
+        marginBottom: 20,
+        maxWidth: "80%",
         lineHeight: 22,
     },
     headerContainer: {
         position: "absolute",
-        width: '100%',
+        width: "100%",
         height: HEADER_HEIGHT,
     },
     headerLeftGlassContainer: {
@@ -170,14 +188,14 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         borderBottomLeftRadius: 18,
         borderBottomRightRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: "rgba(255,255,255,0.08)",
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.25)',
-        overflow: 'hidden',
+        borderColor: "rgba(255,255,255,0.25)",
+        overflow: "hidden",
     },
     glassText: {
-        color: '#FFFFFF',
-        fontWeight: '700',
+        color: "#FFFFFF",
+        fontWeight: "700",
         letterSpacing: 0.5,
     },
 });

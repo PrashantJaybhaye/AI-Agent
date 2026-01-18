@@ -1,44 +1,62 @@
-import { UserSearchResult } from '@/app/(protected)/(tabs)/explore';
-import { Image } from 'expo-image';
-import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { UserSearchResult } from "@/app/(protected)/(tabs)/explore";
+import { ExploreSkeleton } from "@/components/ExploreSkeleton";
+import { Image } from "expo-image";
+import React from "react";
+import {
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface SuggestedUsersProps {
     users: UserSearchResult[];
     followedUsers: Set<string>;
     onFollowPress: (user: UserSearchResult) => void;
     onUserPress: (user: UserSearchResult) => void;
+    isLoading?: boolean;
 }
 
 const COLORS = {
-    primary: '#1C1C1E',
-    secondary: '#8E8E93',
-    accent: '#5B75F0',
-    border: '#E8E8E8',
-    cardBg: '#FFFFFF',
-    tabBg: '#E8E8E8',
+    primary: "#1C1C1E",
+    secondary: "#8E8E93",
+    accent: "#5B75F0",
+    border: "#E8E8E8",
+    cardBg: "#FFFFFF",
+    tabBg: "#E8E8E8",
 };
 
-export const SuggestedUsers = ({ users, followedUsers, onFollowPress, onUserPress }: SuggestedUsersProps) => {
+export const SuggestedUsers = ({
+    users,
+    followedUsers,
+    onFollowPress,
+    onUserPress,
+    isLoading = false,
+}: SuggestedUsersProps) => {
     const [suggestedIds, setSuggestedIds] = React.useState<string[]>([]);
 
     React.useEffect(() => {
         if (suggestedIds.length === 0 && users && users.length > 0) {
-            const shuffled = [...users]
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 4);
-            setSuggestedIds(shuffled.map(u => u.id));
+            const shuffled = [...users].sort(() => 0.5 - Math.random()).slice(0, 4);
+            setSuggestedIds(shuffled.map((u) => u.id));
         }
     }, [users, suggestedIds]);
 
     const displayedUsers = React.useMemo(() => {
         return suggestedIds
-            .map(id => users.find(u => u.id === id))
+            .map((id) => users.find((u) => u.id === id))
             .filter((u): u is UserSearchResult => !!u);
     }, [suggestedIds, users]);
 
-    const renderUserItem = ({ item, index }: { item: UserSearchResult; index: number }) => {
+    const renderUserItem = ({
+        item,
+        index,
+    }: {
+        item: UserSearchResult;
+        index: number;
+    }) => {
         const isFollowing = followedUsers.has(item.id);
 
         return (
@@ -49,13 +67,15 @@ export const SuggestedUsers = ({ users, followedUsers, onFollowPress, onUserPres
                     activeOpacity={0.7}
                 >
                     <Image
-                        source={item.photoURL || 'https://via.placeholder.com/44'}
+                        source={item.photoURL || "https://via.placeholder.com/44"}
                         style={styles.compactAvatar}
                         contentFit="cover"
                         transition={200}
                     />
                     <View style={styles.compactInfo}>
-                        <Text style={styles.compactName} numberOfLines={1}>{item.displayName}</Text>
+                        <Text style={styles.compactName} numberOfLines={1}>
+                            {item.displayName}
+                        </Text>
                         <Text style={styles.compactFollowers} numberOfLines={1}>
                             {item.memberCount || 0} followers
                         </Text>
@@ -63,22 +83,36 @@ export const SuggestedUsers = ({ users, followedUsers, onFollowPress, onUserPres
                     <TouchableOpacity
                         style={[
                             styles.compactActionButton,
-                            isFollowing && styles.compactActionButtonFollowing
+                            isFollowing && styles.compactActionButtonFollowing,
                         ]}
                         onPress={() => onFollowPress(item)}
                         activeOpacity={0.8}
                     >
-                        <Text style={[
-                            styles.compactActionText,
-                            isFollowing && styles.compactActionTextFollowing
-                        ]}>
-                            {isFollowing ? 'following' : 'follow'}
+                        <Text
+                            style={[
+                                styles.compactActionText,
+                                isFollowing && styles.compactActionTextFollowing,
+                            ]}
+                        >
+                            {isFollowing ? "following" : "follow"}
                         </Text>
                     </TouchableOpacity>
                 </TouchableOpacity>
             </Animated.View>
         );
     };
+
+    if (isLoading) {
+        return (
+            <View>
+                <View style={[styles.suggestedHeader, { paddingHorizontal: 20 }]}>
+                    <Text style={styles.suggestedTitle}>People you might know</Text>
+                    <Text style={styles.suggestedSubtitle}>Based on your interests</Text>
+                </View>
+                <ExploreSkeleton itemCount={4} />
+            </View>
+        );
+    }
 
     return (
         <FlatList
@@ -111,7 +145,7 @@ const styles = StyleSheet.create({
     },
     suggestedTitle: {
         fontSize: 17,
-        fontWeight: '700',
+        fontWeight: "700",
         color: COLORS.primary,
         letterSpacing: -0.3,
     },
@@ -121,8 +155,8 @@ const styles = StyleSheet.create({
         marginTop: 1,
     },
     compactUserItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         paddingVertical: 12,
         gap: 16,
     },
@@ -130,15 +164,15 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: "#F2F2F7",
     },
     compactInfo: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: "center",
     },
     compactName: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: COLORS.primary,
         letterSpacing: -0.1,
     },
@@ -153,15 +187,15 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: COLORS.accent,
         minWidth: 80,
-        alignItems: 'center',
+        alignItems: "center",
     },
     compactActionText: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#FFFFFF',
+        fontWeight: "600",
+        color: "#FFFFFF",
     },
     compactActionButtonFollowing: {
-        backgroundColor: 'transparent',
+        backgroundColor: "transparent",
         borderWidth: 1,
         borderColor: COLORS.border,
     },
