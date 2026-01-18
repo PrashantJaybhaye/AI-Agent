@@ -73,7 +73,7 @@ export default function UserProfileScreen() {
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
     const [activeTab, setActiveTab] = useState<"achievements" | "about">(
-        "achievements"
+        "achievements",
     );
 
     const scrollY = useSharedValue(0);
@@ -118,14 +118,14 @@ export default function UserProfileScreen() {
             try {
                 const followersQuery = query(
                     collection(db, "follows"),
-                    where("followingId", "==", id)
+                    where("followingId", "==", id),
                 );
                 const followersSnapshot = await getDocs(followersQuery);
                 setFollowerCount(followersSnapshot.size);
 
                 const followingQuery = query(
                     collection(db, "follows"),
-                    where("followerId", "==", id)
+                    where("followerId", "==", id),
                 );
                 const followingSnapshot = await getDocs(followingQuery);
                 setFollowingCount(followingSnapshot.size);
@@ -191,7 +191,7 @@ export default function UserProfileScreen() {
             scrollY.value,
             [20, 50],
             [0, 1],
-            Extrapolation.CLAMP
+            Extrapolation.CLAMP,
         );
         return { opacity };
     });
@@ -201,7 +201,7 @@ export default function UserProfileScreen() {
             scrollY.value,
             [60, 100],
             [0, 1],
-            Extrapolation.CLAMP
+            Extrapolation.CLAMP,
         );
         return { opacity };
     });
@@ -273,8 +273,7 @@ export default function UserProfileScreen() {
             >
                 {/* Profile Header Block */}
                 <View style={styles.profileHeader}>
-                    {/* Top Row: Avatar & Actions */}
-                    <View style={styles.topRow}>
+                    <View style={styles.headerTopRow}>
                         <View
                             style={[styles.avatarContainer, { borderColor: theme.border }]}
                         >
@@ -286,76 +285,34 @@ export default function UserProfileScreen() {
                             />
                         </View>
 
-                        <View style={styles.actionsContainer}>
-                            {userId === id ? (
-                                <>
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.btnPrimary,
-                                            styles.btnOutline,
-                                            { borderColor: theme.text },
-                                        ]}
-                                        onPress={() => router.push("/(protected)/edit-profile")}
-                                    >
-                                        <Text style={[styles.btnText, { color: theme.text }]}>
-                                            Edit Profile
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.btnIcon, { borderColor: theme.border }]}
-                                        onPress={() => {
-                                            Share.share({
-                                                message: `Check out my profile on Siora! 🧘‍♂️\n\nhttps://siora.app/u/${id}`,
-                                                url: `https://siora.app/u/${id}`,
-                                            });
-                                        }}
-                                    >
-                                        <Ionicons
-                                            name="share-outline"
-                                            size={20}
-                                            color={theme.text}
-                                        />
-                                    </TouchableOpacity>
-                                </>
-                            ) : (
-                                <>
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.btnPrimary,
-                                            isFollowing ? styles.btnOutline : styles.btnSolid,
-                                            {
-                                                backgroundColor: isFollowing
-                                                    ? "transparent"
-                                                    : theme.text,
-                                                borderColor: theme.text,
-                                            },
-                                        ]}
-                                        onPress={handleFollow}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.btnText,
-                                                { color: isFollowing ? theme.text : "#FFF" },
-                                            ]}
-                                        >
-                                            {isFollowing ? "Following" : "Follow"}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.btnIcon, { borderColor: theme.border }]}
-                                    >
-                                        <Ionicons
-                                            name="mail-outline"
-                                            size={20}
-                                            color={theme.text}
-                                        />
-                                    </TouchableOpacity>
-                                </>
-                            )}
+                        {/* Stats Row */}
+                        <View style={styles.statsRow}>
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statVal, { color: theme.text }]}>
+                                    {followerCount}
+                                </Text>
+                                <Text
+                                    style={[styles.statLabel, { color: theme.textSecondary }]}
+                                >
+                                    Followers
+                                </Text>
+                            </View>
+                            <View
+                                style={[styles.vertDivider, { backgroundColor: theme.border }]}
+                            />
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statVal, { color: theme.text }]}>
+                                    {followingCount}
+                                </Text>
+                                <Text
+                                    style={[styles.statLabel, { color: theme.textSecondary }]}
+                                >
+                                    Following
+                                </Text>
+                            </View>
                         </View>
                     </View>
 
-                    {/* Info */}
                     <View style={styles.infoBlock}>
                         <Text style={[styles.displayName, { color: theme.text }]}>
                             {user.displayName}
@@ -366,40 +323,69 @@ export default function UserProfileScreen() {
                                 user.displayName?.toLowerCase().replace(/\s+/g, "")}
                         </Text>
 
-                        <Text style={[styles.bio, { color: theme.text }]}>
-                            {user.bio || "No bio yet."}
-                        </Text>
+                        {user.bio && (
+                            <Text style={[styles.bio, { color: theme.textSecondary }]}>
+                                {user.bio}
+                            </Text>
+                        )}
                     </View>
-                </View>
 
-                {/* Horizontal Divider */}
-                <View
-                    style={[
-                        styles.sectionDivider,
-                        { backgroundColor: theme.cardSecondary },
-                    ]}
-                />
-
-                {/* Stats Row */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statItem}>
-                        <Text style={[styles.statVal, { color: theme.text }]}>
-                            {followerCount}
-                        </Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                            Followers
-                        </Text>
-                    </View>
-                    <View
-                        style={[styles.vertDivider, { backgroundColor: theme.border }]}
-                    />
-                    <View style={styles.statItem}>
-                        <Text style={[styles.statVal, { color: theme.text }]}>
-                            {followingCount}
-                        </Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                            Following
-                        </Text>
+                    {/* Actions */}
+                    <View style={styles.actionsContainer}>
+                        {userId === id ? (
+                            <>
+                                <TouchableOpacity
+                                    style={[styles.btnPrimary, { backgroundColor: theme.text }]}
+                                    onPress={() => router.push("/(protected)/edit-profile")}
+                                >
+                                    <Text style={styles.btnTextPrimary}>Edit Profile</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.btnIcon, { borderColor: theme.border }]}
+                                    onPress={() => {
+                                        Share.share({
+                                            message: `Check out my profile on Siora! 🧘‍♂️\n\nhttps://siora.app/u/${id}`,
+                                            url: `https://siora.app/u/${id}`,
+                                        });
+                                    }}
+                                >
+                                    <Ionicons name="share-outline" size={22} color={theme.text} />
+                                </TouchableOpacity>
+                            </>
+                        ) : (
+                            <>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.btnPrimary,
+                                        isFollowing
+                                            ? {
+                                                backgroundColor: theme.cardSecondary,
+                                                borderWidth: 1,
+                                                borderColor: theme.border,
+                                            }
+                                            : { backgroundColor: "#5B75F0" },
+                                    ]}
+                                    onPress={handleFollow}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.btnTextPrimary,
+                                            isFollowing && { color: theme.text },
+                                        ]}
+                                    >
+                                        {isFollowing ? "Following" : "Follow"}
+                                    </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.btnIcon,
+                                        { borderColor: theme.border, backgroundColor: theme.card },
+                                    ]}
+                                >
+                                    <Ionicons name="mail-outline" size={22} color={theme.text} />
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 </View>
 
@@ -408,10 +394,7 @@ export default function UserProfileScreen() {
                     {["Achievements", "About"].map((tab) => (
                         <TouchableOpacity
                             key={tab}
-                            style={[
-                                styles.tabItem,
-                                activeTab === tab.toLowerCase() && styles.tabItemActive,
-                            ]}
+                            style={styles.tabItem}
                             onPress={() => setActiveTab(tab.toLowerCase() as any)}
                         >
                             <Text
@@ -446,42 +429,73 @@ export default function UserProfileScreen() {
                     ) : (
                         <View style={[styles.detailCard, { backgroundColor: theme.card }]}>
                             <View style={styles.detailRow}>
-                                <Ionicons
-                                    name="calendar-outline"
-                                    size={20}
-                                    color={theme.textSecondary}
-                                />
-                                <Text style={[styles.detailText, { color: theme.text }]}>
-                                    Joined{" "}
-                                    {user.createdAt?.seconds
-                                        ? new Date(
-                                            user.createdAt.seconds * 1000
-                                        ).toLocaleDateString("en-US", {
-                                            month: "long",
-                                            year: "numeric",
-                                        })
-                                        : "Unknown"}
-                                </Text>
+                                <View
+                                    style={[
+                                        styles.iconBox,
+                                        { backgroundColor: "rgba(37, 99, 235, 0.1)" },
+                                    ]}
+                                >
+                                    <Ionicons name="calendar" size={20} color={theme.primary} />
+                                </View>
+                                <View>
+                                    <Text
+                                        style={[styles.detailLabel, { color: theme.textSecondary }]}
+                                    >
+                                        Joined
+                                    </Text>
+                                    <Text style={[styles.detailText, { color: theme.text }]}>
+                                        {user.createdAt?.seconds
+                                            ? new Date(
+                                                user.createdAt.seconds * 1000,
+                                            ).toLocaleDateString("en-US", {
+                                                month: "long",
+                                                year: "numeric",
+                                            })
+                                            : "Unknown"}
+                                    </Text>
+                                </View>
                             </View>
+
                             <View style={styles.detailRow}>
-                                <Ionicons
-                                    name="location-outline"
-                                    size={20}
-                                    color={theme.textSecondary}
-                                />
-                                <Text style={[styles.detailText, { color: theme.text }]}>
-                                    {user.location || "Unknown Location"}
-                                </Text>
+                                <View
+                                    style={[
+                                        styles.iconBox,
+                                        { backgroundColor: "rgba(16, 185, 129, 0.1)" },
+                                    ]}
+                                >
+                                    <Ionicons name="location" size={20} color="#10B981" />
+                                </View>
+                                <View>
+                                    <Text
+                                        style={[styles.detailLabel, { color: theme.textSecondary }]}
+                                    >
+                                        Location
+                                    </Text>
+                                    <Text style={[styles.detailText, { color: theme.text }]}>
+                                        {user.location || "Unknown Location"}
+                                    </Text>
+                                </View>
                             </View>
+
                             <View style={styles.detailRow}>
-                                <Ionicons
-                                    name="link-outline"
-                                    size={20}
-                                    color={theme.textSecondary}
-                                />
-                                <Text style={[styles.detailText, { color: theme.primary }]}>
-                                    siora.app/u/user
-                                </Text>
+                                <View
+                                    style={[
+                                        styles.iconBox,
+                                        { backgroundColor: "rgba(245, 158, 11, 0.1)" },
+                                    ]}
+                                >
+                                    <Ionicons name="link" size={20} color="#F59E0B" />
+                                </View>
+                                <View>
+                                    <Text
+                                        style={[styles.detailLabel, { color: theme.textSecondary }]}
+                                    >
+                                        Profile Level
+                                    </Text>
+                                    <Text style={[styles.detailText, { color: theme.text }]}>
+                                        Siora Pioneer
+                                    </Text>
+                                </View>
                             </View>
                         </View>
                     )}
@@ -504,7 +518,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     navbarBg: {
-        // Blur and Border handled in inline styles
+        // Blur and Border handled
     },
     borderBottom: {
         position: "absolute",
@@ -513,6 +527,7 @@ const styles = StyleSheet.create({
         right: 0,
         height: 1,
         borderBottomWidth: 1,
+        opacity: 0.5,
     },
     navbarContent: {
         flex: 1,
@@ -522,11 +537,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     navTitle: {
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: "600",
     },
     iconBtn: {
-        padding: 8,
+        width: 40,
+        height: 40,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 20,
     },
     scrollContent: {
         paddingBottom: 40,
@@ -534,155 +553,172 @@ const styles = StyleSheet.create({
 
     // Profile Header
     profileHeader: {
-        paddingHorizontal: 20,
+        alignItems: "center",
+        paddingHorizontal: 24,
         marginBottom: 20,
     },
-    topRow: {
+    headerTopRow: {
         flexDirection: "row",
+        alignItems: "center",
         justifyContent: "space-between",
-        alignItems: "flex-start",
+        width: "100%",
         marginBottom: 16,
+        paddingHorizontal: 16,
     },
     avatarContainer: {
-        width: 80,
+        width: 80, // Smaller avatar for compact header
         height: 80,
         borderRadius: 40,
         borderWidth: 1,
-        padding: 2,
+        padding: 3,
+        backgroundColor: "#fff",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        elevation: 3,
     },
     avatar: {
         width: "100%",
         height: "100%",
         borderRadius: 40,
     },
-    actionsContainer: {
-        flexDirection: "row",
-        gap: 8,
-        paddingTop: 10,
-    },
-    btnPrimary: {
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: 20,
-        borderWidth: 1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    btnSolid: {
-        // Color set in inline
-    },
-    btnOutline: {
-        // Color set in inline
-    },
-    btnText: {
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    btnIcon: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        borderWidth: 1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
     infoBlock: {
+        alignItems: "center",
         gap: 4,
+        marginBottom: 20,
+        width: "100%",
     },
     displayName: {
-        fontSize: 24,
+        fontSize: 24, // Slightly smaller
         fontWeight: "800",
         letterSpacing: -0.5,
+        textAlign: "center",
     },
     handle: {
-        fontSize: 15,
-        marginBottom: 8,
+        fontSize: 14, // Slightly smaller
+        fontWeight: "500",
+        textAlign: "center",
     },
     bio: {
         fontSize: 15,
         lineHeight: 22,
+        textAlign: "center",
+        marginTop: 8,
+        maxWidth: "90%",
     },
 
     // Stats
-    sectionDivider: {
-        height: 8,
-        width: "100%",
-        marginBottom: 16,
-    },
     statsRow: {
         flexDirection: "row",
-        paddingHorizontal: 20,
-        marginBottom: 24,
-        justifyContent: "space-between", // Spread out
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(0,0,0,0.03)",
+        borderRadius: 12, // Slightly smaller radius
+        paddingVertical: 10, // Slightly less padding
+        paddingHorizontal: 24, // Slightly less padding
+        gap: 30, // Slightly less gap
     },
     statItem: {
         alignItems: "center",
-        flex: 1,
+        gap: 2,
     },
     vertDivider: {
         width: 1,
-        height: "100%",
+        height: 20, // Slightly smaller
+        opacity: 0.5,
     },
     statVal: {
-        fontSize: 18,
+        fontSize: 18, // Slightly smaller
         fontWeight: "700",
-        marginBottom: 2,
     },
     statLabel: {
-        fontSize: 13,
+        fontSize: 12, // Slightly smaller
+        fontWeight: "500",
+    },
+
+    // Actions
+    actionsContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10, // Slightly less gap
+        width: "100%",
+        maxWidth: 300, // Slightly narrower
+    },
+    btnPrimary: {
+        flex: 1,
+        height: 44,
+        borderRadius: 22,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    btnTextPrimary: {
+        fontSize: 15, // Slightly smaller
+        fontWeight: "600",
+        color: "#fff",
+    },
+    btnIcon: {
+        width: 44, // Adjusted for new height
+        height: 44, // Adjusted for new height
+        borderRadius: 22, // Adjusted for new height
+        borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#fff",
     },
 
     // Tabs
     tabBar: {
         flexDirection: "row",
         borderBottomWidth: 1,
-        marginBottom: 20,
+        marginBottom: 24,
+        paddingHorizontal: 20,
     },
     tabItem: {
-        flex: 1,
-        alignItems: "center",
+        marginRight: 24,
         paddingVertical: 14,
         position: "relative",
     },
-    tabItemActive: {
-        // logic handled logic
-    },
     tabText: {
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: "600",
     },
     activeIndicator: {
         position: "absolute",
         bottom: 0,
-        height: 2,
-        width: "40%",
-        borderRadius: 2,
+        height: 3,
+        width: "100%", // Full width of text
+        borderRadius: 3,
     },
 
     // Content
     contentArea: {
         paddingHorizontal: 20,
     },
-    emptyState: {
-        alignItems: "center",
-        paddingVertical: 40,
-        gap: 12,
-    },
-    emptyText: {
-        fontSize: 15,
-        fontWeight: "500",
-    },
     detailCard: {
-        borderRadius: 16,
-        padding: 20,
-        gap: 16,
+        borderRadius: 24,
+        padding: 24,
+        gap: 24,
     },
     detailRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: 16,
+    },
+    iconBox: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    detailLabel: {
+        fontSize: 13,
+        fontWeight: "500",
+        marginBottom: 2,
     },
     detailText: {
-        fontSize: 15,
+        fontSize: 16,
+        fontWeight: "600",
     },
 });
