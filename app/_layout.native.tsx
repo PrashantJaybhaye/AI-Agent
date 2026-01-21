@@ -2,7 +2,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { StatusBar } from "react-native";
+import { PermissionsAndroid, Platform, StatusBar } from "react-native";
 import { PlaylistProvider } from "../context/PlaylistContext";
 
 import { HomeSkeleton } from "@/components/HomeSkeleton";
@@ -12,6 +12,24 @@ function RootLayoutWithAuth() {
   const { isSignedIn, isLoaded } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (Platform.OS === "android") {
+        try {
+          await PermissionsAndroid.requestMultiple([
+            PermissionsAndroid.PERMISSIONS.CAMERA,
+            PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          ]);
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+    };
+
+    requestPermissions();
+  }, []);
 
   useEffect(() => {
     if (!isLoaded) return;
