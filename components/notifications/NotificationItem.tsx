@@ -10,11 +10,11 @@ interface NotificationItemProps {
 }
 
 const THEME = {
-    text: "#000000",
-    textSecondary: "#666666",
-    primary: "#2563EB",
-    border: "#E5E7EB",
+    textPrimary: "#1A1A1A",
+    textSecondary: "#6B7280",
+    textTertiary: "#9CA3AF",
     unreadDot: "#EF4444",
+    divider: "#F3F4F6",
 };
 
 export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
@@ -27,153 +27,201 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
         const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
         if (diffInDays === 0) {
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
         }
         return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     const getIcon = () => {
-        if (item.type === 'follower' && item.senderPhoto) {
-            return <Image source={{ uri: item.senderPhoto }} style={styles.avatarIcon} />;
-        }
-
-        let iconName: keyof typeof Ionicons.glyphMap = "notifications";
-        let bgColor = "#1A1A1A";
-
+        // Switch statement for different notification types
         switch (item.type) {
             case 'achievement':
-                iconName = "trophy";
-                bgColor = '#F59E0B';
-                break;
-            case 'follower':
-                iconName = "person-add";
-                bgColor = '#3B82F6';
-                break;
-            case 'welcome':
-                iconName = "sparkles";
-                bgColor = '#10B981';
-                break;
-        }
+                // Golden trophy with gradient background
+                return (
+                    <View style={[styles.iconCircle, styles.achievementIcon]}>
+                        <Ionicons name="trophy" size={24} color="#F59E0B" />
+                    </View>
+                );
 
-        return (
-            <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
-                <Ionicons name={iconName} size={18} color="#FFF" />
-            </View>
-        );
+            case 'welcome':
+                // Sparkles with gradient background
+                return (
+                    <View style={[styles.iconCircle, styles.welcomeIcon]}>
+                        <Ionicons name="sparkles" size={24} color="#10B981" />
+                    </View>
+                );
+
+            case 'follower':
+                // User avatar for follower notifications
+                if (item.senderPhoto) {
+                    return <Image source={{ uri: item.senderPhoto }} style={styles.avatar} />;
+                }
+                // Fallback to icon if no photo
+                return (
+                    <View style={[styles.iconCircle, { backgroundColor: '#EFF6FF' }]}>
+                        <Ionicons name="person-add" size={20} color="#3B82F6" />
+                    </View>
+                );
+
+            case 'system':
+            default:
+                // Default system notification icon
+                return (
+                    <View style={[styles.iconCircle, { backgroundColor: '#F3F4F6' }]}>
+                        <Ionicons name="notifications" size={20} color="#6B7280" />
+                    </View>
+                );
+        }
     };
 
-    const typeLabel = item.type === 'achievement' ? 'Achievement'
-        : item.type === 'follower' ? 'Community'
-            : item.type === 'welcome' ? 'Welcome'
-                : 'System';
+    // Get label based on notification type
+    const getNotificationLabel = () => {
+        switch (item.type) {
+            case 'achievement': return 'Achievement';
+            case 'follower': return 'New follower';
+            case 'welcome': return 'Getting started';
+            default: return 'Notification';
+        }
+    };
 
-    const title = item.type === 'follower' && item.senderName
-        ? `${item.senderName} followed you`
+    // Determine the main display title
+    const mainTitle = item.type === 'follower' && item.senderName
+        ? item.senderName
         : item.title;
+
+    // Determine the subtitle/description
+    const subtitle = item.type === 'follower'
+        ? 'started following you'
+        : item.description;
+
+    const typeLabel = getNotificationLabel();
 
     return (
         <TouchableOpacity
-            style={styles.container}
+            style={styles.notificationCard}
             onPress={() => onPress(item)}
-            activeOpacity={0.6}
+            activeOpacity={0.7}
         >
-            <View style={styles.leftSection}>
+            <View style={styles.iconSection}>
                 {getIcon()}
             </View>
 
             <View style={styles.contentSection}>
-                <View style={styles.headerRow}>
-                    <Text style={styles.typeLabel}>{typeLabel}</Text>
-                    <Text style={styles.timeText}>{formatNotificationTime(date)}</Text>
-                </View>
+                {/* Type Label */}
+                <Text style={styles.typeText} numberOfLines={1}>
+                    {typeLabel}
+                </Text>
 
-                <View style={styles.titleRow}>
-                    <Text style={[styles.title, !item.isMarkedRead && styles.unreadTitle]} numberOfLines={1}>
-                        {title}
-                    </Text>
-                    {!item.isMarkedRead && <View style={styles.unreadDot} />}
-                </View>
+                {/* Main Title */}
+                <Text
+                    style={[
+                        styles.titleText,
+                        !item.isMarkedRead && styles.unreadTitle
+                    ]}
+                    numberOfLines={1}
+                >
+                    {mainTitle}
+                </Text>
 
-                {item.description && item.type !== 'follower' && (
-                    <Text style={styles.description} numberOfLines={2}>
-                        {item.description}
+                {/* Description/Subtitle */}
+                {subtitle && (
+                    <Text style={styles.subtitleText} numberOfLines={2}>
+                        {subtitle}
                     </Text>
                 )}
+            </View>
+
+            <View style={styles.metaSection}>
+                <Text style={styles.timeText}>{formatNotificationTime(date)}</Text>
+                {!item.isMarkedRead && <View style={styles.unreadIndicator} />}
             </View>
         </TouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    notificationCard: {
         flexDirection: "row",
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        backgroundColor: "transparent",
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        backgroundColor: "#FFFFFF",
+        borderBottomWidth: 1,
+        borderBottomColor: THEME.divider,
     },
-    leftSection: {
+    iconSection: {
         marginRight: 14,
+        paddingTop: 2,
     },
-    iconContainer: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+    iconCircle: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: "center",
         alignItems: "center",
     },
-    avatarIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+    avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+    },
+    achievementIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+    },
+    welcomeIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
     },
     contentSection: {
         flex: 1,
+        justifyContent: "center",
+        gap: 2,
     },
-    headerRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 2,
-    },
-    typeLabel: {
+    typeText: {
         fontSize: 13,
-        fontWeight: "700",
-        color: THEME.text,
+        fontWeight: "600",
+        color: THEME.textPrimary,
+        marginBottom: 1,
+    },
+    titleText: {
+        fontSize: 15,
+        fontWeight: "500",
+        color: THEME.textPrimary,
         letterSpacing: -0.2,
+    },
+    unreadTitle: {
+        fontWeight: "600",
+    },
+    subtitleText: {
+        fontSize: 14,
+        fontWeight: "400",
+        color: THEME.textTertiary,
+        lineHeight: 18,
+        marginTop: 2,
+    },
+    metaSection: {
+        alignItems: "flex-end",
+        justifyContent: "flex-start",
+        paddingTop: 2,
+        paddingLeft: 12,
     },
     timeText: {
         fontSize: 11,
-        color: THEME.textSecondary,
         fontWeight: "400",
+        color: THEME.textSecondary,
     },
-    titleRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 2,
-        paddingRight: 4,
-    },
-    title: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: THEME.text,
-        letterSpacing: -0.3,
-        flex: 1,
-    },
-    unreadTitle: {
-        fontWeight: "800",
-    },
-    unreadDot: {
+    unreadIndicator: {
         width: 8,
         height: 8,
         borderRadius: 4,
         backgroundColor: THEME.unreadDot,
-        marginLeft: 8,
-    },
-    description: {
-        fontSize: 14,
-        color: THEME.textSecondary,
-        lineHeight: 19,
-        fontWeight: "400",
+        marginTop: 8,
     },
 });
+

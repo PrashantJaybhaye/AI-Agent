@@ -24,11 +24,11 @@ import {
 } from "react-native";
 
 const THEME = {
-    bg: "#FAFAFA",
+    bg: "#F5F5F7",
     text: "#000000",
-    textSecondary: "#666666",
-    primary: "#2563EB",
-    border: "#E5E7EB",
+    textSecondary: "#8E8E93",
+    primary: "#007AFF",
+    border: "#F3F4F6",
 };
 
 interface NotificationSection {
@@ -42,8 +42,6 @@ export default function NotificationsScreen() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-
-    const hasUnread = notifications.some(n => !n.isMarkedRead);
 
     useEffect(() => {
         if (!userId) return;
@@ -117,24 +115,9 @@ export default function NotificationsScreen() {
         }
     };
 
-    const handleMarkAllRead = async () => {
-        const unreadItems = notifications.filter(n => !n.isMarkedRead);
-        if (unreadItems.length === 0) return;
-
-        try {
-            const promises = unreadItems.map(item => {
-                if (!item.id) return Promise.resolve();
-                return updateDoc(doc(db, "notifications", item.id), { isMarkedRead: true });
-            });
-            await Promise.all(promises);
-        } catch (error) {
-            console.error("Error marking all as read:", error);
-        }
-    };
-
     return (
         <View style={styles.container}>
-            <NotificationHeader onMarkAllRead={handleMarkAllRead} hasUnread={hasUnread} />
+            <NotificationHeader />
 
             {loading ? (
                 <View style={styles.centerContainer}><ActivityIndicator size="large" color={THEME.primary} /></View>
@@ -158,7 +141,7 @@ export default function NotificationsScreen() {
                     )}
                     contentContainerStyle={styles.listContent}
                     stickySectionHeadersEnabled={false}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { }} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(true)} />}
                 />
             )}
         </View>

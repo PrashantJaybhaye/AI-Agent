@@ -5,23 +5,18 @@ export type NotificationType = 'achievement' | 'follower' | 'system' | 'welcome'
 
 export interface AppNotification {
     id?: string;
-    recipientId: string;    // The user who receives the notification
-    senderId?: string;       // Optional: The user who triggered it (e.g., the follower)
-    senderName?: string;     // Denormalized name for security (don't fetch full user object)
-    senderPhoto?: string;    // Denormalized photo
+    recipientId: string;
+    senderId?: string;
+    senderName?: string;
+    senderPhoto?: string;
     type: NotificationType;
     title: string;
     description: string;
-    relatedId?: string;      // ID of the related object (e.g., achievement ID or follow doc ID)
+    relatedId?: string;
     isMarkedRead: boolean;
     createdAt: any;
 }
 
-/**
- * Creates a notification in the dedicated 'notifications' collection.
- * This approach is more secure as it centralizes notifications and allows 
- * for strict security rules where users can only read docs where recipientId == theirUid.
- */
 export async function createNotification(params: {
     recipientId: string;
     type: NotificationType;
@@ -34,7 +29,6 @@ export async function createNotification(params: {
         let senderName = "";
         let senderPhoto = "";
 
-        // If there's a sender, fetch basic info once to denormalize (Cybersafe: limited data)
         if (params.senderId) {
             const userSnap = await getDoc(doc(db, "users", params.senderId));
             if (userSnap.exists()) {
@@ -46,8 +40,8 @@ export async function createNotification(params: {
 
         const notificationData: any = {
             recipientId: params.recipientId,
-            senderName: senderName,
-            senderPhoto: senderPhoto,
+            senderName,
+            senderPhoto,
             type: params.type,
             title: params.title,
             description: params.description,
@@ -59,15 +53,38 @@ export async function createNotification(params: {
         if (params.relatedId) notificationData.relatedId = params.relatedId;
 
         await addDoc(collection(db, "notifications"), notificationData);
+
+        // Send local push notification
+        try {
+            const { sendLocalNotification } = await import("./pushNotifications");
+
+            const categoryIdentifier =
+                params.type === 'achievement' ? 'achievement' as const :
+                    params.type === 'follower' ? 'social' as const :
+                        'default' as const;
+
+            const notificationBody = params.type === 'follower' && senderName
+                ? `${senderName} ${params.description}`
+                : params.description;
+
+            await sendLocalNotification({
+                title: params.title,
+                body: notificationBody,
+                data: {
+                    type: params.type,
+                    relatedId: params.relatedId,
+                    senderId: params.senderId,
+                },
+                categoryIdentifier,
+            });
+        } catch (pushError) {
+            console.error('Push notification error:', pushError);
+        }
     } catch (error) {
         console.error("Error creating notification:", error);
     }
 }
 
-/**
- * Removes notifications matching a specific relatedId and type.
- * Useful for undoing notifications (e.g., when unfollowing).
- */
 export async function removeNotification(params: {
     recipientId: string;
     type: NotificationType;

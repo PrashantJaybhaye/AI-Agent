@@ -1,112 +1,92 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface NotificationHeaderProps {
-    onMarkAllRead: () => void;
-    hasUnread: boolean;
-}
+interface NotificationHeaderProps { }
 
-const THEME = {
-    primary: "#2563EB",
-    text: "#111827",
-    textSecondary: "#6B7280",
-    border: "#E5E7EB",
+const COLORS = {
+    headerBg: "#F9F9FB",
+    screenBg: "#F5F5F7",
+    text: "#000000",
+    secondary: "#8E8E93",
+    border: "#E5E5E7",
 };
 
-export const NotificationHeader = ({ onMarkAllRead, hasUnread }: NotificationHeaderProps) => {
+export const NotificationHeader = ({ }: NotificationHeaderProps) => {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     return (
-        <Stack.Screen
-            options={{
-                title: "Notifications",
-                headerShown: true,
-                headerShadowVisible: false,
-                headerTransparent: false,
-                headerStyle: {
-                    backgroundColor: '#FAFAFA',
-                },
-                headerTitleStyle: {
-                    fontSize: 20,
-                    fontWeight: '700',
-                    color: THEME.text,
-                    fontFamily: 'System',
-                },
-                headerLeft: () => (
+        <>
+            <Stack.Screen
+                options={{
+                    headerShown: false,
+                }}
+            />
+            <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+                <View style={styles.header}>
                     <TouchableOpacity
                         onPress={() => router.back()}
-                        style={styles.headerButton}
-                        activeOpacity={0.7}
+                        style={styles.backButton}
+                        activeOpacity={0.5}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                        <View style={styles.iconCircle}>
-                            <Ionicons name="chevron-back" size={22} color={THEME.text} />
-                        </View>
+                        <Ionicons name="chevron-back" size={26} color={COLORS.text} />
                     </TouchableOpacity>
-                ),
-                headerRight: () => (
-                    <TouchableOpacity
-                        onPress={onMarkAllRead}
-                        disabled={!hasUnread}
-                        style={[styles.markReadButton, !hasUnread && styles.disabledButton]}
-                        activeOpacity={0.7}
-                    >
-                        <Text style={[styles.markReadText, !hasUnread && styles.disabledText]}>
-                            Mark read
-                        </Text>
-                    </TouchableOpacity>
-                ),
-            }}
-        />
+
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.headerTitle}>Notifications</Text>
+                    </View>
+
+                    <View style={styles.rightPlaceholder} />
+                </View>
+                <View style={styles.divider} />
+            </View>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
-    headerButton: {
-        padding: 4,
+    headerContainer: {
+        backgroundColor: COLORS.headerBg,
     },
-    iconCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#FFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: THEME.border,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 12,
+        height: 56,
     },
-    markReadButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: THEME.border,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+    backButton: {
+        width: 40,
+        height: 40,
+        alignItems: "center",
+        justifyContent: "center",
+        marginLeft: -4,
     },
-    disabledButton: {
-        backgroundColor: 'transparent',
-        borderWidth: 0,
-        elevation: 0,
-        shadowOpacity: 0,
+    titleContainer: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        alignItems: "center",
+        justifyContent: "center",
+        pointerEvents: "none",
     },
-    markReadText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: THEME.primary,
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "700",
+        color: COLORS.text,
+        letterSpacing: Platform.OS === 'ios' ? -0.4 : 0,
     },
-    disabledText: {
-        color: THEME.textSecondary,
-        opacity: 0.5,
+    rightPlaceholder: {
+        width: 40,
+        height: 40,
+    },
+    divider: {
+        height: 0.5,
+        backgroundColor: COLORS.border,
     },
 });
+

@@ -57,8 +57,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     await createNotification({
                         recipientId: user.id,
                         type: 'welcome',
-                        title: "Welcome to Siora! 🧘‍♂️",
-                        description: "We're glad to have you on your journey to mindfulness.",
+                        title: "Welcome to Siora!👋",
+                        description: "We are so glad to have you here. Start your journey today!",
                     });
                 } else {
                     const data = userSnap.data();
