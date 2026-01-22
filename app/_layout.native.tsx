@@ -1,9 +1,16 @@
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
-import { PermissionsAndroid, Platform, StatusBar } from "react-native";
+import { useEffect, useState } from "react";
+import { LogBox, PermissionsAndroid, Platform, StatusBar } from "react-native";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PlaylistProvider } from "../context/PlaylistContext";
+
+// Suppress known Expo Router warning about linking configuration
+// This is a false positive when using expo-router with deep linking
+LogBox.ignoreLogs([
+  'Looks like you have configured linking in multiple places',
+]);
 
 import { HomeSkeleton } from "@/components/HomeSkeleton";
 import { UserProvider } from "../context/UserContext";
@@ -12,6 +19,12 @@ function RootLayoutWithAuth() {
   const { isSignedIn, isLoaded } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Mark component as mounted
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const requestPermissions = async () => {
@@ -32,7 +45,8 @@ function RootLayoutWithAuth() {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    // Don't navigate until component is mounted and auth is loaded
+    if (!isLoaded || !isMounted) return;
 
     const inProtectedGroup = segments[0] === "(protected)";
     const inPublicGroup = segments[0] === "(public)";
@@ -43,13 +57,18 @@ function RootLayoutWithAuth() {
       return;
     }
 
-    // Redirect based on auth state
-    if (isSignedIn && !inProtectedGroup) {
-      router.replace("/(protected)/(tabs)");
-    } else if (!isSignedIn && !inPublicGroup) {
-      router.replace("/(public)");
-    }
-  }, [isSignedIn, isLoaded, segments]);
+    // Add small delay to ensure navigation is ready
+    const timeoutId = setTimeout(() => {
+      // Redirect based on auth state
+      if (isSignedIn && !inProtectedGroup) {
+        router.replace("/(protected)/(tabs)");
+      } else if (!isSignedIn && !inPublicGroup) {
+        router.replace("/(public)");
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [isSignedIn, isLoaded, segments, isMounted]);
 
   if (!isLoaded) {
     return <HomeSkeleton />;
@@ -66,20 +85,22 @@ function RootLayoutWithAuth() {
 
 export default function RootLayout() {
   return (
-    <ClerkProvider
-      tokenCache={tokenCache}
-      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
-    >
-      <UserProvider>
-        <PlaylistProvider>
-          <StatusBar
-            backgroundColor="transparent"
-            barStyle="dark-content"
-            hidden={false}
-          />
-          <RootLayoutWithAuth />
-        </PlaylistProvider>
-      </UserProvider>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider
+        tokenCache={tokenCache}
+        publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      >
+        <UserProvider>
+          <PlaylistProvider>
+            <StatusBar
+              backgroundColor="transparent"
+              barStyle="dark-content"
+              hidden={false}
+            />
+            <RootLayoutWithAuth />
+          </PlaylistProvider>
+        </UserProvider>
+      </ClerkProvider>
+    </ErrorBoundary>
   );
 }

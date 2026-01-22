@@ -53,7 +53,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     });
 
     return (
-        <View style={[styles.container, { bottom: insets.bottom + 10 }]}>
+        <View style={[styles.container, {
+            // When gesture navigation is hidden (insets.bottom = 0), add +10 offset
+            // When gesture navigation is visible (insets.bottom > 0), use only insets value
+            bottom: insets.bottom > 0 ? insets.bottom : 10
+        }]}>
             {/* Main Tabs Group */}
             <View style={styles.tabGroupContainer}>
                 <View style={[styles.blurContainer, { backgroundColor: '#ffffff' }]}>
