@@ -1,5 +1,5 @@
+import { colors } from "@/utils/colors";
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import React from "react";
 import {
     Modal,
@@ -9,7 +9,7 @@ import {
     View,
     ViewStyle,
 } from "react-native";
-import Animated, { Easing, FadeIn, SlideInDown } from "react-native-reanimated";
+import Animated, { Easing, Keyframe } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface ActionSheetProps {
@@ -17,22 +17,44 @@ interface ActionSheetProps {
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
-    cancelText?: string;
 }
 
+const ExpandOpen = new Keyframe({
+    0: {
+        opacity: 0,
+        transform: [{ scale: 0.8 }, { translateX: 20 }, { translateY: -15 }],
+    },
+    100: {
+        opacity: 1,
+        transform: [{ scale: 1 }, { translateX: 0 }, { translateY: 0 }],
+        easing: Easing.out(Easing.cubic),
+    },
+}).duration(250);
+
+const ShrinkClose = new Keyframe({
+    0: {
+        opacity: 1,
+        transform: [{ scale: 1 }, { translateX: 0 }, { translateY: 0 }],
+    },
+    100: {
+        opacity: 0,
+        transform: [{ scale: 0.8 }, { translateX: 20 }, { translateY: -15 }],
+        easing: Easing.out(Easing.cubic),
+    },
+}).duration(200);
+
 /**
- * A reusable iOS-style Action Sheet component.
+ * A floating dropdown menu component (popover style).
  * Features:
- * - Glassmorphism background and content
- * - Smooth entrance animations
- * - Grouped content with a separate Cancel button
+ * - Top-right positioning (anchored to header area usually)
+ * - Compact Light theme (White)
+ * - Compact animated entrance (Diagonal expansion)
  */
 export function ActionSheet({
     visible,
     onClose,
     title,
     children,
-    cancelText = "Cancel",
 }: ActionSheetProps) {
     const insets = useSafeAreaInsets();
 
@@ -42,60 +64,35 @@ export function ActionSheet({
         <Modal
             visible={visible}
             transparent={true}
-            animationType="none" // We handle animation with Reanimated
+            animationType="none"
             onRequestClose={onClose}
         >
-            <Animated.View entering={FadeIn.duration(200)} style={styles.overlay}>
-                {/* Backdrop -> Dismiss on press */}
+            <View style={styles.overlay}>
                 <TouchableOpacity
                     style={StyleSheet.absoluteFill}
                     activeOpacity={1}
                     onPress={onClose}
-                >
-                    <BlurView
-                        intensity={20}
-                        tint="light"
-                        style={StyleSheet.absoluteFill}
-                    />
-                </TouchableOpacity>
-
-                {/* Sheet Content */}
+                />
                 <Animated.View
-                    entering={SlideInDown.duration(300).easing(Easing.out(Easing.quad))}
+                    entering={ExpandOpen}
+                    exiting={ShrinkClose}
                     style={[
-                        styles.sheetContainer,
-                        { paddingBottom: Math.max(insets.bottom, 24) },
+                        styles.dropdownContainer,
+                        { top: insets.top + 60 },
                     ]}
                 >
-                    {/* Main Options Group */}
                     <View style={styles.contentGroup}>
-                        <BlurView
-                            intensity={80}
-                            tint="extraLight" // Cleaner, whiter glass effect
-                            style={StyleSheet.absoluteFill}
-                        />
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#FFFFFF' }]} />
                         <View style={styles.innerContent}>
                             {title && <Text style={styles.title}>{title}</Text>}
                             {children}
                         </View>
                     </View>
-                    {/* Cancel Button */}
-                    <TouchableOpacity
-                        style={styles.cancelButton}
-                        activeOpacity={0.9}
-                        onPress={onClose}
-                    >
-                        <Text style={styles.cancelText}>{cancelText}</Text>
-                    </TouchableOpacity>
                 </Animated.View>
-            </Animated.View>
+            </View>
         </Modal>
     );
 }
-
-// ----------------------------------------------------------------------
-// ActionSheet Item Component
-// ----------------------------------------------------------------------
 
 interface ActionSheetItemProps {
     icon?: keyof typeof Ionicons.glyphMap;
@@ -115,7 +112,7 @@ export function ActionSheetItem({
     check = false,
     isLast = false,
     style,
-    textColor = "#000000",
+    textColor = "#000000", // Default to Black
     iconColor = "#000000",
 }: ActionSheetItemProps) {
     return (
@@ -128,13 +125,13 @@ export function ActionSheetItem({
                 {icon && (
                     <Ionicons
                         name={icon}
-                        size={20}
+                        size={18}
                         color={iconColor}
                         style={styles.itemIcon}
                     />
                 )}
                 <Text style={[styles.itemLabel, { color: textColor }]}>{label}</Text>
-                {check && <Ionicons name="checkmark" size={18} color="#007AFF" />}
+                {check && <Ionicons name="checkmark" size={16} color={colors.primary} />}
             </TouchableOpacity>
             {!isLast && <View style={styles.separator} />}
         </React.Fragment>
@@ -144,69 +141,55 @@ export function ActionSheetItem({
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        justifyContent: "flex-end",
-        backgroundColor: "rgba(0,0,0,0.3)", // Slightly lighter backdrop
+        alignItems: "flex-end",
+        justifyContent: "flex-start",
     },
-    sheetContainer: {
-        paddingHorizontal: 24, // Wider side padding for "medium" width look
-        paddingTop: 0,
+    dropdownContainer: {
+        marginRight: 16,
+        width: 200,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15, // Softer shadow for light theme
+        shadowRadius: 16,
+        elevation: 10,
     },
     contentGroup: {
-        borderRadius: 16, // Compact radius
+        borderRadius: 12,
         overflow: "hidden",
-        backgroundColor: "rgba(255,255,255,0.85)", // Less transparency for clearer text
-        marginBottom: 10, // Tighter gap
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.6)",
+        borderColor: "rgba(0,0,0,0.1)", // Subtle border
     },
+    // menuBackground removed
     innerContent: {
-        // Transparent
+        paddingVertical: 2,
     },
     title: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: "600",
-        color: "#8E8E93",
-        textAlign: "center",
-        paddingVertical: 12, // Compact padding
+        color: "#8E8E93", // Gray
+        marginLeft: 16,
+        paddingVertical: 8,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "rgba(0,0,0,0.08)",
+        borderBottomColor: "#E5E5EA", // Light separator
     },
-    cancelButton: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 16, // Match contentGroup
-        paddingVertical: 13, // Compact button height
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-    },
-    cancelText: {
-        fontSize: 16, // Refined font size
-        fontWeight: "600",
-        color: "#007AFF",
-    },
-    // Item Styles
     itemContainer: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 13, // Compact hit area
+        paddingVertical: 11, // Compact
         paddingHorizontal: 16,
-        backgroundColor: "transparent",
     },
     itemIcon: {
         marginRight: 12,
     },
     itemLabel: {
-        fontSize: 16, // Standard compact text size
-        flex: 1,
-        color: "#000",
+        fontSize: 15,
         fontWeight: "400",
+        color: "#000000",
+        flex: 1,
     },
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "rgba(0, 0, 0, 0.08)",
-        marginLeft: 48,
+        backgroundColor: "#E5E5EA", // Light Separator
+        marginLeft: 46,
     },
 });

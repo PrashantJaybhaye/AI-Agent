@@ -1,6 +1,6 @@
 import { db } from '@/utils/firebase';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 
@@ -104,30 +104,27 @@ export default function UserAchievements({ userId }: UserAchievementsProps) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchAchievements = async () => {
-            if (!userId) return;
-            try {
-                // Query top-level 'achievements' collection where user_id matches
-                const q = query(
-                    collection(db, 'achievements'),
-                    where('user_id', '==', userId)
-                );
-                const snapshot = await getDocs(q);
+        if (!userId) return;
 
-                if (!snapshot.empty) {
-                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Achievement));
-                    setAchievements(data);
-                } else {
-                    setAchievements([]);
-                }
-            } catch (error) {
-                console.error("Error fetching achievements", error);
+        const q = query(
+            collection(db, 'achievements'),
+            where('user_id', '==', userId)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Achievement));
+                setAchievements(data);
+            } else {
                 setAchievements([]);
-            } finally {
-                setLoading(false);
             }
-        };
-        fetchAchievements();
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching achievements", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [userId]);
 
     if (loading) {

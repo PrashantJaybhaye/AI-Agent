@@ -336,15 +336,13 @@ export default function LibraryScreen() {
                 </TouchableOpacity>
             </Modal>
 
-            {/* Menu Options Modal */}
             <ActionSheet
                 visible={menuVisible}
                 onClose={() => setMenuVisible(false)}
-                title="Library Options"
             >
                 <ActionSheetItem
                     icon="arrow-down-outline"
-                    label="Sort by Duration (Shortest)"
+                    label="Shortest First"
                     onPress={() => {
                         setSortOption("shortest");
                         setMenuVisible(false);
@@ -353,7 +351,7 @@ export default function LibraryScreen() {
                 />
                 <ActionSheetItem
                     icon="arrow-up-outline"
-                    label="Sort by Duration (Longest)"
+                    label="Longest First"
                     onPress={() => {
                         setSortOption("longest");
                         setMenuVisible(false);
@@ -362,7 +360,7 @@ export default function LibraryScreen() {
                 />
                 <ActionSheetItem
                     icon="refresh-outline"
-                    label="Reset to Default"
+                    label="Default Order"
                     onPress={() => {
                         setSortOption("default");
                         setMenuVisible(false);
