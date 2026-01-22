@@ -1,4 +1,4 @@
-import { BottomSheet, BottomSheetItem } from "@/components/ui/BottomSheet";
+import { ActionSheet, ActionSheetItem } from "@/components/ui/ActionSheet";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
@@ -337,12 +337,12 @@ export default function LibraryScreen() {
             </Modal>
 
             {/* Menu Options Modal */}
-            <BottomSheet
+            <ActionSheet
                 visible={menuVisible}
                 onClose={() => setMenuVisible(false)}
                 title="Library Options"
             >
-                <BottomSheetItem
+                <ActionSheetItem
                     icon="arrow-down-outline"
                     label="Sort by Duration (Shortest)"
                     onPress={() => {
@@ -351,7 +351,7 @@ export default function LibraryScreen() {
                     }}
                     check={sortOption === "shortest"}
                 />
-                <BottomSheetItem
+                <ActionSheetItem
                     icon="arrow-up-outline"
                     label="Sort by Duration (Longest)"
                     onPress={() => {
@@ -360,7 +360,7 @@ export default function LibraryScreen() {
                     }}
                     check={sortOption === "longest"}
                 />
-                <BottomSheetItem
+                <ActionSheetItem
                     icon="refresh-outline"
                     label="Reset to Default"
                     onPress={() => {
@@ -370,7 +370,7 @@ export default function LibraryScreen() {
                     check={sortOption === "default"}
                     isLast
                 />
-            </BottomSheet>
+            </ActionSheet>
         </View>
     );
 }

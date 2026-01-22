@@ -127,6 +127,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
             {exploreRoute && (
                 <TouchableOpacity
                     style={styles.searchButtonContainer}
+                    activeOpacity={1}
                     onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         navigation.navigate(exploreRoute.name);
@@ -134,7 +135,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                     accessibilityRole="button"
                 >
                     <View style={[styles.searchButtonBlur, { backgroundColor: '#ffffff' }]}>
-                        <Ionicons name="search" size={24} color="#000000" />
+                        <Ionicons
+                            name="search"
+                            size={24}
+                            color={state.index === state.routes.indexOf(exploreRoute) ? "#007AFF" : "#000000"}
+                        />
                     </View>
                 </TouchableOpacity>
             )}

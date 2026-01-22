@@ -12,7 +12,7 @@ import {
 import Animated, { Easing, FadeIn, SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-interface BottomSheetProps {
+interface ActionSheetProps {
     visible: boolean;
     onClose: () => void;
     title?: string;
@@ -21,19 +21,19 @@ interface BottomSheetProps {
 }
 
 /**
- * A reusable iOS-style Bottom Sheet / Action Sheet component.
+ * A reusable iOS-style Action Sheet component.
  * Features:
  * - Glassmorphism background and content
  * - Smooth entrance animations
  * - Grouped content with a separate Cancel button
  */
-export function BottomSheet({
+export function ActionSheet({
     visible,
     onClose,
     title,
     children,
     cancelText = "Cancel",
-}: BottomSheetProps) {
+}: ActionSheetProps) {
     const insets = useSafeAreaInsets();
 
     if (!visible) return null;
@@ -62,13 +62,16 @@ export function BottomSheet({
                 {/* Sheet Content */}
                 <Animated.View
                     entering={SlideInDown.duration(300).easing(Easing.out(Easing.quad))}
-                    style={[styles.sheetContainer, { paddingBottom: insets.bottom }]}
+                    style={[
+                        styles.sheetContainer,
+                        { paddingBottom: Math.max(insets.bottom, 24) },
+                    ]}
                 >
                     {/* Main Options Group */}
                     <View style={styles.contentGroup}>
                         <BlurView
                             intensity={80}
-                            tint="light" // Matches iOS system material
+                            tint="extraLight" // Cleaner, whiter glass effect
                             style={StyleSheet.absoluteFill}
                         />
                         <View style={styles.innerContent}>
@@ -91,10 +94,10 @@ export function BottomSheet({
 }
 
 // ----------------------------------------------------------------------
-// BottomSheet Item Component
+// ActionSheet Item Component
 // ----------------------------------------------------------------------
 
-interface BottomSheetItemProps {
+interface ActionSheetItemProps {
     icon?: keyof typeof Ionicons.glyphMap;
     label: string;
     onPress: () => void;
@@ -105,7 +108,7 @@ interface BottomSheetItemProps {
     iconColor?: string;
 }
 
-export function BottomSheetItem({
+export function ActionSheetItem({
     icon,
     label,
     onPress,
@@ -114,7 +117,7 @@ export function BottomSheetItem({
     style,
     textColor = "#000000",
     iconColor = "#000000",
-}: BottomSheetItemProps) {
+}: ActionSheetItemProps) {
     return (
         <React.Fragment>
             <TouchableOpacity
@@ -142,43 +145,45 @@ const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(0,0,0,0.4)",
+        backgroundColor: "rgba(0,0,0,0.3)", // Slightly lighter backdrop
     },
     sheetContainer: {
-        paddingHorizontal: 12, // Compact side padding
+        paddingHorizontal: 24, // Wider side padding for "medium" width look
         paddingTop: 0,
     },
     contentGroup: {
-        borderRadius: 13,
+        borderRadius: 16, // Compact radius
         overflow: "hidden",
-        backgroundColor: "rgba(245,245,245,0.8)",
-        marginBottom: 5, // Tight gap
+        backgroundColor: "rgba(255,255,255,0.85)", // Less transparency for clearer text
+        marginBottom: 10, // Tighter gap
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.6)",
     },
     innerContent: {
-        // Transparent to let blur show through
+        // Transparent
     },
     title: {
         fontSize: 12,
         fontWeight: "600",
-        color: "rgba(60, 60, 67, 0.6)",
+        color: "#8E8E93",
         textAlign: "center",
-        paddingVertical: 10,
+        paddingVertical: 12, // Compact padding
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "rgba(60, 60, 67, 0.2)",
+        borderBottomColor: "rgba(0,0,0,0.08)",
     },
     cancelButton: {
         backgroundColor: "#FFFFFF",
-        borderRadius: 13,
-        paddingVertical: 12,
+        borderRadius: 16, // Match contentGroup
+        paddingVertical: 13, // Compact button height
         alignItems: "center",
         justifyContent: "center",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
     },
     cancelText: {
-        fontSize: 16,
+        fontSize: 16, // Refined font size
         fontWeight: "600",
         color: "#007AFF",
     },
@@ -186,20 +191,22 @@ const styles = StyleSheet.create({
     itemContainer: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        backgroundColor: "rgba(255,255,255,0.5)",
+        paddingVertical: 13, // Compact hit area
+        paddingHorizontal: 16,
+        backgroundColor: "transparent",
     },
     itemIcon: {
-        marginRight: 10,
+        marginRight: 12,
     },
     itemLabel: {
-        fontSize: 16,
+        fontSize: 16, // Standard compact text size
         flex: 1,
+        color: "#000",
+        fontWeight: "400",
     },
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "rgba(60, 60, 67, 0.2)",
-        marginLeft: 50, // Indent separator
+        backgroundColor: "rgba(0, 0, 0, 0.08)",
+        marginLeft: 48,
     },
 });
