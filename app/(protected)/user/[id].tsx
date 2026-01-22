@@ -3,6 +3,8 @@ import {
     addFirstFollowAchievement,
     checkFiveFollowersAchievement,
 } from "@/utils/achievements";
+import { createNotification } from "@/utils/notifications";
+
 import { db } from "@/utils/firebase";
 import { User } from "@/utils/types";
 import { useAuth } from "@clerk/clerk-expo";
@@ -167,6 +169,14 @@ export default function UserProfileScreen() {
             const followRef = doc(db, "follows", `${userId}_${id}`);
             if (wasFollowing) {
                 await deleteDoc(followRef);
+
+                // Remove the notification if it exists
+                const { removeNotification } = await import("@/utils/notifications");
+                await removeNotification({
+                    recipientId: id,
+                    type: 'follower',
+                    relatedId: followRef.id
+                });
             } else {
                 await setDoc(followRef, {
                     followerId: userId,
@@ -174,8 +184,19 @@ export default function UserProfileScreen() {
                     createdAt: serverTimestamp(),
                 });
 
+                // Trigger notification for the user being followed
+                await createNotification({
+                    recipientId: id,
+                    type: 'follower',
+                    title: "New Follower",
+                    description: "started following you.",
+                    senderId: userId,
+                    relatedId: followRef.id
+                });
+
                 // Check if the target user has reached 5 followers
                 await checkFiveFollowersAchievement(id);
+
             }
         } catch (error) {
             console.error("Error toggling follow:", error);

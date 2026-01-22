@@ -56,7 +56,7 @@ export default function ExploreScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { userId } = useAuth();
-    const { userData } = useUserContext();
+    const { userData, unreadCount } = useUserContext();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
@@ -276,12 +276,36 @@ export default function ExploreScreen() {
 
             if (isFollowing) {
                 await deleteDoc(followRef);
+
+                // Remove the notification if it exists
+                const { removeNotification } = await import("@/utils/notifications");
+                await removeNotification({
+                    recipientId: user.id,
+                    type: 'follower',
+                    relatedId: followRef.id
+                });
             } else {
                 await setDoc(followRef, {
                     followerId: userId,
                     followingId: user.id,
                     createdAt: serverTimestamp(),
                 });
+
+                // Trigger notification for the user being followed
+                const { createNotification } = await import("@/utils/notifications");
+                await createNotification({
+                    recipientId: user.id,
+                    type: 'follower',
+                    title: "New Follower",
+                    description: "started following you.",
+                    senderId: userId,
+                    relatedId: followRef.id
+                });
+
+                // Check for achievements
+                const { checkFiveFollowersAchievement, addFirstFollowAchievement } = await import("@/utils/achievements");
+                await checkFiveFollowersAchievement(user.id);
+                await addFirstFollowAchievement(userId);
             }
         } catch (error: any) {
             console.error("Error toggling follow:", error);
@@ -387,12 +411,20 @@ export default function ExploreScreen() {
                     <TouchableOpacity style={styles.iconButton}>
                         <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <Ionicons
-                            name="notifications-outline"
-                            size={24}
-                            color={COLORS.primary}
-                        />
+                    <TouchableOpacity
+                        style={styles.iconButton}
+                        onPress={() => router.push("/(protected)/notifications")}
+                    >
+                        <View>
+                            <Ionicons
+                                name="notifications-outline"
+                                size={24}
+                                color={COLORS.primary}
+                            />
+                            {unreadCount > 0 && (
+                                <View style={styles.badge} />
+                            )}
+                        </View>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.avatarButton}
@@ -659,4 +691,16 @@ const styles = StyleSheet.create({
         color: COLORS.secondary,
         textAlign: "center",
     },
+    badge: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#EF4444',
+        borderWidth: 1.5,
+        borderColor: COLORS.bg,
+    },
 });
+

@@ -1,6 +1,6 @@
 import { useUser } from "@clerk/clerk-expo";
 import * as Location from 'expo-location';
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { db } from "../utils/firebase";
 import { User } from "../utils/types";
@@ -8,11 +8,13 @@ import { User } from "../utils/types";
 interface UserContextType {
     userData: User | null;
     loading: boolean;
+    unreadCount: number;
 }
 
 const UserContext = createContext<UserContextType>({
     userData: null,
     loading: true,
+    unreadCount: 0,
 });
 
 export const useUserContext = () => useContext(UserContext);
@@ -21,7 +23,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const { user } = useUser();
     const [userData, setUserData] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
 
+    // Sync user profile & listen to user data changes
     useEffect(() => {
         if (!user) {
             setUserData(null);
@@ -36,7 +40,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 const userSnap = await getDoc(userRef);
 
                 if (!userSnap.exists()) {
-                    // Create new user document
                     const newUser: User = {
                         uid: user.id,
                         email: user.primaryEmailAddress?.emailAddress || "",
@@ -48,8 +51,16 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                         lastLoginAt: serverTimestamp(),
                     };
                     await setDoc(userRef, newUser);
+
+                    // Trigger Welcome Notification
+                    const { createNotification } = await import("../utils/notifications");
+                    await createNotification({
+                        recipientId: user.id,
+                        type: 'welcome',
+                        title: "Welcome to Siora! 🧘‍♂️",
+                        description: "We're glad to have you on your journey to mindfulness.",
+                    });
                 } else {
-                    // Update last login & ensure username exists
                     const data = userSnap.data();
                     const updates: any = { lastLoginAt: serverTimestamp() };
 
@@ -90,7 +101,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         syncUser();
 
-        // Listen to user changes
         const unsubscribe = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
                 setUserData(doc.data() as User);
@@ -103,8 +113,30 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         return () => unsubscribe();
     }, [user]);
 
+    // Track unread notifications count - Updated to use the new 'notifications' table
+    useEffect(() => {
+        if (!user) {
+            setUnreadCount(0);
+            return;
+        }
+
+        const q = query(
+            collection(db, 'notifications'),
+            where('recipientId', '==', user.id),
+            where('isMarkedRead', '==', false)
+        );
+
+        const unsub = onSnapshot(q, (snapshot) => {
+            setUnreadCount(snapshot.size);
+        }, (err) => {
+            console.error("Error listening to notification unread count", err);
+        });
+
+        return () => unsub();
+    }, [user]);
+
     return (
-        <UserContext.Provider value={{ userData, loading }}>
+        <UserContext.Provider value={{ userData, loading, unreadCount }}>
             {children}
         </UserContext.Provider>
     );

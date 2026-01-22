@@ -1,5 +1,6 @@
 import { addDoc, collection, getDocs, query, Timestamp, where } from 'firebase/firestore';
 import { db } from './firebase';
+import { createNotification } from './notifications';
 
 export interface Achievement {
     id?: string;
@@ -17,14 +18,31 @@ export async function addAchievement(
     description: string
 ): Promise<void> {
     try {
-        await addDoc(collection(db, 'achievements'), {
+        console.log(`Attempting to add achievement: ${title} for user: ${userId}`);
+        const docRef = await addDoc(collection(db, 'achievements'), {
             user_id: userId,
             achievement_type: achievementType,
             title,
             description,
             earned_at: Timestamp.now(),
         });
-        console.log('Achievement added:', title);
+
+        // Trigger notification in the new 'notifications' table
+        try {
+            await createNotification({
+                recipientId: userId,
+                type: 'achievement',
+                title: `🏆 ${title}`,
+                description: description,
+                relatedId: docRef.id
+            });
+        } catch (notifError) {
+            console.error('Error sending achievement notification:', notifError);
+            // Notification failure shouldn't crash the achievement addition
+        }
+
+        console.log('✅ Achievement successfully added to database:', title);
+
     } catch (error) {
         console.error('Error adding achievement:', error);
         throw error;
@@ -121,4 +139,3 @@ export async function checkFiveFollowersAchievement(
 
     return { newlyAwarded: false };
 }
-
