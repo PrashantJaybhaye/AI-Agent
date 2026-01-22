@@ -81,7 +81,26 @@ Whether you're exploring guided courses like **"Sleep Journey"** or **"Anxiety R
 
 ## 🎉 Recent Updates
 
-### January 2026 - Major UI/UX Overhaul
+### Late January 2026 - Admin Tools & Feature Refinements
+
+**🏆 Achievements System**
+
+- **New Achievements**: Introduced "First Follow" and "First Breath" achievements to reward user engagement.
+- **Logic Improvements**: Refined achievement triggering logic for better reliability.
+- **Notification Integration**: Integrated achievement unlocking with the notification system.
+
+**🔔 Notifications System**
+
+- **Refactored Header**: Extracted `NotificationHeader` component for better maintainability and code reuse.
+- **UI Consistency**: Polished notification cards and fixed typography issues.
+- **Bug Fixes**: Resolved issues with notification state management and "mark all read" functionality.
+
+**💅 UI/UX Polish**
+
+- **ActionSheet Alignment**: Fixed initial rendering position issues for ActionSheets to match main app design.
+- **Code Cleanup**: Removed debug artifacts and optimized component rendering performance.
+
+### Early January 2026 - Major UI/UX Overhaul
 
 **🎨 Design System Enhancements**
 
