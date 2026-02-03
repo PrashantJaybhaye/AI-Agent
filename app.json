@@ -64,7 +64,8 @@
         {
           "locationWhenInUsePermission": "Show your location on your profile."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
