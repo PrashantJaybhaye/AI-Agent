@@ -1,12 +1,13 @@
+import { IOSAlert } from "@/components/IOSAlert";
 import { useUserContext } from "@/context/UserContext";
 import { db } from "@/utils/firebase";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     Image,
     Modal,
     StatusBar,
@@ -16,6 +17,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import PaymentModal from "./PaymentModal";
 
 const FEATURES = [
     "Unlimited access to all courses",
@@ -35,52 +37,92 @@ export default function SubscriptionModal({ visible, onClose }: SubscriptionModa
     const { userData } = useUserContext();
     const [loading, setLoading] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>('yearly');
+    const [showPayment, setShowPayment] = useState(false);
+
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: "",
+        message: "",
+        buttons: [] as any[],
+    });
 
     const isPremium = userData?.subscriptionPlan === "premium";
+
+    const closeAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
     const handleSubscribe = async () => {
         if (!userData?.uid) return;
 
-        setLoading(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, 1500));
             const userRef = doc(db, "users", userData.uid);
             await updateDoc(userRef, {
                 subscriptionPlan: "premium",
             });
-            Alert.alert("Success", "Welcome to Premium! 🌟");
-            onClose();
+            setShowPayment(false);
+            setAlertConfig({
+                visible: true,
+                title: "Success",
+                message: "Welcome to Premium! 🌟",
+                buttons: [{ text: "OK", style: "default", onPress: () => { closeAlert(); onClose(); } }]
+            });
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "Something went wrong. Please try again.");
-        } finally {
-            setLoading(false);
+            setAlertConfig({
+                visible: true,
+                title: "Error",
+                message: "Something went wrong. Please try again.",
+                buttons: [{ text: "OK", onPress: closeAlert }]
+            });
+        }
+    };
+
+    const onSubscribePress = () => {
+        if (isPremium) {
+            handleDowngrade();
+        } else {
+            setShowPayment(true);
         }
     };
 
     const handleDowngrade = async () => {
         if (!userData?.uid) return;
 
-        Alert.alert("Cancel Subscription", "Are you sure you want to cancel your Premium subscription?", [
-            { text: "No", style: "cancel" },
-            {
-                text: "Yes, Cancel",
-                style: "destructive",
-                onPress: async () => {
-                    setLoading(true);
-                    try {
-                        const userRef = doc(db, "users", userData.uid);
-                        await updateDoc(userRef, { subscriptionPlan: "free" });
-                        Alert.alert("Subscription Cancelled", " You are now on the Free plan.");
-                        onClose();
-                    } catch (e) {
-                        Alert.alert("Error", "Failed to cancel.");
-                    } finally {
-                        setLoading(false);
+        setAlertConfig({
+            visible: true,
+            title: "Cancel Subscription",
+            message: "Are you sure you want to cancel your Premium subscription?",
+            buttons: [
+                { text: "No", style: "cancel", onPress: closeAlert },
+                {
+                    text: "Yes, Cancel",
+                    style: "destructive",
+                    onPress: async () => {
+                        closeAlert();
+                        setLoading(true);
+                        try {
+                            const userRef = doc(db, "users", userData.uid);
+                            await updateDoc(userRef, { subscriptionPlan: "free" });
+                            setAlertConfig({
+                                visible: true,
+                                title: "Subscription Cancelled",
+                                message: "You are now on the Free plan.",
+                                buttons: [{ text: "OK", onPress: () => { closeAlert(); onClose(); } }]
+                            });
+                        } catch (e) {
+                            setAlertConfig({
+                                visible: true,
+                                title: "Error",
+                                message: "Failed to cancel.",
+                                buttons: [{ text: "OK", onPress: closeAlert }]
+                            });
+                        } finally {
+                            setLoading(false);
+                        }
                     }
                 }
-            }
-        ])
+            ]
+        });
     }
 
     return (
@@ -107,8 +149,15 @@ export default function SubscriptionModal({ visible, onClose }: SubscriptionModa
                     <TouchableOpacity
                         onPress={onClose}
                         style={[styles.closeBtn, { top: insets.top + 10 }]}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="close-circle" size={32} color="rgba(255,255,255,0.8)" />
+                        <BlurView
+                            intensity={25}
+                            tint="light"
+                            style={styles.glassBtnInner}
+                        >
+                            <Ionicons name="close" size={18} color="#000" />
+                        </BlurView>
                     </TouchableOpacity>
 
                     <View style={styles.heroContent}>
@@ -197,7 +246,7 @@ export default function SubscriptionModal({ visible, onClose }: SubscriptionModa
                             isPremium && styles.cancelBtn,
                             loading && { opacity: 0.8 }
                         ]}
-                        onPress={isPremium ? handleDowngrade : handleSubscribe}
+                        onPress={onSubscribePress}
                         disabled={loading}
                     >
                         {loading ? (
@@ -221,6 +270,22 @@ export default function SubscriptionModal({ visible, onClose }: SubscriptionModa
                         </TouchableOpacity>
                     </View>
                 </View>
+
+                <IOSAlert
+                    visible={alertConfig.visible}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    buttons={alertConfig.buttons}
+                    onClose={closeAlert}
+                />
+
+                <PaymentModal
+                    visible={showPayment}
+                    onClose={() => setShowPayment(false)}
+                    amount={selectedPlan === 'yearly' ? '₹2,999' : '₹299'}
+                    planName={selectedPlan === 'yearly' ? 'Yearly Premium' : 'Monthly Premium'}
+                    onConfirm={handleSubscribe}
+                />
             </View>
         </Modal>
     );
@@ -232,7 +297,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#FFFFFF",
     },
     heroContainer: {
-        height: 320,
+        height: 350,
         width: '100%',
         position: 'relative',
     },
@@ -248,8 +313,19 @@ const styles = StyleSheet.create({
     },
     closeBtn: {
         position: 'absolute',
-        right: 20,
+        right: 16,
         zIndex: 10,
+    },
+    glassBtnInner: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.25)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
     },
     heroContent: {
         position: 'absolute',
@@ -388,13 +464,13 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     cancelBtn: {
-        backgroundColor: "#FF3B30", // Session Red
+        backgroundColor: "#C62828",
         borderWidth: 0,
         borderColor: "transparent",
-        shadowColor: "#FF3B30",
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 6,
+        shadowColor: "#C62828",
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 4,
     },
     actionBtnText: {
         color: "#FFF",
@@ -403,8 +479,8 @@ const styles = StyleSheet.create({
         letterSpacing: -0.2,
     },
     cancelBtnText: {
-        color: "#FFF", // White text on Red button
-        fontWeight: "700",
+        color: "#FFF",
+        fontWeight: "600",
     },
     disabledCard: {
         backgroundColor: "#F5F5F7",

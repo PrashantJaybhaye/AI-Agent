@@ -643,60 +643,65 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                <View style={[styles.menuContainer, { marginTop: 20 }]}>
+                <View style={styles.menuContainer}>
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => setSubscriptionVisible(true)}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSubscriptionVisible(true);
+                        }}
                     >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                            <View style={[styles.iconBox, { backgroundColor: userData?.subscriptionPlan === 'premium' ? '#FDE047' : '#F4F4F5' }]}>
-                                <Ionicons
-                                    name={userData?.subscriptionPlan === 'premium' ? "diamond" : "diamond-outline"}
-                                    size={20}
-                                    color={userData?.subscriptionPlan === 'premium' ? "#B45309" : "#71717A"}
-                                />
-                            </View>
-                            <View>
-                                <Text style={styles.menuText}>Subscription Plan</Text>
-                                <Text style={styles.menuSubtext}>
-                                    {userData?.subscriptionPlan === 'premium'
-                                        ? "Premium Active 🌟"
-                                        : "Free Plan • Upgrade to Unlock"}
+                        <Text style={styles.menuText}>Subscription</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <View style={{
+                                backgroundColor: userData?.subscriptionPlan === 'premium' ? '#F0FDF4' : '#F4F4F5',
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderRadius: 6
+                            }}>
+                                <Text style={{
+                                    fontSize: 10,
+                                    fontWeight: '800',
+                                    color: userData?.subscriptionPlan === 'premium' ? '#166534' : COLORS.primary,
+                                    letterSpacing: 0.5
+                                }}>
+                                    {userData?.subscriptionPlan === 'premium' ? 'ACTIVE' : 'UPGRADE'}
                                 </Text>
                             </View>
+                            <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
                         </View>
-                        <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
                     </TouchableOpacity>
-
                     <View style={styles.divider} />
-
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push("/(protected)/(tabs)/history")}
+                        onPress={() =>
+                            Haptics.notificationAsync(
+                                Haptics.NotificationFeedbackType.Success
+                            )
+                        }
                     >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                            <View style={[styles.iconBox, { backgroundColor: '#F4F4F5' }]}>
-                                <Ionicons name="time-outline" size={20} color="#71717A" />
-                            </View>
-                            <Text style={styles.menuText}>History & Logs</Text>
+                        <Text style={styles.menuText}>Achievements</Text>
+                        <View
+                            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                        >
+                            <Text style={{ fontSize: 12, color: COLORS.secondary }}>
+                                Coming Soon
+                            </Text>
+                            <Ionicons
+                                name="lock-closed-outline"
+                                size={14}
+                                color={COLORS.secondary}
+                            />
                         </View>
-                        <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
                     </TouchableOpacity>
-
                     <View style={styles.divider} />
-
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => setSettingsVisible(true)}
                     >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                            <View style={[styles.iconBox, { backgroundColor: '#F4F4F5' }]}>
-                                <Ionicons name="settings-outline" size={20} color="#71717A" />
-                            </View>
-                            <Text style={styles.menuText}>Preferences</Text>
-                        </View>
+                        <Text style={styles.menuText}>Preferences</Text>
                         <Ionicons
-                            name="chevron-forward"
+                            name="settings-outline"
                             size={16}
                             color={COLORS.secondary}
                         />
@@ -704,17 +709,17 @@ export default function ProfileScreen() {
                 </View>
             </ScrollView>
 
-            <SubscriptionModal
-                visible={subscriptionVisible}
-                onClose={() => setSubscriptionVisible(false)}
-            />
-
             <SettingsModal
                 visible={settingsVisible}
                 onClose={() => setSettingsVisible(false)}
                 signOut={signOut}
                 isAdmin={userData?.isAdmin}
                 router={router}
+            />
+
+            <SubscriptionModal
+                visible={subscriptionVisible}
+                onClose={() => setSubscriptionVisible(false)}
             />
         </View>
     );
@@ -819,18 +824,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 12,
         gap: 8,
-    },
-    iconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    menuSubtext: {
-        fontSize: 12,
-        color: COLORS.secondary,
-        marginTop: 2,
     },
     cardLabel: {
         color: COLORS.secondary,
