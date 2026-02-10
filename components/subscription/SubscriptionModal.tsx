@@ -137,7 +137,7 @@ export default function SubscriptionModal({ visible, onClose }: SubscriptionModa
                 {/* Hero Banner */}
                 <View style={styles.heroContainer}>
                     <Image
-                        source={require("@/assets/images/blue_croc_hero.png")}
+                        source={require("@/assets/images/blue_croc_hero.jpg")}
                         style={styles.heroImage}
                         resizeMode="cover"
                     />
