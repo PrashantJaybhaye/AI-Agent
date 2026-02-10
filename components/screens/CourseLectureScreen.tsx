@@ -1,14 +1,14 @@
 import LectureVideoControls from "@/components/lecture/LectureVideoControls";
+import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { useUserContext } from "@/context/UserContext";
 import { dailyRecommendations } from "@/utils/sessions";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const { width } = Dimensions.get('window');
 
 const IOS_BG = '#F2F2F7';
 const PRIMARY_BLUE = '#007AFF';
@@ -20,7 +20,19 @@ export default function CourseLectureScreen() {
     const insets = useSafeAreaInsets();
     const { userData } = useUserContext();
 
+    // Capture portrait dimensions once on mount — avoids race conditions
+    // with reactive hooks that report new values mid-rotation
+    const portraitDims = useRef(() => {
+        const { width, height } = Dimensions.get('screen');
+        return {
+            width: Math.min(width, height),   // portrait width  = shorter edge
+            height: Math.max(width, height),   // portrait height = longer edge
+        };
+    }).current;
+
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [showSubscription, setShowSubscription] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Playback Logic
     const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
@@ -28,6 +40,8 @@ export default function CourseLectureScreen() {
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isBuffering, setIsBuffering] = useState(true);
+
+    const isPremium = userData?.subscriptionPlan === 'premium';
 
     const parsedId = Array.isArray(courseId) ? parseInt(courseId[0], 10) : parseInt(courseId || "", 10);
     const course = dailyRecommendations.find((c) => c.id === parsedId);
@@ -41,7 +55,7 @@ export default function CourseLectureScreen() {
         if (currentLessonIndex < syllabus.length - 1) {
             const nextIndex = currentLessonIndex + 1;
             const nextLesson = syllabus[nextIndex];
-            const isLocked = nextLesson.isLocked && userData?.subscriptionPlan !== 'premium';
+            const isLocked = nextLesson.isLocked && !isPremium;
             if (!isLocked) {
                 setCurrentLessonIndex(nextIndex);
             }
@@ -81,12 +95,38 @@ export default function CourseLectureScreen() {
         };
     }, [player, currentLessonIndex]); // Re-bind if index changes (for playNextLesson closure)
 
-    const handleBack = () => {
+    // Lock orientation to portrait on unmount
+    useEffect(() => {
+        return () => {
+            ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch((error) => {
+                console.error('Failed to restore portrait orientation on unmount:', error);
+            });
+        };
+    }, []);
+
+    const handleBack = useCallback(async () => {
+        if (isFullscreen) {
+            // Restore portrait FIRST, then update state
+            try {
+                await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+                setIsFullscreen(false);
+            } catch (error) {
+                console.error('Failed to restore portrait on back:', error);
+                setIsFullscreen(false);
+            }
+            return;
+        }
         player.pause();
         router.back();
-    };
+    }, [isFullscreen, player, router]);
 
     const handleLessonPress = (index: number) => {
+        const lesson = syllabus[index];
+        const isLocked = lesson.isLocked && !isPremium;
+        if (isLocked) {
+            setShowSubscription(true);
+            return;
+        }
         setCurrentLessonIndex(index);
     };
 
@@ -102,15 +142,54 @@ export default function CourseLectureScreen() {
         player.currentTime = newPosMillis / 1000;
     };
 
+    const handleToggleFullscreen = useCallback(async () => {
+        try {
+            if (isFullscreen) {
+                // Exit fullscreen → Portrait
+                await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+                setIsFullscreen(false);
+            } else {
+                // Enter fullscreen → Landscape
+                await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+                setIsFullscreen(true);
+            }
+        } catch (error) {
+            console.error('Failed to toggle fullscreen orientation:', error);
+            // State is not changed on failure, so the UI stays consistent
+        }
+    }, [isFullscreen]);
+
     if (!course || !videoSource) return null;
 
+    // Video dimensions — use stable portrait dims to avoid race conditions
+    const pw = portraitDims().width;
+    const ph = portraitDims().height;
+    const videoWidth = isFullscreen ? ph : pw;            // landscape width = portrait height
+    const videoHeight = isFullscreen ? pw : pw * (9 / 16); // landscape height = portrait width
+
+    // Count locked lessons
+    const lockedCount = syllabus.filter(s => s.isLocked).length;
+
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#000" />
+        <View style={[styles.container, isFullscreen && styles.fullscreenContainer]}>
+            <StatusBar
+                barStyle="light-content"
+                backgroundColor="#000"
+                hidden={isFullscreen}
+            />
 
             {/* Video Container (Pinned Top) */}
-            <View style={[styles.videoContainer, { paddingTop: insets.top }]}>
-                <View style={styles.videoWrapper}>
+            <View style={[
+                styles.videoContainer,
+                !isFullscreen && { paddingTop: insets.top },
+                isFullscreen && styles.fullscreenVideoContainer,
+            ]}>
+                <View style={[
+                    styles.videoWrapper,
+                    isFullscreen
+                        ? StyleSheet.absoluteFillObject
+                        : { width: videoWidth, height: videoHeight },
+                ]}>
                     <VideoView
                         player={player}
                         style={styles.video}
@@ -134,107 +213,160 @@ export default function CourseLectureScreen() {
                             onPlayPause={handlePlayPause}
                             onSeek={handleSeek}
                             onBack={handleBack}
+                            isFullscreen={isFullscreen}
+                            onToggleFullscreen={handleToggleFullscreen}
                         />
                     </View>
                 </View>
             </View>
 
-            {/* Fixed Meta Section (Non-scrollable) */}
-            <View style={styles.metaContainer}>
-                <View style={styles.metaHeader}>
-                    <Text style={styles.courseTitle} numberOfLines={2}>
-                        {activeLesson ? activeLesson.title : course.title}
-                    </Text>
-                    <TouchableOpacity style={styles.iconBtn}>
-                        <MaterialCommunityIcons name="dots-horizontal" size={26} color={PRIMARY_BLUE} />
-                    </TouchableOpacity>
-                </View>
+            {/* Content below video (hidden in fullscreen) */}
+            {!isFullscreen && (
+                <>
+                    {/* Fixed Meta Section (Non-scrollable) */}
+                    <View style={styles.metaContainer}>
+                        <View style={styles.metaHeader}>
+                            <Text style={styles.courseTitle} numberOfLines={2}>
+                                {activeLesson ? activeLesson.title : course.title}
+                            </Text>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <MaterialCommunityIcons name="dots-horizontal" size={26} color={PRIMARY_BLUE} />
+                            </TouchableOpacity>
+                        </View>
 
-                <Text style={styles.captionText}>
-                    Episode {currentLessonIndex + 1}
-                </Text>
+                        <Text style={styles.captionText}>
+                            Episode {currentLessonIndex + 1}
+                        </Text>
 
-                <TouchableOpacity onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}>
-                    <Text style={styles.descriptionText} numberOfLines={isDescriptionExpanded ? undefined : 2}>
-                        {course.courseDetails?.fullDescription || course.description}
-                    </Text>
-                </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}>
+                            <Text style={styles.descriptionText} numberOfLines={isDescriptionExpanded ? undefined : 2}>
+                                {course.courseDetails?.fullDescription || course.description}
+                            </Text>
+                        </TouchableOpacity>
 
-                <View style={styles.actionRow}>
-                    <TouchableOpacity style={styles.compactActionBtn}>
-                        <MaterialCommunityIcons name="calendar-clock-outline" size={20} color={PRIMARY_BLUE} />
-                        <Text style={styles.actionText}>Schedule</Text>
-                    </TouchableOpacity>
-                    <View style={styles.verticalDivider} />
-                    <TouchableOpacity style={styles.compactActionBtn}>
-                        <MaterialCommunityIcons name="heart-outline" size={20} color={PRIMARY_BLUE} />
-                        <Text style={styles.actionText}>Favorite</Text>
-                    </TouchableOpacity>
-                    <View style={styles.verticalDivider} />
-                    <TouchableOpacity style={styles.compactActionBtn}>
-                        <MaterialCommunityIcons name="script-text-outline" size={20} color={PRIMARY_BLUE} />
-                        <Text style={styles.actionText}>Transcript</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+                        <View style={styles.actionRow}>
+                            <TouchableOpacity style={styles.compactActionBtn}>
+                                <MaterialCommunityIcons name="calendar-clock-outline" size={20} color={PRIMARY_BLUE} />
+                                <Text style={styles.actionText}>Schedule</Text>
+                            </TouchableOpacity>
+                            <View style={styles.verticalDivider} />
+                            <TouchableOpacity style={styles.compactActionBtn}>
+                                <MaterialCommunityIcons name="heart-outline" size={20} color={PRIMARY_BLUE} />
+                                <Text style={styles.actionText}>Favorite</Text>
+                            </TouchableOpacity>
+                            <View style={styles.verticalDivider} />
+                            <TouchableOpacity style={styles.compactActionBtn}>
+                                <MaterialCommunityIcons name="script-text-outline" size={20} color={PRIMARY_BLUE} />
+                                <Text style={styles.actionText}>Transcript</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
-            {/* Scrollable Syllabus List */}
-            <ScrollView
-                style={styles.contentScroll}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                <Text style={styles.sectionHeader}>UP NEXT</Text>
-
-                <View style={[styles.cardContainer, styles.listCard]}>
-                    {syllabus.map((item, index) => {
-                        const isCurrent = currentLessonIndex === index;
-                        // Unlock if user is premium
-                        const isLocked = item.isLocked && userData?.subscriptionPlan !== 'premium';
-                        const isLast = index === syllabus.length - 1;
-
-                        return (
-                            <View key={index}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.lessonRow,
-                                        isCurrent && styles.activeRow
-                                    ]}
-                                    activeOpacity={isLocked ? 1 : 0.6}
-                                    onPress={() => !isLocked && handleLessonPress(index)}
-                                >
-                                    <View style={styles.statusCol}>
-                                        {isCurrent ? (
-                                            <MaterialCommunityIcons name="play" size={16} color={PRIMARY_BLUE} />
-                                        ) : (
-                                            <Text style={styles.indexText}>{index + 1}</Text>
-                                        )}
+                    {/* Scrollable Syllabus List */}
+                    <ScrollView
+                        style={styles.contentScroll}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {/* Premium Banner for non-subscribers */}
+                        {!isPremium && lockedCount > 0 && (
+                            <TouchableOpacity
+                                style={styles.premiumBanner}
+                                activeOpacity={0.7}
+                                onPress={() => setShowSubscription(true)}
+                            >
+                                <View style={styles.premiumBannerInner}>
+                                    <View style={styles.premiumBannerIcon}>
+                                        <Ionicons name="lock-closed" size={16} color={PRIMARY_BLUE} />
                                     </View>
-
-                                    <View style={styles.contentCol}>
-                                        <Text
-                                            style={[styles.lessonTitle, isCurrent && styles.activeTitle]}
-                                            numberOfLines={1}
-                                        >
-                                            {item.title}
+                                    <View style={styles.premiumBannerContent}>
+                                        <Text style={styles.premiumBannerTitle}>
+                                            {lockedCount} lessons locked
                                         </Text>
-                                        <Text style={styles.durationText}>{item.duration}</Text>
+                                        <Text style={styles.premiumBannerSub}>
+                                            Upgrade to unlock the full course
+                                        </Text>
                                     </View>
+                                    <View style={styles.premiumBannerAction}>
+                                        <Text style={styles.premiumBannerActionText}>Upgrade</Text>
+                                        <Ionicons name="chevron-forward" size={14} color={PRIMARY_BLUE} />
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        )}
 
-                                    {isLocked && (
-                                        <MaterialCommunityIcons name="lock-outline" size={14} color="#8E8E93" style={{ marginLeft: 8 }} />
-                                    )}
+                        <Text style={styles.sectionHeader}>UP NEXT</Text>
 
-                                    <MaterialCommunityIcons name="chevron-right" size={20} color="#C7C7CC" style={{ marginLeft: 4 }} />
-                                </TouchableOpacity>
-                                {!isLast && <View style={styles.separator} />}
-                            </View>
-                        );
-                    })}
-                </View>
+                        <View style={[styles.cardContainer, styles.listCard]}>
+                            {syllabus.map((item, index) => {
+                                const isCurrent = currentLessonIndex === index;
+                                const isLocked = item.isLocked && !isPremium;
+                                const isLast = index === syllabus.length - 1;
 
-                <View style={{ height: 40 }} />
-            </ScrollView>
+                                return (
+                                    <View key={index}>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.lessonRow,
+                                                isCurrent && styles.activeRow,
+                                                isLocked && styles.lockedRow,
+                                            ]}
+                                            activeOpacity={isLocked ? 0.7 : 0.6}
+                                            onPress={() => handleLessonPress(index)}
+                                        >
+                                            <View style={styles.statusCol}>
+                                                {isLocked ? (
+                                                    <View style={styles.lockCircle}>
+                                                        <Ionicons name="lock-closed" size={10} color="#8E8E93" />
+                                                    </View>
+                                                ) : isCurrent ? (
+                                                    <MaterialCommunityIcons name="play" size={16} color={PRIMARY_BLUE} />
+                                                ) : (
+                                                    <Text style={styles.indexText}>{index + 1}</Text>
+                                                )}
+                                            </View>
+
+                                            <View style={styles.contentCol}>
+                                                <Text
+                                                    style={[
+                                                        styles.lessonTitle,
+                                                        isCurrent && styles.activeTitle,
+                                                        isLocked && styles.lockedTitle,
+                                                    ]}
+                                                    numberOfLines={1}
+                                                >
+                                                    {item.title}
+                                                </Text>
+                                                <Text style={[styles.durationText, isLocked && { color: '#C7C7CC' }]}>
+                                                    {item.duration}
+                                                </Text>
+                                            </View>
+
+                                            {isLocked ? (
+                                                <View style={styles.proChip}>
+                                                    <Ionicons name="lock-closed" size={9} color="#8E8E93" />
+                                                    <Text style={styles.proChipText}>PRO</Text>
+                                                </View>
+                                            ) : (
+                                                <MaterialCommunityIcons name="chevron-right" size={20} color="#C7C7CC" style={{ marginLeft: 4 }} />
+                                            )}
+                                        </TouchableOpacity>
+                                        {!isLast && <View style={styles.separator} />}
+                                    </View>
+                                );
+                            })}
+                        </View>
+
+                        <View style={{ height: 40 }} />
+                    </ScrollView>
+                </>
+            )}
+
+            {/* Subscription Modal */}
+            <SubscriptionModal
+                visible={showSubscription}
+                onClose={() => setShowSubscription(false)}
+            />
         </View>
     );
 }
@@ -244,14 +376,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: IOS_BG,
     },
+    fullscreenContainer: {
+        backgroundColor: '#000',
+    },
     // Video
     videoContainer: {
         backgroundColor: '#000',
         zIndex: 100,
     },
+    fullscreenVideoContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     videoWrapper: {
-        width: width,
-        height: width * (9 / 16),
         backgroundColor: '#000',
     },
     video: {
@@ -285,7 +423,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 16,
         marginBottom: 20,
-        // Shadow for depth
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -355,6 +492,55 @@ const styles = StyleSheet.create({
         height: 16,
         backgroundColor: '#D1D1D6',
     },
+    // Premium Banner
+    premiumBanner: {
+        marginHorizontal: 16,
+        marginTop: 16,
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    premiumBannerInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        gap: 12,
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E5E5EA',
+    },
+    premiumBannerIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F0F5FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    premiumBannerContent: {
+        flex: 1,
+    },
+    premiumBannerTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1C1C1E',
+        marginBottom: 2,
+    },
+    premiumBannerSub: {
+        fontSize: 12,
+        color: '#8E8E93',
+        fontWeight: '400',
+    },
+    premiumBannerAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+    },
+    premiumBannerActionText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: PRIMARY_BLUE,
+    },
     // List
     sectionHeader: {
         fontSize: 12,
@@ -362,7 +548,7 @@ const styles = StyleSheet.create({
         color: '#6D6D72',
         marginBottom: 8,
         marginTop: 24,
-        marginLeft: 20, // Align with inset
+        marginLeft: 20,
         textTransform: 'uppercase',
     },
     lessonRow: {
@@ -375,15 +561,26 @@ const styles = StyleSheet.create({
     activeRow: {
         backgroundColor: '#F2F2F7',
     },
+    lockedRow: {
+        backgroundColor: '#FAFAFA',
+    },
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: SEPARATOR_COLOR,
-        marginLeft: 44, // Align with text
+        marginLeft: 44,
     },
     statusCol: {
         width: 28,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    lockCircle: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: '#E5E5EA',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     indexText: {
         fontSize: 13,
@@ -407,8 +604,29 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: PRIMARY_BLUE,
     },
+    lockedTitle: {
+        color: '#B0B0B0',
+    },
     durationText: {
         fontSize: 12,
         color: '#8E8E93',
+    },
+    proChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        backgroundColor: '#F2F2F7',
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+        borderRadius: 8,
+        marginLeft: 6,
+        borderWidth: 1,
+        borderColor: '#E5E5EA',
+    },
+    proChipText: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: '#8E8E93',
+        letterSpacing: 0.5,
     },
 });

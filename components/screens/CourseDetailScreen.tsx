@@ -1,3 +1,5 @@
+import SubscriptionModal from "@/components/subscription/SubscriptionModal";
+import { useUserContext } from "@/context/UserContext";
 import { dailyRecommendations } from "@/utils/sessions";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
@@ -27,9 +29,12 @@ export default function CourseDetailScreen() {
     const { courseId } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { userData } = useUserContext();
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [showSubscription, setShowSubscription] = useState(false);
     const loadingRef = React.useRef(false);
+    const isPremium = userData?.subscriptionPlan === 'premium';
 
     // Slider State
     const slideAnim = React.useRef(new Animated.Value(0)).current;
@@ -106,13 +111,16 @@ export default function CourseDetailScreen() {
 
     const renderItem = ({ item, index }: { item: any; index: number }) => {
         const isLast = index === (details.syllabus?.length || 0) - 1;
+        const isLocked = item.isLocked && !isPremium;
 
         return (
             <View style={styles.listRow}>
                 {/* Index / Status Column */}
                 <View style={styles.indexCol}>
-                    {item.isLocked ? (
-                        <MaterialCommunityIcons name="lock-outline" size={16} color="#C7C7CC" />
+                    {isLocked ? (
+                        <View style={styles.lockIconBox}>
+                            <Ionicons name="lock-closed" size={12} color="#8E8E93" />
+                        </View>
                     ) : (
                         <View style={styles.playIndexBox}>
                             <Text style={styles.indexText}>{index + 1}</Text>
@@ -121,14 +129,33 @@ export default function CourseDetailScreen() {
                 </View>
 
                 {/* Content */}
-                <TouchableOpacity style={styles.listContent} activeOpacity={0.7} disabled={item.isLocked}>
+                <TouchableOpacity
+                    style={styles.listContent}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                        if (isLocked) {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            setShowSubscription(true);
+                        } else {
+                            router.push({
+                                pathname: "/course/lecture",
+                                params: { courseId: course.id, lessonIndex: index },
+                            });
+                        }
+                    }}
+                >
                     <View style={styles.textContainer}>
-                        <Text style={[styles.listTitle, !item.isLocked && styles.activeListTitle]} numberOfLines={1}>
+                        <Text style={[styles.listTitle, !isLocked && styles.activeListTitle]} numberOfLines={1}>
                             {item.title}
                         </Text>
                         <Text style={styles.listSub}>{item.duration}</Text>
                     </View>
-                    {!item.isLocked && (
+                    {isLocked ? (
+                        <View style={styles.premiumChip}>
+                            <Ionicons name="lock-closed" size={10} color="#8E8E93" />
+                            <Text style={styles.premiumChipText}>PRO</Text>
+                        </View>
+                    ) : (
                         <MaterialCommunityIcons name="play-circle-outline" size={24} color="#000" />
                     )}
                 </TouchableOpacity>
@@ -254,6 +281,12 @@ export default function CourseDetailScreen() {
                     </Animated.View>
                 </BlurView>
             </View>
+
+            {/* Subscription Modal */}
+            <SubscriptionModal
+                visible={showSubscription}
+                onClose={() => setShowSubscription(false)}
+            />
         </View>
     );
 }
@@ -438,6 +471,14 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: '#F2F2F7',
     },
+    lockIconBox: {
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 12,
+        backgroundColor: '#E5E5EA',
+    },
     indexText: {
         fontSize: 12,
         fontWeight: '600',
@@ -467,6 +508,23 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#8E8E93',
         marginTop: 2,
+    },
+    premiumChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#F2F2F7',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#E5E5EA',
+    },
+    premiumChipText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#8E8E93',
+        letterSpacing: 0.5,
     },
     // Footer
     footer: {
@@ -514,5 +572,27 @@ const styles = StyleSheet.create({
         color: '#AAA', // Lighter text for dark track
         letterSpacing: 0.5,
         zIndex: 1,
+    },
+    // Premium upgrade CTA
+    upgradeCta: {
+        width: '100%',
+        marginTop: 10,
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    upgradeGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        gap: 8,
+    },
+    upgradeText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#FFF',
+        flex: 1,
+        textAlign: 'center',
     },
 });

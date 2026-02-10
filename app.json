@@ -3,7 +3,7 @@
     "name": "Siora",
     "slug": "siora",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/logo-mic.jpg",
     "scheme": "siora",
     "userInterfaceStyle": "automatic",
@@ -59,6 +59,12 @@
       "expo-brightness",
       "expo-web-browser",
       "expo-video",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "DEFAULT"
+        }
+      ],
       [
         "expo-location",
         {

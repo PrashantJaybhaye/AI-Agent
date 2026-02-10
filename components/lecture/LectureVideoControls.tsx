@@ -12,6 +12,8 @@ interface Props {
     onPlayPause: () => void;
     onSeek: (position: number) => void;
     onBack: () => void;
+    isFullscreen?: boolean;
+    onToggleFullscreen?: () => void;
 }
 
 const formatTime = (millis: number) => {
@@ -29,7 +31,9 @@ export default function LectureVideoControls({
     duration,
     onPlayPause,
     onSeek,
-    onBack
+    onBack,
+    isFullscreen = false,
+    onToggleFullscreen,
 }: Props) {
     const [isVisible, setIsVisible] = useState(true);
     const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -100,7 +104,7 @@ export default function LectureVideoControls({
                     <TouchableOpacity onPress={onBack} style={styles.glassBtn}>
                         <BlurView intensity={20} tint="dark" style={styles.blurContainerBottom} />
                         <View style={styles.iconContainer}>
-                            <Ionicons name="chevron-back" size={24} color="#FFF" />
+                            <Ionicons name={isFullscreen ? "close" : "chevron-back"} size={24} color="#FFF" />
                         </View>
                     </TouchableOpacity>
 
@@ -168,6 +172,24 @@ export default function LectureVideoControls({
                     </TouchableWithoutFeedback>
 
                     <Text style={styles.timeText}>{formatTime(duration)}</Text>
+
+                    {/* Fullscreen Toggle Button */}
+                    {onToggleFullscreen && (
+                        <TouchableOpacity
+                            style={styles.fullscreenBtn}
+                            onPress={() => {
+                                onToggleFullscreen();
+                                resetTimer();
+                            }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <Ionicons
+                                name={isFullscreen ? "contract-outline" : "expand-outline"}
+                                size={20}
+                                color="#FFF"
+                            />
+                        </TouchableOpacity>
+                    )}
                 </Animated.View>
 
             </View>
@@ -304,5 +326,14 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.5,
         shadowRadius: 2,
-    }
+    },
+    // Fullscreen toggle
+    fullscreenBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });

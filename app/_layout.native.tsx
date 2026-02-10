@@ -1,6 +1,7 @@
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { useEffect, useState } from "react";
 import { LogBox, PermissionsAndroid, Platform, StatusBar } from "react-native";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -20,6 +21,14 @@ function RootLayoutWithAuth() {
   const segments = useSegments();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+
+  // Lock to portrait on mount
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch((error) => {
+      // Orientation lock may not be supported on all platforms (e.g., web, some tablets)
+      console.error('Failed to lock screen orientation to portrait:', error);
+    });
+  }, []);
 
   // Mark component as mounted
   useEffect(() => {
