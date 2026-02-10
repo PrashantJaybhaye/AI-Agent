@@ -1,4 +1,5 @@
 import LectureVideoControls from "@/components/lecture/LectureVideoControls";
+import { useUserContext } from "@/context/UserContext";
 import { dailyRecommendations } from "@/utils/sessions";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,6 +18,7 @@ export default function CourseLectureScreen() {
     const { courseId } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { userData } = useUserContext();
 
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
@@ -39,7 +41,8 @@ export default function CourseLectureScreen() {
         if (currentLessonIndex < syllabus.length - 1) {
             const nextIndex = currentLessonIndex + 1;
             const nextLesson = syllabus[nextIndex];
-            if (!nextLesson.isLocked) {
+            const isLocked = nextLesson.isLocked && userData?.subscriptionPlan !== 'premium';
+            if (!isLocked) {
                 setCurrentLessonIndex(nextIndex);
             }
         }
@@ -186,7 +189,8 @@ export default function CourseLectureScreen() {
                 <View style={[styles.cardContainer, styles.listCard]}>
                     {syllabus.map((item, index) => {
                         const isCurrent = currentLessonIndex === index;
-                        const isLocked = item.isLocked;
+                        // Unlock if user is premium
+                        const isLocked = item.isLocked && userData?.subscriptionPlan !== 'premium';
                         const isLast = index === syllabus.length - 1;
 
                         return (

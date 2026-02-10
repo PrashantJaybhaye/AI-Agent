@@ -1,3 +1,4 @@
+import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { db } from "@/utils/firebase";
 import { Session, StreakEntry } from "@/utils/types";
 import { useAuth } from "@clerk/clerk-expo";
@@ -192,6 +193,7 @@ export default function ProfileScreen() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [streakEntries, setStreakEntries] = useState<StreakEntry[]>([]);
     const [settingsVisible, setSettingsVisible] = useState(false);
+    const [subscriptionVisible, setSubscriptionVisible] = useState(false);
 
     const handleShare = async () => {
         const message = `I'm on a ${stats.currentStreak}-day streak with Siora! 🧘‍♂️\n\nTotal Focus: ${stats.totalDurationMinutes} mins\nSessions: ${stats.totalSessions}\n\nCheck out my profile: https://siora.app/u/${userData?.uid}`;
@@ -641,51 +643,71 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                <View style={styles.menuContainer}>
+                <View style={[styles.menuContainer, { marginTop: 20 }]}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => setSubscriptionVisible(true)}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            <View style={[styles.iconBox, { backgroundColor: userData?.subscriptionPlan === 'premium' ? '#FDE047' : '#F4F4F5' }]}>
+                                <Ionicons
+                                    name={userData?.subscriptionPlan === 'premium' ? "diamond" : "diamond-outline"}
+                                    size={20}
+                                    color={userData?.subscriptionPlan === 'premium' ? "#B45309" : "#71717A"}
+                                />
+                            </View>
+                            <View>
+                                <Text style={styles.menuText}>Subscription Plan</Text>
+                                <Text style={styles.menuSubtext}>
+                                    {userData?.subscriptionPlan === 'premium'
+                                        ? "Premium Active 🌟"
+                                        : "Free Plan • Upgrade to Unlock"}
+                                </Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
+                    </TouchableOpacity>
+
+                    <View style={styles.divider} />
+
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => router.push("/(protected)/(tabs)/history")}
                     >
-                        <Text style={styles.menuText}>History & Logs</Text>
-                        <Ionicons name="arrow-forward" size={16} color={COLORS.secondary} />
-                    </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() =>
-                            Haptics.notificationAsync(
-                                Haptics.NotificationFeedbackType.Success
-                            )
-                        }
-                    >
-                        <Text style={styles.menuText}>Achievements</Text>
-                        <View
-                            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                        >
-                            <Text style={{ fontSize: 12, color: COLORS.secondary }}>
-                                Coming Soon
-                            </Text>
-                            <Ionicons
-                                name="lock-closed-outline"
-                                size={14}
-                                color={COLORS.secondary}
-                            />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            <View style={[styles.iconBox, { backgroundColor: '#F4F4F5' }]}>
+                                <Ionicons name="time-outline" size={20} color="#71717A" />
+                            </View>
+                            <Text style={styles.menuText}>History & Logs</Text>
                         </View>
+                        <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
                     </TouchableOpacity>
+
                     <View style={styles.divider} />
+
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => setSettingsVisible(true)}
                     >
-                        <Text style={styles.menuText}>Preferences</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            <View style={[styles.iconBox, { backgroundColor: '#F4F4F5' }]}>
+                                <Ionicons name="settings-outline" size={20} color="#71717A" />
+                            </View>
+                            <Text style={styles.menuText}>Preferences</Text>
+                        </View>
                         <Ionicons
-                            name="settings-outline"
+                            name="chevron-forward"
                             size={16}
                             color={COLORS.secondary}
                         />
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            <SubscriptionModal
+                visible={subscriptionVisible}
+                onClose={() => setSubscriptionVisible(false)}
+            />
 
             <SettingsModal
                 visible={settingsVisible}
@@ -797,6 +819,18 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 12,
         gap: 8,
+    },
+    iconBox: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    menuSubtext: {
+        fontSize: 12,
+        color: COLORS.secondary,
+        marginTop: 2,
     },
     cardLabel: {
         color: COLORS.secondary,

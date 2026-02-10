@@ -77,4 +77,5 @@ export interface User {
     isAdmin: boolean;
     createdAt: any;
     lastLoginAt: any;
+    subscriptionPlan?: 'free' | 'premium';
 }
