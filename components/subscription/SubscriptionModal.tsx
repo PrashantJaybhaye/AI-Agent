@@ -187,39 +187,38 @@ export default function SubscriptionModal({ visible, onClose }: SubscriptionModa
                         </TouchableOpacity>
                     </View>
 
-                    {/* Footer Actions */}
-                    <View style={styles.footerContainer}>
-                        <TouchableOpacity
-                            style={[
-                                styles.actionBtn,
-                                isPremium && styles.cancelBtn,
-                                loading && { opacity: 0.8 }
-                            ]}
-                            onPress={isPremium ? handleDowngrade : handleSubscribe}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#FFF" />
-                            ) : (
-                                <Text style={[styles.actionBtnText, isPremium && styles.cancelBtnText]}>
-                                    {isPremium ? "Cancel Subscription" : `Start 7-Day Free Trial`}
-                                </Text>
-                            )}
-                        </TouchableOpacity>
+                </View>
 
-                        {!isPremium && (
-                            <Text style={styles.disclaimer}>
-                                7 days free, then {selectedPlan === 'yearly' ? '₹249/mo' : '₹299/mo'}. Cancel anytime.
+                {/* Sticky Footer */}
+                <View style={[styles.footerContainer, { paddingBottom: insets.bottom + 16 }]}>
+                    <TouchableOpacity
+                        style={[
+                            styles.actionBtn,
+                            isPremium && styles.cancelBtn,
+                            loading && { opacity: 0.8 }
+                        ]}
+                        onPress={isPremium ? handleDowngrade : handleSubscribe}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <Text style={[styles.actionBtnText, isPremium && styles.cancelBtnText]}>
+                                {isPremium ? "Cancel Subscription" : `Start 7-Day Free Trial`}
                             </Text>
                         )}
+                    </TouchableOpacity>
 
-                        <View style={styles.footerLinks}>
-                            <TouchableOpacity><Text style={styles.linkText}>Restore</Text></TouchableOpacity>
-                            <Text style={styles.linkDivider}>•</Text>
-                            <TouchableOpacity><Text style={styles.linkText}>Terms</Text></TouchableOpacity>
-                            <Text style={styles.linkDivider}>•</Text>
-                            <TouchableOpacity><Text style={styles.linkText}>Privacy</Text></TouchableOpacity>
-                        </View>
+                    <View style={styles.footerMeta}>
+                        <Text style={styles.footerMetaText}>
+                            {!isPremium
+                                ? `7 days free, then ${selectedPlan === 'yearly' ? '₹249/mo' : '₹299/mo'}. Cancel anytime.`
+                                : 'Plan Active'}
+                        </Text>
+                        <Text style={styles.footerMetaText}>•</Text>
+                        <TouchableOpacity>
+                            <Text style={styles.restoreText}>Restore</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
@@ -275,6 +274,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 20,
         paddingTop: 16,
+        paddingBottom: 140, // Increased for footer
         justifyContent: 'flex-start', // Top align now
         gap: 16, // Use gap for spacing between sections
     },
@@ -362,63 +362,73 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         letterSpacing: 0.5,
     },
-    disabledCard: {
-        opacity: 0.5,
-    },
+    // disabledCard moved to bottom with specific styling
     footerContainer: {
-        marginTop: 'auto',
-        alignItems: 'center',
-        paddingVertical: 8,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "rgba(255,255,255,0.95)", // slightly translucent
+        borderTopWidth: 0.5,
+        borderTopColor: "rgba(0,0,0,0.1)",
+        paddingTop: 12,
+        paddingHorizontal: 20,
     },
     actionBtn: {
         backgroundColor: "#007AFF",
-        height: 52,
-        borderRadius: 26,
+        height: 50,
+        borderRadius: 25,
         alignItems: "center",
         justifyContent: "center",
         width: '100%',
-        marginBottom: 12,
         shadowColor: "#007AFF",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
         elevation: 4,
     },
     cancelBtn: {
-        backgroundColor: "#FFF",
-        borderWidth: 1,
-        borderColor: "#FF3B30",
-        shadowOpacity: 0.05,
-        shadowColor: "#000",
+        backgroundColor: "#FF3B30", // Session Red
+        borderWidth: 0,
+        borderColor: "transparent",
+        shadowColor: "#FF3B30",
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 6,
     },
     actionBtnText: {
         color: "#FFF",
         fontSize: 16,
-        fontWeight: "700",
-        letterSpacing: -0.3,
+        fontWeight: "600",
+        letterSpacing: -0.2,
     },
     cancelBtnText: {
-        color: "#FF3B30",
+        color: "#FFF", // White text on Red button
+        fontWeight: "700",
     },
-    disclaimer: {
+    disabledCard: {
+        backgroundColor: "#F5F5F7",
+        borderColor: "#E5E5EA",
+        // Remove shadow for disabled state
+        shadowOpacity: 0,
+        elevation: 0,
+    },
+    footerMeta: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 12,
+        marginBottom: 4,
+        gap: 16, // Space between text and restore
+    },
+    footerMetaText: {
         fontSize: 11,
         color: "#8E8E93",
         textAlign: "center",
-        marginBottom: 12,
     },
-    footerLinks: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 12,
-    },
-    linkText: {
+    restoreText: {
         fontSize: 11,
-        color: "#8E8E93",
-        fontWeight: "500",
-    },
-    linkDivider: {
-        fontSize: 11,
-        color: "#D1D1D6",
+        color: "#007AFF",
+        fontWeight: "600",
     },
 });
