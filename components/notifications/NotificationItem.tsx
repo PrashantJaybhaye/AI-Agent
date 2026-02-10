@@ -1,6 +1,5 @@
 import { AppNotification } from "@/utils/notifications";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -55,17 +54,7 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
                     </View>
                 );
 
-            case 'follower':
-                // User avatar for follower notifications
-                if (item.senderPhoto) {
-                    return <Image source={{ uri: item.senderPhoto }} style={styles.avatar} />;
-                }
-                // Fallback to icon if no photo
-                return (
-                    <View style={[styles.iconCircle, { backgroundColor: '#EFF6FF' }]}>
-                        <Ionicons name="person-add" size={20} color="#3B82F6" />
-                    </View>
-                );
+
 
             case 'system':
             default:
@@ -82,21 +71,16 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
     const getNotificationLabel = () => {
         switch (item.type) {
             case 'achievement': return 'Achievement';
-            case 'follower': return 'New follower';
             case 'welcome': return 'Getting started';
             default: return 'Notification';
         }
     };
 
     // Determine the main display title
-    const mainTitle = item.type === 'follower' && item.senderName
-        ? item.senderName
-        : item.title;
+    const mainTitle = item.title;
 
     // Determine the subtitle/description
-    const subtitle = item.type === 'follower'
-        ? 'started following you'
-        : item.description;
+    const subtitle = item.description;
 
     const typeLabel = getNotificationLabel();
 

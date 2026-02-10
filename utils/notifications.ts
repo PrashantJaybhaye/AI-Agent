@@ -1,7 +1,7 @@
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
-export type NotificationType = 'achievement' | 'follower' | 'system' | 'welcome';
+export type NotificationType = 'achievement' | 'system' | 'welcome';
 
 export interface AppNotification {
     id?: string;
@@ -60,12 +60,9 @@ export async function createNotification(params: {
 
             const categoryIdentifier =
                 params.type === 'achievement' ? 'achievement' as const :
-                    params.type === 'follower' ? 'social' as const :
-                        'default' as const;
+                    'default' as const;
 
-            const notificationBody = params.type === 'follower' && senderName
-                ? `${senderName} ${params.description}`
-                : params.description;
+            const notificationBody = params.description;
 
             await sendLocalNotification({
                 title: params.title,
@@ -85,24 +82,3 @@ export async function createNotification(params: {
     }
 }
 
-export async function removeNotification(params: {
-    recipientId: string;
-    type: NotificationType;
-    relatedId: string;
-}) {
-    try {
-        const { getDocs, query, where, collection, deleteDoc } = await import("firebase/firestore");
-        const q = query(
-            collection(db, "notifications"),
-            where("recipientId", "==", params.recipientId),
-            where("type", "==", params.type),
-            where("relatedId", "==", params.relatedId)
-        );
-
-        const snapshot = await getDocs(q);
-        const promises = snapshot.docs.map(notificationDoc => deleteDoc(notificationDoc.ref));
-        await Promise.all(promises);
-    } catch (error) {
-        console.error("Error removing notification:", error);
-    }
-}

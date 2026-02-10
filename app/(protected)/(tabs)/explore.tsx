@@ -277,13 +277,7 @@ export default function ExploreScreen() {
             if (isFollowing) {
                 await deleteDoc(followRef);
 
-                // Remove the notification if it exists
-                const { removeNotification } = await import("@/utils/notifications");
-                await removeNotification({
-                    recipientId: user.id,
-                    type: 'follower',
-                    relatedId: followRef.id
-                });
+
             } else {
                 await setDoc(followRef, {
                     followerId: userId,
@@ -291,16 +285,7 @@ export default function ExploreScreen() {
                     createdAt: serverTimestamp(),
                 });
 
-                // Trigger notification for the user being followed
-                const { createNotification } = await import("@/utils/notifications");
-                await createNotification({
-                    recipientId: user.id,
-                    type: 'follower',
-                    title: "New Follower",
-                    description: "started following you.",
-                    senderId: userId,
-                    relatedId: followRef.id
-                });
+
 
                 // Check for achievements
                 const { checkFiveFollowersAchievement, addFirstFollowAchievement } = await import("@/utils/achievements");
