@@ -33,19 +33,26 @@ import { useUserContext } from "../../context/UserContext";
 const { width } = Dimensions.get("window");
 
 const COLORS = {
-    bg: "#FFFFFF",
-    card: "#FAFAFA",
-    cardBorder: "#E4E4E7",
-    primary: "#09090B",
+    bg: "#F8F9FA", // Cleaner, brighter background
+    card: "#FFFFFF",
+    cardBorder: "#F0F0F0",
+    primary: "#18181B",
     secondary: "#71717A",
     accent: "#3B82F6",
     danger: "#EF4444",
     success: "#10B981",
+    divider: "#F4F4F5",
 };
 
 const BentoCard = ({ children, style, delay = 0, colSpan = 1 }: any) => (
-    <View style={[styles.bentoCard, { flex: colSpan }, style]}>{children}</View>
+    <View
+        style={[styles.bentoCard, { flex: colSpan }, style]}
+    >
+        {children}
+    </View>
 );
+
+
 
 const ActivityBar = ({ height, label, active }: any) => (
     <View style={styles.activityBarContainer}>
@@ -66,6 +73,81 @@ const ActivityBar = ({ height, label, active }: any) => (
         {active && <View style={styles.activeDot} />}
     </View>
 );
+
+const calculateBreathingStreak = (streakEntries: StreakEntry[]) => {
+    if (streakEntries.length === 0) return { streak: 0, startDate: null };
+
+    // Unique dates from breathing exercises
+    const uniqueDates = Array.from(
+        new Set(
+            streakEntries
+                .map((entry) => {
+                    if (entry.completion_time) {
+                        const date = entry.completion_time.toDate();
+                        return new Date(
+                            date.getFullYear(),
+                            date.getMonth(),
+                            date.getDate()
+                        ).getTime();
+                    }
+                    return 0;
+                })
+                .filter((d) => d > 0)
+        )
+    ).sort((a, b) => b - a);
+
+
+    if (uniqueDates.length === 0) return { streak: 0, startDate: null };
+
+    let streak = 0;
+    const today = new Date();
+    const todayReset = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    ).getTime();
+
+    const hasToday = uniqueDates.includes(todayReset);
+    const yesterdayReset = todayReset - 86400000;
+    const hasYesterday = uniqueDates.includes(yesterdayReset);
+
+    // Start counting if activity today or yesterday
+    if (!hasToday && !hasYesterday) return { streak: 0, startDate: null };
+
+    let checkTime = hasToday ? todayReset : yesterdayReset;
+
+    // Count consecutive days
+    while (uniqueDates.includes(checkTime)) {
+        streak++;
+        checkTime -= 86400000; // Go back one day
+    }
+
+    return { streak, startDate: uniqueDates[streak - 1] };
+};
+
+const calculateBreathingActivity = (streakEntries: StreakEntry[]) => {
+    const activity = [0, 0, 0, 0, 0, 0, 0];
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(today.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+
+    streakEntries.forEach((entry) => {
+        if (entry.completion_time) {
+            const entryDate = entry.completion_time.toDate();
+            if (entryDate >= monday) {
+                let dayIndex = entryDate.getDay() - 1;
+                if (dayIndex === -1) dayIndex = 6;
+                const durationMins = entry.total_session_duration_seconds / 60;
+                activity[dayIndex] += durationMins;
+            }
+        }
+    });
+
+    const maxVal = Math.max(...activity, 1);
+    return activity.map((v) => (v / maxVal) * 100);
+};
 
 const SettingsModal = ({ visible, onClose, signOut, isAdmin, router }: any) => {
     const insets = useSafeAreaInsets();
@@ -210,12 +292,7 @@ export default function ProfileScreen() {
         }
     };
 
-    const parseDate = (date: any): Date => {
-        if (!date) return new Date();
-        if (typeof date.toDate === "function") return date.toDate(); // Firestore Timestamp
-        if (date.seconds) return new Date(date.seconds * 1000); // Timestamp
-        return new Date(date); // Date object or string
-    };
+
 
     const processSessions = useCallback(
         (sessions: Session[], streakEntries: StreakEntry[]) => {
@@ -225,21 +302,34 @@ export default function ProfileScreen() {
                 0
             );
 
-            // Breathing exercise duration
-            const breathingDurationSecs = streakEntries.reduce(
+            // Streak from breathing exercises
+            const { streak: breathingStreak, startDate: streakStartDate } = calculateBreathingStreak(streakEntries);
+
+            // Filter entries to only include those in the current streak
+            const currentStreakEntries = streakEntries.filter(entry => {
+                if (!entry.completion_time) return false;
+                const entryDate = entry.completion_time.toDate();
+                const entryTime = new Date(
+                    entryDate.getFullYear(),
+                    entryDate.getMonth(),
+                    entryDate.getDate()
+                ).getTime();
+                return streakStartDate && entryTime >= streakStartDate;
+            });
+
+            // Recalculate breathing duration based on CURRENT STREAK only
+
+            const breathingDurationSecs = (breathingStreak > 0) ? currentStreakEntries.reduce(
                 (acc, entry) => acc + (entry.total_session_duration_seconds || 0),
                 0
-            );
+            ) : 0;
 
             // Weekly activity from breathing exercises
             const breathingActivity = calculateBreathingActivity(streakEntries);
 
-            // Streak from breathing exercises
-            const breathingStreak = calculateBreathingStreak(streakEntries);
-
             setStats({
                 totalSessions, // Call sessions
-                totalDurationMinutes: Math.floor(breathingDurationSecs / 60), // Breathing exercises
+                totalDurationMinutes: Math.floor(breathingDurationSecs / 60), // Breathing exercises (Streak only)
                 averageDurationMinutes:
                     totalSessions > 0
                         ? Math.round(totalDurationSecs / 60 / totalSessions)
@@ -302,146 +392,7 @@ export default function ProfileScreen() {
         processSessions(sessions, streakEntries);
     }, [sessions, streakEntries, processSessions]);
 
-    const calculateStreak = (sessions: Session[]) => {
-        if (!sessions.length) return 0;
 
-        const uniqueDates = Array.from(
-            new Set(
-                sessions.map((s) => {
-                    const date = parseDate(s.created_at);
-                    return new Date(
-                        date.getFullYear(),
-                        date.getMonth(),
-                        date.getDate()
-                    ).getTime();
-                })
-            )
-        ).sort((a, b) => b - a);
-
-        let streak = 0;
-        const today = new Date();
-        const todayReset = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate()
-        ).getTime();
-
-        const hasToday = uniqueDates.includes(todayReset);
-        const yesterdayReset = todayReset - 86400000;
-        const hasYesterday = uniqueDates.includes(yesterdayReset);
-
-        if (!hasToday && !hasYesterday) return 0;
-
-        let checkTime = hasToday ? todayReset : yesterdayReset;
-
-        while (uniqueDates.includes(checkTime)) {
-            streak++;
-            checkTime -= 86400000;
-        }
-
-        return streak;
-    };
-
-    // Calculate Daily Activity
-    // Fixed week (Mon-Sun)
-    // Map current week's activity
-    const calculateDailyActivity = (sessions: Session[]) => {
-        const activity = [0, 0, 0, 0, 0, 0, 0];
-        const today = new Date();
-        const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(today.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
-
-        sessions.forEach((s) => {
-            const sessionDate = parseDate(s.created_at);
-            if (sessionDate >= monday) {
-                let dayIndex = sessionDate.getDay() - 1;
-                if (dayIndex === -1) dayIndex = 6;
-
-                const durationMins = (s.call_duration_secs || 0) / 60;
-                activity[dayIndex] += durationMins;
-            }
-        });
-
-        const maxVal = Math.max(...activity, 1);
-        return activity.map((v) => (v / maxVal) * 100);
-    };
-
-    // Calculate streak from breathing exercises
-    const calculateBreathingStreak = (streakEntries: StreakEntry[]) => {
-        if (streakEntries.length === 0) return 0;
-
-        // Unique dates from breathing exercises
-        const uniqueDates = Array.from(
-            new Set(
-                streakEntries
-                    .map((entry) => {
-                        if (entry.completion_time) {
-                            const date = entry.completion_time.toDate();
-                            return new Date(
-                                date.getFullYear(),
-                                date.getMonth(),
-                                date.getDate()
-                            ).getTime();
-                        }
-                        return 0;
-                    })
-                    .filter((d) => d > 0)
-            )
-        ).sort((a, b) => b - a);
-
-        if (uniqueDates.length === 0) return 0;
-
-        let streak = 0;
-        const today = new Date();
-        const todayReset = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate()
-        ).getTime();
-
-        const hasToday = uniqueDates.includes(todayReset);
-        const yesterdayReset = todayReset - 86400000;
-        const hasYesterday = uniqueDates.includes(yesterdayReset);
-
-        // Start counting if activity today or yesterday
-        if (!hasToday && !hasYesterday) return 0;
-
-        let checkTime = hasToday ? todayReset : yesterdayReset;
-
-        // Count consecutive days
-        while (uniqueDates.includes(checkTime)) {
-            streak++;
-            checkTime -= 86400000; // Go back one day
-        }
-
-        return streak;
-    };
-
-    const calculateBreathingActivity = (streakEntries: StreakEntry[]) => {
-        const activity = [0, 0, 0, 0, 0, 0, 0];
-        const today = new Date();
-        const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(today.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
-
-        streakEntries.forEach((entry) => {
-            if (entry.completion_time) {
-                const entryDate = entry.completion_time.toDate();
-                if (entryDate >= monday) {
-                    let dayIndex = entryDate.getDay() - 1;
-                    if (dayIndex === -1) dayIndex = 6;
-                    const durationMins = entry.total_session_duration_seconds / 60;
-                    activity[dayIndex] += durationMins;
-                }
-            }
-        });
-
-        const maxVal = Math.max(...activity, 1);
-        return activity.map((v) => (v / maxVal) * 100);
-    };
 
     return (
         <View style={styles.container}>
