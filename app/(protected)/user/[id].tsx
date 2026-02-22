@@ -3,6 +3,7 @@ import {
     addFirstFollowAchievement,
     checkFiveFollowersAchievement,
 } from "@/utils/achievements";
+import { createNotification } from "@/utils/notifications";
 
 import { db } from "@/utils/firebase";
 import { User } from "@/utils/types";
@@ -182,6 +183,17 @@ export default function UserProfileScreen() {
                 // Check if the target user has reached 5 followers
                 await checkFiveFollowersAchievement(id);
 
+                // Create a notification for the person being followed
+                const currentUserDoc = await getDoc(doc(db, "users", userId));
+                const currentUserName = currentUserDoc.exists() ? currentUserDoc.data()?.displayName : "Someone";
+
+                await createNotification({
+                    recipientId: id,
+                    type: 'follow',
+                    title: 'New Follower',
+                    description: `${currentUserName} started following you!`,
+                    senderId: userId,
+                });
             }
         } catch (error) {
             console.error("Error toggling follow:", error);

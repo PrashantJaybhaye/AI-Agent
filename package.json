@@ -42,7 +42,7 @@
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
-    "expo-video": "~3.0.15",
+    "expo-video": "~3.0.16",
     "expo-web-browser": "~15.0.10",
     "firebase": "^12.7.0",
     "livekit-client": "^2.16.0",
@@ -59,9 +59,12 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
-    "eslint": "^9.25.0",
-    "eslint-config-expo": "~10.0.0",
+    "eslint": "^10.0.1",
+    "eslint-config-expo": "^10.0.0",
     "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   },
   "private": true,
   "description": "Your Personal AI-Powered Mindfulness Companion",

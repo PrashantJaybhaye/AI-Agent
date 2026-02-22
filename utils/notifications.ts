@@ -1,7 +1,7 @@
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
-export type NotificationType = 'achievement' | 'system' | 'welcome';
+export type NotificationType = 'achievement' | 'system' | 'welcome' | 'follow';
 
 export interface AppNotification {
     id?: string;
@@ -53,30 +53,6 @@ export async function createNotification(params: {
         if (params.relatedId) notificationData.relatedId = params.relatedId;
 
         await addDoc(collection(db, "notifications"), notificationData);
-
-        // Send local push notification
-        try {
-            const { sendLocalNotification } = await import("./pushNotifications");
-
-            const categoryIdentifier =
-                params.type === 'achievement' ? 'achievement' as const :
-                    'default' as const;
-
-            const notificationBody = params.description;
-
-            await sendLocalNotification({
-                title: params.title,
-                body: notificationBody,
-                data: {
-                    type: params.type,
-                    relatedId: params.relatedId,
-                    senderId: params.senderId,
-                },
-                categoryIdentifier,
-            });
-        } catch (pushError) {
-            console.error('Push notification error:', pushError);
-        }
     } catch (error) {
         console.error("Error creating notification:", error);
     }

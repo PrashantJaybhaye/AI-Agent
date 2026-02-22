@@ -1,5 +1,6 @@
 import { AppNotification } from "@/utils/notifications";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -53,10 +54,19 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
                         <Ionicons name="sparkles" size={24} color="#10B981" />
                     </View>
                 );
-
-
-
-            case 'system':
+            case 'follow':
+                return item.senderPhoto ? (
+                    <Image
+                        source={{ uri: item.senderPhoto }}
+                        style={styles.avatar}
+                        contentFit="cover"
+                        transition={200}
+                    />
+                ) : (
+                    <View style={[styles.iconCircle, styles.followIcon]}>
+                        <Ionicons name="person-add" size={24} color="#3B82F6" />
+                    </View>
+                );
             default:
                 // Default system notification icon
                 return (
@@ -72,16 +82,16 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
         switch (item.type) {
             case 'achievement': return 'Achievement';
             case 'welcome': return 'Getting started';
+            case 'follow': return 'New Follower';
             default: return 'Notification';
         }
     };
 
-    // Determine the main display title
-    const mainTitle = item.title;
-
-    // Determine the subtitle/description
-    const subtitle = item.description;
-
+    // For follow notifications, use sender name as the title
+    // so the label ("New Follower") and title (sender name) are distinct
+    const isFollow = item.type === 'follow';
+    const mainTitle = isFollow ? (item.senderName || 'Someone') : item.title;
+    const subtitle = isFollow ? 'started following you' : item.description;
     const typeLabel = getNotificationLabel();
 
     return (
@@ -95,10 +105,12 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
             </View>
 
             <View style={styles.contentSection}>
-                {/* Type Label */}
-                <Text style={styles.typeText} numberOfLines={1}>
-                    {typeLabel}
-                </Text>
+                {/* Type Label — hidden for follow notifications */}
+                {typeLabel && (
+                    <Text style={styles.typeText} numberOfLines={1}>
+                        {typeLabel}
+                    </Text>
+                )}
 
                 {/* Main Title */}
                 <Text
@@ -113,7 +125,10 @@ export const NotificationItem = ({ item, onPress }: NotificationItemProps) => {
 
                 {/* Description/Subtitle */}
                 {subtitle && (
-                    <Text style={styles.subtitleText} numberOfLines={2}>
+                    <Text style={[
+                        styles.subtitleText,
+                        isFollow && styles.followAction,
+                    ]} numberOfLines={2}>
                         {subtitle}
                     </Text>
                 )}
@@ -162,6 +177,12 @@ const styles = StyleSheet.create({
         height: 48,
         borderRadius: 24,
     },
+    followIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "rgba(59, 130, 246, 0.1)",
+    },
     contentSection: {
         flex: 1,
         justifyContent: "center",
@@ -188,6 +209,10 @@ const styles = StyleSheet.create({
         color: THEME.textTertiary,
         lineHeight: 18,
         marginTop: 2,
+    },
+    followAction: {
+        fontSize: 13,
+        color: THEME.textSecondary,
     },
     metaSection: {
         alignItems: "flex-end",

@@ -37,14 +37,6 @@ function RootLayoutWithAuth() {
 
   useEffect(() => {
     const requestPermissions = async () => {
-      // Request notification permissions (iOS & Android)
-      try {
-        const { requestNotificationPermissions } = await import('@/utils/pushNotifications');
-        await requestNotificationPermissions();
-      } catch (err) {
-        console.warn('Notification permissions error:', err);
-      }
-
       // Request Android-specific permissions
       if (Platform.OS === "android") {
         try {

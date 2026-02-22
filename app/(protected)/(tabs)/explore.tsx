@@ -3,6 +3,7 @@ import { ExploreSkeleton } from "@/components/ExploreSkeleton";
 import { SuggestedUsers } from "@/components/SuggestedUsers";
 import { useUserContext } from "@/context/UserContext";
 import { db } from "@/utils/firebase";
+import { createNotification } from "@/utils/notifications";
 import { User } from "@/utils/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
@@ -291,6 +292,17 @@ export default function ExploreScreen() {
                 const { checkFiveFollowersAchievement, addFirstFollowAchievement } = await import("@/utils/achievements");
                 await checkFiveFollowersAchievement(user.id);
                 await addFirstFollowAchievement(userId);
+
+                // Create a notification for the person being followed
+                const currentUserName = userData?.displayName || "Someone";
+
+                await createNotification({
+                    recipientId: user.id,
+                    type: 'follow',
+                    title: 'New Follower',
+                    description: `${currentUserName} started following you!`,
+                    senderId: userId,
+                });
             }
         } catch (error: any) {
             console.error("Error toggling follow:", error);

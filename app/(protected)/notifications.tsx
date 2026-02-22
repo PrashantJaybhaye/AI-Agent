@@ -106,12 +106,21 @@ export default function NotificationsScreen() {
         return sections;
     }, [notifications]);
 
-    const handleMarkAsRead = async (item: AppNotification) => {
-        if (item.isMarkedRead || !item.id) return;
-        try {
-            await updateDoc(doc(db, "notifications", item.id), { isMarkedRead: true });
-        } catch (error) {
-            console.error("Error marking as read:", error);
+    const handleNotificationPress = async (item: AppNotification) => {
+        // Mark as read
+        if (!item.isMarkedRead && item.id) {
+            try {
+                await updateDoc(doc(db, "notifications", item.id), { isMarkedRead: true });
+            } catch (error) {
+                console.error("Error marking as read:", error);
+            }
+        }
+
+        // Navigate based on type
+        if (item.type === 'follow' && item.senderId) {
+            router.push(`/(protected)/user/${item.senderId}` as any);
+        } else if (item.type === 'achievement') {
+            router.push('/(protected)/profile');
         }
     };
 
@@ -132,7 +141,7 @@ export default function NotificationsScreen() {
                     sections={groupedNotifications}
                     keyExtractor={(item) => item.id || Math.random().toString()}
                     renderItem={({ item }) => (
-                        <NotificationItem item={item} onPress={handleMarkAsRead} />
+                        <NotificationItem item={item} onPress={handleNotificationPress} />
                     )}
                     renderSectionHeader={({ section: { title } }) => (
                         <View style={styles.sectionHeader}>
