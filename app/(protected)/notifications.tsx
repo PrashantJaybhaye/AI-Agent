@@ -16,7 +16,6 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
-    RefreshControl,
     SectionList,
     StyleSheet,
     Text,
@@ -41,7 +40,7 @@ export default function NotificationsScreen() {
     const router = useRouter();
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+
 
     useEffect(() => {
         if (!userId) return;
@@ -66,7 +65,6 @@ export default function NotificationsScreen() {
 
             setNotifications(sortedData);
             setLoading(false);
-            setRefreshing(false);
         }, (error) => {
             console.error("Error listening to notifications:", error);
             setLoading(false);
@@ -150,7 +148,7 @@ export default function NotificationsScreen() {
                     )}
                     contentContainerStyle={styles.listContent}
                     stickySectionHeadersEnabled={false}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(true)} />}
+
                 />
             )}
         </View>
