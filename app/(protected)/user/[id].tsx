@@ -305,7 +305,14 @@ export default function UserProfileScreen() {
 
                         {/* Stats Row */}
                         <View style={styles.statsRow}>
-                            <View style={styles.statItem}>
+                            <TouchableOpacity
+                                style={styles.statItem}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    router.push(`/(protected)/follow-list?userId=${id}&type=followers` as any);
+                                }}
+                                activeOpacity={0.7}
+                            >
                                 <Text style={[styles.statVal, { color: theme.text }]}>
                                     {followerCount}
                                 </Text>
@@ -314,11 +321,18 @@ export default function UserProfileScreen() {
                                 >
                                     Followers
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                             <View
                                 style={[styles.vertDivider, { backgroundColor: theme.border }]}
                             />
-                            <View style={styles.statItem}>
+                            <TouchableOpacity
+                                style={styles.statItem}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    router.push(`/(protected)/follow-list?userId=${id}&type=following` as any);
+                                }}
+                                activeOpacity={0.7}
+                            >
                                 <Text style={[styles.statVal, { color: theme.text }]}>
                                     {followingCount}
                                 </Text>
@@ -327,7 +341,7 @@ export default function UserProfileScreen() {
                                 >
                                     Following
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                         </View>
                     </View>
 

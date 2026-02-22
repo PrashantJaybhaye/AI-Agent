@@ -32,7 +32,7 @@ export async function addAchievement(
             await createNotification({
                 recipientId: userId,
                 type: 'achievement',
-                title: `🏆 ${title}`,
+                title: `${title}`,
                 description: description,
                 relatedId: docRef.id
             });
