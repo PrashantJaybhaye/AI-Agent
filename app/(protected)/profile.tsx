@@ -247,7 +247,7 @@ const SettingsModal = ({ visible, onClose, signOut, isAdmin, router }: any) => {
                         style={styles.cancelButton}
                         underlayColor={IOS_HIGHLIGHT}
                         onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                             onClose();
                         }}
                     >
@@ -598,7 +598,7 @@ export default function ProfileScreen() {
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                             setSubscriptionVisible(true);
                         }}
                     >

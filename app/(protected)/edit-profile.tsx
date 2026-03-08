@@ -58,7 +58,7 @@ export default function EditProfileScreen() {
     const handleGetCurrentLocation = async () => {
         try {
             setIsLocating(true);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
@@ -111,7 +111,7 @@ export default function EditProfileScreen() {
 
         try {
             setIsSaving(true);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
             if (username.trim() !== userData.username) {
                 // Check if username is taken

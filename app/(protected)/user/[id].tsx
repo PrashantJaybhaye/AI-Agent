@@ -148,14 +148,14 @@ export default function UserProfileScreen() {
     // Fetch achievements
 
     const handleBack = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         router.back();
     };
 
     const handleFollow = async () => {
         if (!userId || !id) return;
 
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         const wasFollowing = isFollowing;
         setIsFollowing(!isFollowing);
 
@@ -308,7 +308,7 @@ export default function UserProfileScreen() {
                             <TouchableOpacity
                                 style={styles.statItem}
                                 onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                     router.push(`/(protected)/follow-list?userId=${id}&type=followers` as any);
                                 }}
                                 activeOpacity={0.7}
@@ -328,7 +328,7 @@ export default function UserProfileScreen() {
                             <TouchableOpacity
                                 style={styles.statItem}
                                 onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                     router.push(`/(protected)/follow-list?userId=${id}&type=following` as any);
                                 }}
                                 activeOpacity={0.7}

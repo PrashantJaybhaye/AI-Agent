@@ -234,7 +234,7 @@ export default function ExploreScreen() {
 
     // Follow/Unfollow user with Firestore
     const handleFollowPress = async (user: UserSearchResult) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
         if (!userId) {
             console.error("No userId found");
@@ -465,7 +465,7 @@ export default function ExploreScreen() {
                         <TouchableOpacity
                             onPress={() => {
                                 setSearchQuery("");
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                             }}
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >

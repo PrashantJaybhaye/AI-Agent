@@ -76,7 +76,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                             const isFocused = state.index === state.routes.indexOf(route);
 
                             const onPress = () => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                 const event = navigation.emit({
                                     type: 'tabPress',
                                     target: route.key,
@@ -129,7 +129,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                     style={styles.searchButtonContainer}
                     activeOpacity={1}
                     onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                         navigation.navigate(exploreRoute.name);
                     }}
                     accessibilityRole="button"

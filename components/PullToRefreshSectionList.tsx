@@ -179,7 +179,7 @@ export function PullToRefreshSectionList<ItemT, SectionT>({
         if (refreshState === "refreshing") return;
 
         setRefreshState("refreshing");
-        hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+        hapticImpact(Haptics.ImpactFeedbackStyle.Heavy);
         pullY.value = withSpring(REFRESH_HEIGHT, SPRING_CONFIG);
 
         try {
@@ -250,7 +250,7 @@ export function PullToRefreshSectionList<ItemT, SectionT>({
                 previous <= PULL_THRESHOLD &&
                 isDragging.value
             ) {
-                runOnJS(hapticImpact)(Haptics.ImpactFeedbackStyle.Light);
+                runOnJS(hapticImpact)(Haptics.ImpactFeedbackStyle.Heavy);
             }
         }
     );

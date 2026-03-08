@@ -55,7 +55,7 @@ export default function CourseDetailScreen() {
             onStartShouldSetPanResponder: () => !loadingRef.current,
             onMoveShouldSetPanResponder: () => !loadingRef.current,
             onPanResponderGrant: () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
             },
             onPanResponderMove: (_, gestureState) => {
                 if (loadingRef.current) return;
@@ -77,7 +77,7 @@ export default function CourseDetailScreen() {
                         handleStart();
                     });
                 } else {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                     Animated.spring(slideAnim, {
                         toValue: 0, stiffness: 150, damping: 16, mass: 0.9, useNativeDriver: true,
                     }).start();
@@ -134,7 +134,7 @@ export default function CourseDetailScreen() {
                     activeOpacity={0.7}
                     onPress={() => {
                         if (isLocked) {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                             setShowSubscription(true);
                         } else {
                             router.push({

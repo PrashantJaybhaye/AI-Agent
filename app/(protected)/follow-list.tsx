@@ -140,7 +140,7 @@ export default function FollowListScreen() {
 
     const handleFollowToggle = async (targetUserId: string) => {
         if (!currentUserId) return;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
         const isFollowing = followedUsers.has(targetUserId);
 
@@ -281,7 +281,7 @@ export default function FollowListScreen() {
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                         router.back();
                     }}
                     style={styles.backBtn}
