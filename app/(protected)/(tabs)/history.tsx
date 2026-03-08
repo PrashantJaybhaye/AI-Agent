@@ -6,7 +6,7 @@ import { Session } from "@/utils/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Image,
@@ -15,6 +15,7 @@ import {
     StatusBar,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -43,6 +44,16 @@ export default function HistoryScreen() {
     const [sections, setSections] = useState<HistorySection[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
+    const searchInputRef = useRef<TextInput>(null);
+
+    // Debounce search query by 300ms
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         fetchSessions();
@@ -128,6 +139,30 @@ export default function HistoryScreen() {
         return `${mins}m`;
     };
 
+    // Filter sections based on debounced search query
+    const filteredSections = useMemo(() => {
+        if (!debouncedQuery.trim()) return sections;
+        const q = debouncedQuery.toLowerCase();
+        return sections
+            .map(section => ({
+                ...section,
+                data: section.data.filter(s =>
+                    (s.call_summary_title || "").toLowerCase().includes(q)
+                ),
+            }))
+            .filter(section => section.data.length > 0);
+    }, [sections, debouncedQuery]);
+
+    const toggleSearch = () => {
+        if (isSearchVisible) {
+            setSearchQuery("");
+            setIsSearchVisible(false);
+        } else {
+            setIsSearchVisible(true);
+            setTimeout(() => searchInputRef.current?.focus(), 100);
+        }
+    };
+
     const renderHeader = () => (
         <View
             style={[styles.glassHeader, { paddingTop: insets.top + 12 }]}
@@ -136,12 +171,21 @@ export default function HistoryScreen() {
             <View style={styles.headerContent}>
                 <Text style={styles.headerTitleLarge}>History</Text>
                 <View style={styles.headerRightButtons}>
-                    <TouchableOpacity style={styles.moreButton}>
-                        <Ionicons name="search" size={20} color="#000" />
+                    <TouchableOpacity
+                        style={styles.searchToggle}
+                        onPress={toggleSearch}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons
+                            name={isSearchVisible ? "close-outline" : "search-outline"}
+                            size={24}
+                            color="#1C1C1E"
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.avatarButton}
                         onPress={() => router.push("/profile")}
+                        activeOpacity={0.7}
                     >
                         {userData?.photoURL ? (
                             <Image source={{ uri: userData.photoURL }} style={styles.avatarImage} />
@@ -153,6 +197,39 @@ export default function HistoryScreen() {
                     </TouchableOpacity>
                 </View>
             </View>
+
+            {/* Search Bar */}
+            {isSearchVisible && (
+                <Animated.View entering={FadeInDown.springify().damping(18).stiffness(220)} style={styles.searchBarContainer}>
+                    <View style={styles.searchBar}>
+                        <Ionicons name="search" size={18} color="#8E8E93" style={{ marginRight: 2 }} />
+                        <TextInput
+                            ref={searchInputRef}
+                            style={styles.searchInput}
+                            placeholder="Search sessions..."
+                            placeholderTextColor="#C7C7CC"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="search"
+                            selectionColor="#007AFF"
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setSearchQuery("");
+                                    searchInputRef.current?.focus();
+                                }}
+                                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                                style={styles.clearButton}
+                            >
+                                <Ionicons name="close-circle" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </Animated.View>
+            )}
         </View>
     );
 
@@ -349,7 +426,7 @@ export default function HistoryScreen() {
                 {renderHeader()}
 
                 <PullToRefreshSectionList
-                    sections={sections}
+                    sections={filteredSections}
                     keyExtractor={(item: any) => `${item.id}-${refreshKey}`}
                     renderItem={({ item, index }: any) => <HistoryCard item={item} index={index} />}
                     renderSectionHeader={renderSectionHeader}
@@ -358,7 +435,7 @@ export default function HistoryScreen() {
                         styles.listContent,
                         {
                             paddingBottom: insets.bottom + 100,
-                            paddingTop: insets.top + 72,
+                            paddingTop: insets.top + (isSearchVisible ? 124 : 72),
                             flexGrow: 1,
                         }
                     ]}
@@ -407,13 +484,35 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 12,
     },
-    moreButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#F2F2F7',
+    searchToggle: {
+        width: 32,
+        height: 32,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    searchBarContainer: {
+        paddingHorizontal: 20,
+        paddingBottom: 14,
+    },
+    searchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F2F2F7',
+        borderRadius: 14,
+        paddingHorizontal: 14,
+        height: 44,
+        gap: 6,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#1C1C1E',
+        fontWeight: '400',
+        paddingVertical: 0,
+        letterSpacing: -0.2,
+    },
+    clearButton: {
+        padding: 4,
     },
     // Shared Avatar styles
     avatarButton: {
@@ -423,6 +522,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.1)',
+        backgroundColor: '#F2F2F7',
     },
     avatarImage: {
         width: '100%',

@@ -153,18 +153,55 @@ const SettingsModal = ({ visible, onClose, signOut, isAdmin, router }: any) => {
     const insets = useSafeAreaInsets();
     const { userData } = useUserContext();
 
-    const IOS_HIGHLIGHT = "#E5E5EA"; // The exact color iOS uses for press states
+    const IOS_HIGHLIGHT = "#E5E5EA";
 
     const handleShare = async () => {
         try {
             await Share.share({
                 message: `Check out my profile on Siora! 🧘‍♂️\n\nhttps://siora.app/u/${userData?.uid}`,
-                url: `https://siora.app/u/${userData?.uid}`, // iOS supports generic URL field
+                url: `https://siora.app/u/${userData?.uid}`,
             });
         } catch (error) {
             console.log(error);
         }
     };
+
+    const SettingsRow = ({
+        icon,
+        iconColor = COLORS.primary,
+        label,
+        onPress,
+        isDestructive = false,
+        isLast = false,
+    }: {
+        icon: keyof typeof Ionicons.glyphMap;
+        iconColor?: string;
+        label: string;
+        onPress: () => void;
+        isDestructive?: boolean;
+        isLast?: boolean;
+    }) => (
+        <>
+            <TouchableHighlight
+                style={styles.actionSheetItem}
+                underlayColor={IOS_HIGHLIGHT}
+                onPress={onPress}
+            >
+                <View style={styles.actionSheetRow}>
+                    <View style={[styles.actionSheetIconWrap, { backgroundColor: isDestructive ? '#FEE2E2' : '#F4F4F5' }]}>
+                        <Ionicons name={icon} size={18} color={isDestructive ? '#EF4444' : iconColor} />
+                    </View>
+                    <Text style={isDestructive ? styles.actionSheetTextDestructive : styles.actionSheetText}>
+                        {label}
+                    </Text>
+                    {!isDestructive && (
+                        <Ionicons name="chevron-forward" size={16} color="#C7C7CC" style={{ marginLeft: 'auto' }} />
+                    )}
+                </View>
+            </TouchableHighlight>
+            {!isLast && <View style={styles.actionSheetSeparator} />}
+        </>
+    );
 
     return (
         <Modal
@@ -183,63 +220,64 @@ const SettingsModal = ({ visible, onClose, signOut, isAdmin, router }: any) => {
                 <View
                     style={[
                         styles.actionSheetContainer,
-                        { paddingBottom: insets.bottom + 10 },
+                        { paddingBottom: insets.bottom + 12 },
                     ]}
                 >
+                    {/* Handle */}
+                    <View style={styles.actionSheetHandle}>
+                        <View style={styles.handleBar} />
+                    </View>
+
+                    {/* Title */}
+                    <View style={styles.actionSheetTitleRow}>
+                        <Text style={styles.actionSheetTitle}>Settings</Text>
+                    </View>
+
+                    {/* Main Group */}
                     <View style={styles.actionGroup}>
-                        {/* Edit Profile */}
-                        <TouchableHighlight
-                            style={styles.actionSheetItem}
-                            underlayColor={IOS_HIGHLIGHT}
+                        <SettingsRow
+                            icon="person-outline"
+                            label="Edit Profile"
                             onPress={() => {
                                 Haptics.selectionAsync();
                                 onClose();
                                 router.push("/(protected)/edit-profile");
                             }}
-                        >
-                            <Text style={styles.actionSheetText}>Edit Profile</Text>
-                        </TouchableHighlight>
-
-                        <View style={styles.actionSheetSeparator} />
-
-                        {/* Notifications */}
-                        <TouchableHighlight
-                            style={styles.actionSheetItem}
-                            underlayColor={IOS_HIGHLIGHT}
+                        />
+                        <SettingsRow
+                            icon="notifications-outline"
+                            label="Notifications"
                             onPress={() => {
                                 Haptics.selectionAsync();
                                 onClose();
+                                router.push("/(protected)/notifications");
                             }}
-                        >
-                            <Text style={styles.actionSheetText}>Notifications</Text>
-                        </TouchableHighlight>
+                        />
+                        <SettingsRow
+                            icon="share-outline"
+                            label="Share Profile"
+                            onPress={() => {
+                                Haptics.selectionAsync();
+                                handleShare();
+                            }}
+                            isLast
+                        />
+                    </View>
 
-                        <View style={styles.actionSheetSeparator} />
-
-                        {/* Share Profile */}
-                        <TouchableHighlight
-                            style={styles.actionSheetItem}
-                            underlayColor={IOS_HIGHLIGHT}
-                            onPress={handleShare}
-                        >
-                            <Text style={styles.actionSheetText}>Share Profile</Text>
-                        </TouchableHighlight>
-
-                        <View style={styles.actionSheetSeparator} />
-
-                        {/* Log Out */}
-                        <TouchableHighlight
-                            style={styles.actionSheetItem}
-                            underlayColor={IOS_HIGHLIGHT}
+                    {/* Danger Group */}
+                    <View style={[styles.actionGroup, { marginTop: 12 }]}>
+                        <SettingsRow
+                            icon="log-out-outline"
+                            label="Log Out"
+                            isDestructive
+                            isLast
                             onPress={() => {
                                 Haptics.notificationAsync(
                                     Haptics.NotificationFeedbackType.Warning
                                 );
                                 signOut();
                             }}
-                        >
-                            <Text style={styles.actionSheetTextDestructive}>Log Out</Text>
-                        </TouchableHighlight>
+                        />
                     </View>
 
                     {/* Cancel Button */}
@@ -247,7 +285,7 @@ const SettingsModal = ({ visible, onClose, signOut, isAdmin, router }: any) => {
                         style={styles.cancelButton}
                         underlayColor={IOS_HIGHLIGHT}
                         onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             onClose();
                         }}
                     >
@@ -892,36 +930,70 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     actionSheetContainer: {
+        backgroundColor: '#F2F2F7',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
         paddingHorizontal: 16,
     },
+    actionSheetHandle: {
+        alignItems: 'center',
+        paddingTop: 10,
+        paddingBottom: 4,
+    },
+    handleBar: {
+        width: 36,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: '#D1D1D6',
+    },
+    actionSheetTitleRow: {
+        paddingVertical: 14,
+        paddingHorizontal: 4,
+    },
+    actionSheetTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: COLORS.primary,
+        letterSpacing: -0.3,
+    },
     actionGroup: {
-        backgroundColor: "rgba(255, 255, 255, 0.9)",
+        backgroundColor: "#FFFFFF",
         borderRadius: 14,
         overflow: "hidden",
-        marginBottom: 8,
     },
     actionSheetItem: {
-        paddingVertical: 18,
-        alignItems: "center",
-        justifyContent: "center",
+        paddingVertical: 14,
+        paddingHorizontal: 16,
         backgroundColor: "#FFFFFF",
     },
+    actionSheetRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+    },
+    actionSheetIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     actionSheetText: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: "500",
         color: "#000000",
-        letterSpacing: -0.3, // Tighter tracking for that "premium" feel
+        letterSpacing: -0.2,
     },
     actionSheetTextDestructive: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: "600",
-        color: "#FF3B30",
-        letterSpacing: -0.3,
+        color: "#EF4444",
+        letterSpacing: -0.2,
     },
     actionSheetSeparator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: "#3C3C4336",
-        width: "100%",
+        marginLeft: 62,
     },
     cancelButton: {
         backgroundColor: "#FFFFFF",
@@ -929,6 +1001,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: "center",
         justifyContent: "center",
+        marginTop: 12,
     },
     cancelButtonText: {
         fontSize: 17,

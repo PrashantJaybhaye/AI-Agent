@@ -405,9 +405,6 @@ export default function ExploreScreen() {
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <Text style={styles.headerTitle}>Discover</Text>
                 <View style={styles.headerIcons}>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
-                    </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.iconButton}
                         onPress={() => router.push("/(protected)/notifications")}
