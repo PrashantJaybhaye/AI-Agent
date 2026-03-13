@@ -44,6 +44,7 @@ export default function EditProfileScreen() {
     const [location, setLocation] = useState(userData?.location || '');
     const [isSaving, setIsSaving] = useState(false);
     const [isLocating, setIsLocating] = useState(false);
+    const [activityPrivacy, setActivityPrivacy] = useState<"public" | "followers" | "private">(userData?.activityPrivacy || 'followers');
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
         title: '',
@@ -128,7 +129,8 @@ export default function EditProfileScreen() {
                 displayName: displayName.trim(),
                 username: username.trim(),
                 bio: bio.trim(),
-                location: location.trim()
+                location: location.trim(),
+                activityPrivacy: activityPrivacy
             });
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -321,6 +323,57 @@ export default function EditProfileScreen() {
                             </View>
                         </View>
 
+                        {/* Privacy Section */}
+                        <View style={styles.sectionContainer}>
+                            <Text style={styles.sectionTitle}>PRIVACY</Text>
+                            <View style={styles.formGroup}>
+                                <TouchableOpacity 
+                                    style={styles.inputRow} 
+                                    onPress={() => {
+                                        Haptics.selectionAsync();
+                                        setActivityPrivacy('public');
+                                    }}
+                                >
+                                    <Ionicons name="earth-outline" size={20} color={activityPrivacy === 'public' ? COLORS.primary : COLORS.subtext} style={{ marginRight: 12 }} />
+                                    <Text style={[styles.label, { flex: 1 }]}>Public</Text>
+                                    {activityPrivacy === 'public' && <Ionicons name="checkmark" size={20} color={COLORS.primary} />}
+                                </TouchableOpacity>
+                                
+                                <View style={styles.separator} />
+
+                                <TouchableOpacity 
+                                    style={styles.inputRow} 
+                                    onPress={() => {
+                                        Haptics.selectionAsync();
+                                        setActivityPrivacy('followers');
+                                    }}
+                                >
+                                    <Ionicons name="people-outline" size={20} color={activityPrivacy === 'followers' ? COLORS.primary : COLORS.subtext} style={{ marginRight: 12 }} />
+                                    <Text style={[styles.label, { flex: 1 }]}>Followers</Text>
+                                    {activityPrivacy === 'followers' && <Ionicons name="checkmark" size={20} color={COLORS.primary} />}
+                                </TouchableOpacity>
+
+                                <View style={styles.separator} />
+
+                                <TouchableOpacity 
+                                    style={styles.inputRow} 
+                                    onPress={() => {
+                                        Haptics.selectionAsync();
+                                        setActivityPrivacy('private');
+                                    }}
+                                >
+                                    <Ionicons name="lock-closed-outline" size={20} color={activityPrivacy === 'private' ? COLORS.primary : COLORS.subtext} style={{ marginRight: 12 }} />
+                                    <Text style={[styles.label, { flex: 1 }]}>Private</Text>
+                                    {activityPrivacy === 'private' && <Ionicons name="checkmark" size={20} color={COLORS.primary} />}
+                                </TouchableOpacity>
+                            </View>
+                            <Text style={styles.footerText}>
+                                {activityPrivacy === 'public' ? "Everyone can see your activity feed." : 
+                                 activityPrivacy === 'followers' ? "Only people you follow back can see your activity." : 
+                                 "Only you can see your activity feed."}
+                            </Text>
+                        </View>
+
                         {/* System Section */}
                         <Animated.View
                             entering={FadeInDown.delay(200).duration(500)}
@@ -469,5 +522,13 @@ const styles = StyleSheet.create({
         color: COLORS.subtext,
         marginTop: 7,
         marginHorizontal: 16,
+    },
+    sectionTitle: {
+        fontSize: 13,
+        color: COLORS.subtext,
+        fontWeight: '600',
+        marginBottom: 8,
+        marginLeft: 16,
+        textTransform: 'uppercase',
     },
 });

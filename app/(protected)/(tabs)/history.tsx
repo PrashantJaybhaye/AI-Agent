@@ -200,7 +200,7 @@ export default function HistoryScreen() {
 
             {/* Search Bar */}
             {isSearchVisible && (
-                <Animated.View entering={FadeInDown.springify().damping(18).stiffness(220)} style={styles.searchBarContainer}>
+                <Animated.View entering={FadeInDown.duration(200)} style={styles.searchBarContainer}>
                     <View style={styles.searchBar}>
                         <Ionicons name="search" size={18} color="#8E8E93" style={{ marginRight: 2 }} />
                         <TextInput

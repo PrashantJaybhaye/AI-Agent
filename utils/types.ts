@@ -39,6 +39,7 @@ export interface Session {
     tokens?: number;
     call_duration_secs?: number;
     transcript?: string;
+    transcript_summary?: string;
     call_summary_title?: string;
 }
 
@@ -78,4 +79,5 @@ export interface User {
     createdAt: any;
     lastLoginAt: any;
     subscriptionPlan?: 'free' | 'premium';
+    activityPrivacy?: 'public' | 'followers' | 'private';
 }

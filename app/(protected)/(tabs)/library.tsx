@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     Dimensions,
+    Linking,
     Modal,
     ScrollView,
     StyleSheet,
@@ -86,6 +87,7 @@ export default function LibraryScreen() {
     >(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
+    const [notifyModalVisible, setNotifyModalVisible] = useState(false);
     const [sortOption, setSortOption] = useState<
         "default" | "shortest" | "longest"
     >("default");
@@ -119,8 +121,20 @@ export default function LibraryScreen() {
         });
     };
 
-    const handleRemindPress = () => {
-        // console.log('Remind me pressed'); // Placeholder for reminder logic
+    const handleRemindPress = async () => {
+        setNotifyModalVisible(true);
+        
+        // Open Google Calendar to create a reminder/event
+        const title = encodeURIComponent("Group Meditation - Siora");
+        const details = encodeURIComponent("Practice mindfulness with the community.");
+        // Optional: you can add specific dates such as &dates=YYYYMMDDTHHmmssZ/YYYYMMDDTHHmmssZ
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}`;
+        
+        try {
+            await Linking.openURL(url);
+        } catch (error) {
+            console.log("Error opening calendar:", error);
+        }
     };
 
     return (
@@ -277,6 +291,55 @@ export default function LibraryScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
+
+            {/* Notify Modal */}
+            <Modal
+                visible={notifyModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setNotifyModalVisible(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setNotifyModalVisible(false)}
+                >
+                    <BlurView
+                        intensity={20}
+                        tint="light"
+                        style={StyleSheet.absoluteFill}
+                    />
+
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={(e) => e.stopPropagation()}
+                    >
+                        <View style={styles.alertContainer}>
+                            <BlurView
+                                intensity={80}
+                                tint="light"
+                                style={StyleSheet.absoluteFill}
+                            />
+
+                            <View style={styles.alertContent}>
+                                <Text style={styles.alertTitle}>Reminder Set</Text>
+                                <Text style={styles.alertMessage}>
+                                    We'll notify you when the session is about to start.
+                                </Text>
+                            </View>
+
+                            <View style={styles.alertButtons}>
+                                <TouchableOpacity
+                                    style={styles.alertButton}
+                                    onPress={() => setNotifyModalVisible(false)}
+                                >
+                                    <Text style={styles.alertButtonTextConfirm}>Okay</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+                </TouchableOpacity>
+            </Modal>
 
             {/* Audio Option Modal */}
             <Modal
